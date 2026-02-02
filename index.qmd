@@ -1,0 +1,41 @@
+```{=tex}
+\pagenumbering{roman}
+\setcounter{page}{1}
+```
+
+# Preface {.unnumbered}
+
+**A continuing partnership**
+
+This fifth edition of the bi-regional Brazil-Europe comparison report of Air Navigation System Performance continues to add transparent and robust data to support an informed discussion about operational performance in both regions.
+Further, it showcases the close collaboration between DECEA and EUROCONTROL.
+This report is jointly developed by the Performance Section of the Department of Airspace Control (DECEA) and EUROCONTROL's Performance Review Unit (PRU).
+
+For any questions, please do not hesitate to contact one of the authoring organisations.
+
+Performance Section, DECEA        
+Performance Review Unit, EUROCONTROL    
+
+
+<!-- add one inch of whitespace = empty equation --------------------------->
+
+$$\\[1in]$$
+
+::: border
+
+**COPYRIGHT NOTICE AND DISCLAIMER**
+
+Every possible effort was made to ensure that the information and analysis contained in this document are as accurate and complete as possible. 
+Should you find any errors or inconsistencies we would be grateful if you could bring them to our attention.
+
+The views expressed herein do not necessarily reflect the official views or policy of DECEA or EUROCONTROL, which - both jointly or individually - make no warranty, either implied or express, for the information contained in this document, neither do both organisations assume any legal liability or
+responsibility for the accuracy, completeness or usefulness of this information.
+
+This document is jointly published by EUROCONTROL and DECEA for information purposes. It may be copied in whole or in part, provided that EUROCONTROL and DECEA are mentioned as the source and it is not used for commercial purposes (i.e. for financial gain). The information in this document may not be modified without prior written permission from EUROCONTROL and DECEA.
+
+www.eurocontrol.int & www.decea.mil.br
+
+:::
+
+\KOMAoptions{headsepline,footsepline}
+\pagestyle{headings}

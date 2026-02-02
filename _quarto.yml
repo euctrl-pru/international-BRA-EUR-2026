@@ -1,0 +1,75 @@
+project:
+  type: book
+  #output-dir: docs    # use this output dir for anything updated on the public site
+  output-dir: _book-local
+
+# do not show output of code chunks - outside errors
+execute:
+  echo: false
+  warning: false
+
+book:
+  title: "Operational Comparison of ANS Performance"
+  author: 
+    - DECEA Performance Section
+    - EUROCONTROL Performance Review Unit
+  date:  today #"31 May 2025"             # during drafting: today
+  date-format: "D MMMM YYYY"
+  downloads: pdf # [pdf, docx]
+  chapters:
+  - index.qmd
+  - 00-foreword.qmd
+  - 00-executive-summary.qmd
+  - 01-intro.qmd
+  - 02-system-overview.qmd
+  #- 03-traffic_characterisation.qmd
+  #- 04-predictability.qmd
+  #- 05-capacity_and_throughput.qmd
+  #- 06-efficiency.qmd
+  # - 07-environment.qmd
+  #- 09-studies.qmd
+  #- 10-conclusions.qmd
+  - 99-references.qmd
+  #appendices:
+  #- A1-appendix.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme: cosmo
+    include-in-header:
+      text: |
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <style>
+          .navbar-logo {
+            max-height: 60px;
+          }
+        </style>
+  pdf:
+    documentclass: scrreport
+    papersize: a4
+    fig-pos: 'H'
+    geometry:
+    - top=30mm
+    - right=25mm
+    - left=30mm
+    - bottom=30mm
+    - heightrounded
+    include-in-header:
+      text: |
+        \usepackage{pdfpages}
+        \pagenumbering{gobble}
+        \setlength{\columnsep}{1cm}
+        \usepackage{fancyhdr}
+        \pagestyle{fancy}
+        \fancyhead[L]{\leftmark}
+        \fancyhead[R]{}
+        \fancyfoot[L]{}
+
+  docx:
+    toc: true
+    number-sections: true
+    highlight-style: github
+# epub:
+#    cover-image: cover.png

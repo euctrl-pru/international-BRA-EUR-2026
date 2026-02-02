@@ -1,0 +1,17 @@
+# References {-}
+
+<!-- DO NOT EDIT ANYTHING HERE --- 
+     THIS IS A PLACEHOLDER FOR THE REFERENCES.
+     ADDITIONAL CHAPTERS (e.g. Appendices) CAN BE ADDED VIA FILE and _quarto.yml
+-->
+
+::: {#refs}
+:::
+
+
+
+Eurocontrol. (2014). Point Merge: Integration of Arrival Flows Enabling Extensive RNAV Application and Continuous Descent. Eurocontrol Experimental Centre.
+
+FRANZINI, Bruno Monteiro et al. (2024). Analysis of Guarulhos Point Merge Adherence Based On Additional Time In Tma And Trajectory Clustering.. In: Anais do XXI Simpósio de Transporte Aéreo - SITRAER 2024.
+
+ICAO. (2016). Continuous Descent Operations (CDO) Manual. International Civil Aviation Organization.
