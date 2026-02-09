@@ -1,7 +1,7 @@
 # Executive Summary {.unnumbered}
 
-The Performance Section of the Brazilian Department of Airspace Control and the Performance Review Unit of EUROCONTROL jointly developed this fourth edition of the Brazil-Europe comparison of Air Navigation System Performance. 
-This edition of the bi-regional report builds on the previous comparison reports using commonly agreed metrics and definitions to compare, understand, and improve the performance of air navigation services. 
+The Performance Section of the Brazilian Department of Airspace Control (DECEA) and the Performance Review Unit (PRU) of EUROCONTROL jointly developed this edition of the Brazil–Europe comparison of Air Navigation System performance. 
+This bi-regional report builds on previous comparative analyses and is based on commonly agreed performance metrics and definitions, enabling a consistent assessment of air navigation service performance over time. By extending the observation period to 2019–2025, the report supports a comprehensive analysis of long-term performance trends, encompassing the pre-COVID, the pandemic disruption, and the subsequent recovery phase. [To be reviewed] 
 This report and previous editions are available via the web-portals of both organisations: 
 
 * <https://ansperformance.eu/global/brazil> or 
