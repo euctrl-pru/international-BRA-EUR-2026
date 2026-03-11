@@ -12,3 +12,11 @@ figures/~$*
 _book-local/
 **/*.quarto_ipynb
 
+# xx files
+
+xx-*
+
+# Big data files
+
+data-src
+

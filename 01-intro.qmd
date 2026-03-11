@@ -111,10 +111,88 @@ All of these airports are subject to the performance monitoring under the EUROCO
 @fig-scope-airports provides an overview of the location of the chosen study airports within both regions.
 The airports are also listed in @tbl-scopetable.
 
+<!--
+
+New version of table using csv table. Tested in html and PDF views.
+
+-->
+
+
 ```{r}
 #| label: tbl-scopetable
 #| tbl-cap: List of study airports for the Brazil / Europe operational ANS performance comparison
 
+# Read CSV
+scopetable <- readr::read_csv(here::here("data", "study_airports_BRA_EUR.csv"))
+
+tbl <- scopetable |>
+  gt::gt() |>
+  gt::cols_label(
+    Brazil = "Brazil",
+    Europe = "Europe"
+  ) |>
+  gt::cols_width(
+    Brazil ~ gt::pct(50),
+    Europe ~ gt::pct(50)
+  ) |>
+  gt::tab_style(
+    style = gt::cell_text(weight = "bold", align = "center"),
+    locations = gt::cells_column_labels()
+  ) |>
+  gt::tab_options(
+    table.border.top.style            = "hidden",
+    table.border.bottom.style         = "hidden",
+    table.width                       = gt::pct(100),
+    column_labels.border.top.width    = gt::px(2),
+    column_labels.border.top.color    = "black",
+    column_labels.border.bottom.width = gt::px(1),
+    column_labels.border.bottom.color = "black",
+    table_body.border.bottom.width    = gt::px(2),
+    table_body.border.bottom.color    = "black",
+    data_row.padding                  = gt::px(4)
+  )
+
+# HTML-only: zebra striping + vertical divider
+if (knitr::is_html_output()) {
+  tbl <- tbl |>
+    gt::tab_style(
+      style = gt::cell_fill(color = "#EAF0F7"),
+      locations = gt::cells_body(rows = seq(1, nrow(scopetable), by = 2))
+    ) |>
+    gt::tab_style(
+      style = gt::cell_fill(color = "#FFFFFF"),
+      locations = gt::cells_body(rows = seq(2, nrow(scopetable), by = 2))
+    )
+}
+
+# PDF-only: vertical divider between columns
+if (!knitr::is_html_output()) {
+  tbl <- tbl |>
+    gt::tab_style(
+      style = gt::cell_borders(
+        sides  = "right",
+        color  = "black",
+        weight = gt::px(1)
+      ),
+      locations = list(
+        gt::cells_column_labels(columns = Brazil),
+        gt::cells_body(columns = Brazil)
+      )
+    )
+}
+
+tbl
+```
+
+<!---
+Old version Below
+--->
+
+```{r}
+#| include: false
+#| label: tbl-scopetable1
+#| tbl-cap: List of study airports for the Brazil / Europe operational ANS performance comparison
+# Old version
 scopetable <- tibble::tribble(
   ~Brazil,                            ~Europe,
   "Brasília (SBBR)",                  "Amsterdam Schiphol (EHAM)",
@@ -127,13 +205,15 @@ scopetable <- tibble::tribble(
   "Salvador (SBSV)",                  "Barcelona (LEBL)",
   "Porto Alegre (SBPA)",              "London Gatwick (EGKK)",
   "Curitiba (SBCT)",                  "Zurich (LSZH)",
-  "Recife (SBRE)",                    "Istanbul (LTFM)",
+  "Recife (SBRF)",                    "Istanbul (LTFM)",
   "Eduardo Gomes (SBEG)",             "Athens (LGAV)"
 )
 
 scopetable |> 
   gt::gt()
 ```
+
+
 
 ```{r}
 #| label: fig-scope-airports
