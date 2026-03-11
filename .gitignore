@@ -7,3 +7,4 @@
 
 # local rendering
 _book-local/
+**/*.quarto_ipynb
