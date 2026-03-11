@@ -118,6 +118,8 @@ scopetable <- tibble::tribble(
   "Salvador (SBSV)",                  "Barcelona (LEBL)",
   "Porto Alegre (SBPA)",              "London Gatwick (EGKK)",
   "Curitiba (SBCT)",                  "Zurich (LSZH)",
+  "Recife (SBRE)",                    "Istanbul (LTFM)",
+  "Eduardo Gomes (SBEG)",             "Athens (LGAV)"
 )
 
 scopetable |> 

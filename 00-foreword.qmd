@@ -2,10 +2,10 @@
 
 ![](figures/foreword-combined.png)
 
-```{}
+<!--
 #| label: shakehands
 #| fig-cap: ""
 #| fig-align: "center"
 #| out-width: 55%
 knitr::include_graphics("./figures/DGCEA-PRC.jpg")
-```
+-->
