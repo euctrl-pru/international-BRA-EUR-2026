@@ -30,7 +30,6 @@ library(ggrepel)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(patchwork)
-library(ggrepel)
 
 world   <- ne_countries(scale = "medium", returnclass = "sf")
 bra_map <- world |> dplyr::filter(admin == "Brazil")
@@ -97,6 +96,7 @@ eur_chart
 plot_ratio <- tmaptools::get_asp_ratio(eur_map)
 my_size <- 5
 
+
 eur_chart |> 
   ggplot2::ggsave(filename = here::here("figures","_map-eur.png")
                   , dpi = 320, bg = "white"
@@ -140,8 +140,6 @@ bra_chart2 <- ggplot2::ggplot() +
   labs(subtitle = "Brazil")
 
 
-bra_chart2 + eur_chart2
-
 eur_apts_coords <- this_airports |> filter(grepl(pattern = "^(E|L)", x = ICAO)) |> 
   mutate(LB_LAT = LAT, LB_LON = LON)
 
@@ -164,7 +162,7 @@ eur_chart2 <- ggplot2::ggplot() +
 bra_chart2 + eur_chart2
 
 
-
+## output for report starts here
 ## ----------------------------------------------------------------------
 
 # Define airport data
@@ -189,7 +187,9 @@ airports <- tribble(
   "SBPA", -30.0, -51.2, "Porto Alegre",
   "SBRJ", -22.9, -43.2, "Santos Dumont",
   "SBSP", -23.6, -46.7, "Congonhas",
-  "SBSV", -12.9, -38.3, "Salvador"
+  
+  "SBSV", -12.9, -38.3, "Salvador",
+  "SBCF", -8.125, -34.923, "Recife"
 )
 
 # Split datasets
@@ -261,10 +261,11 @@ combi_plot_scope <-
 
 combi_plot_scope
 
-combi_plot_scope |> ggsave(
-  filename = here::here("figures","_scope-airports-map.png")
- # filename = here::here("figures","_scope-airports-map.pdf")
-  ,dpi = 320
-  ,width = 8, height = 5, units = "in"
-  ,bg = "white")
+# ======== write out final plot
+# combi_plot_scope |> ggsave(
+#   filename = here::here("figures","_scope-airports-map.png")
+#  # filename = here::here("figures","_scope-airports-map.pdf")
+#   ,dpi = 320
+#   ,width = 8, height = 5, units = "in"
+#   ,bg = "white")
 

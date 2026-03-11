@@ -87,7 +87,16 @@ This includes the integration of military objectives and requirements which need
 A variety of coordination cells/procedures exists between civil air traffic control centres and air defence units reflecting the local practices.
 Many EUROCONTROL member states are members of NATO and have their air defence centres / processes for civil-military coordination aligned under the integrated NATO air defence system.
 
-Further details on the organisation of the regional air navigation systems in Brazil and Europe will be provided in Section 2.1.
+```
+Further details on the organisation of the regional air navigation systems in Brazil and Europe will be provided in Section 2.1. <!-- make this a cross-reference -->
+```
+
+### Network and Inter-regional Traffic Flow
+
+:::{.callout-tip}
+
+To-do - develop secion on what we did.
+:::
 
 ### Study Airports
 
@@ -130,7 +139,7 @@ scopetable |>
 #| label: fig-scope-airports
 #| fig-cap: Study airports of Brazil/Europe Comparison
 #| out-width: 90%
-knitr::include_graphics("./figures/scope-airports-map.png")
+knitr::include_graphics("./figures/_scope-airports-map.png")
 ```
 
 ### Temporal Scope

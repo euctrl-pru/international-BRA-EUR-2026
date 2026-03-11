@@ -5,6 +5,10 @@
 
 /.quarto/
 
+# remove pptx temp files
+figures/~$*
+
 # local rendering
 _book-local/
 **/*.quarto_ipynb
+
