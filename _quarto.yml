@@ -1,7 +1,7 @@
 project:
   type: book
-  #output-dir: docs    # use this output dir for anything updated on the public site
-  output-dir: _book-local
+  output-dir: docs    # use this output dir for anything updated on the public site
+  #output-dir: _book-local
 
 # do not show output of code chunks - outside errors
 execute:
