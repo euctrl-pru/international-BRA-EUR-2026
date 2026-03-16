@@ -1,0 +1,87 @@
+---
+title: "BRA-EUR - Data Validation"
+---
+
+## Overview
+
+This doc serves as a high-level data validation check for this iteration of the BRA-EUR report, i.e. xxxx-2025.
+
+The report builds on broadly 2 categories of data and may be complemented by specific data in support of a topic deep dive:    
+
+* network-level
+* airport-level
+* specific study-data
+
+```{r}
+knitr::include_graphics("./figures/data-source-analytic-perfrelated.png")
+```
+
+## Annual Scope
+
+
+## Network-level
+
+TBD
+
+## Airport-level
+
+```{r}
+eur_apts <- c("EGLL","EGKK","EHAM","EDDF","EDDM","LSZH","LFPG","LEMD","LEBL",
+              # LIRF - removed to include Lisbon 2024
+              "LPPT",
+              # 2025 expansion to 12 airports
+              "LGAV", "LTFM"
+)
+
+bra_apts <- c("SBGR","SBGL","SBRJ","SBCF","SBBR","SBSV","SBKP","SBSP","SBCT","SBPA",
+              # 2025 expansion to 12 airports
+              "SBRF", "SBEG"
+              )
+```
+
+
+### Airport Traffic Count
+
+```{r}
+check_apt_tfc_completeness <- function(reg_tfc, apts, series = 2019:2025){
+  check_grid <- tidyr::expand_grid(ICAO = apts, YEAR = series) |> 
+    dplyr::left_join(
+      reg_tfc |> dplyr::mutate(YEAR = lubridate::year(DATE)) 
+      , by = dplyr::join_by(ICAO, YEAR)
+      ) |>
+    dplyr::group_by(ICAO, YEAR) |> 
+    dplyr::reframe(DAYS = dplyr::n()) |> 
+    dplyr::mutate(YEAR_DAYS = paste0(YEAR, "(", DAYS,")")) |> 
+    dplyr::group_by(ICAO) |>
+    dplyr::reframe(N = n(), COVERAGE = paste(YEAR_DAYS, collapse = ","))
+
+  return(check_grid)
+}
+
+check_apt_tfc_viz <- function(reg_tfc){
+  tmp <- reg_tfc |> dplyr::mutate(FLTS = ARRS + DEPS) 
+  
+  p <- tmp|> 
+    ggplot2::ggplot() + 
+    ggplot2::geom_path(aes(x = DATE, y = FLTS)) + 
+    ggplot2::facet_wrap(vars(ICAO)) +
+    
+    ggplot2::labs(x = NULL)
+  
+  return(p)
+}
+```
+
+
+```{r}
+eur_apts_tfc <- fs::dir_ls("./data", regexp = "EUR-apt-tfc") |>
+  readr::read_csv(show_col_types = F) |> 
+  dplyr::filter(ICAO %in% eur_apts)
+
+eur_apts_tfc |> check_apt_tfc_completeness(eur_apts) |> gt::gt()
+```
+
+```{r}
+eur_apts_tfc |> check_apt_tfc_viz()
+```
+
