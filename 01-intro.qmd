@@ -262,21 +262,27 @@ scopetable |>
 ```
 
 
+<!---
+Old version Below
+--->
 
 ```{r}
-#| label: fig-scope-airports
-#| fig-cap: Study airports of Brazil/Europe Comparison
+#| include: false
+#| label: fig-scope-airports1
+#| fig-cap: Study airports of Brazil/Europe Comparison1
 #| out-width: 90%
 knitr::include_graphics("./figures/scope-airports-map.png")
 ```
 
+<!---
+new version Below
+--->
 
 ```{r}
-#| label: fig-scope-airports1
-#| fig-cap: Study airports of Brazil/Europe Comparison1
-#| out-width: 100%
-#| out-height: 450px
-knitr::include_graphics(here::here("figures", "Rplot1.png"))
+#| label: fig-scope-airports
+#| fig-cap: Study airports of Brazil/Europe Comparison
+#| out-width: 110%
+knitr::include_graphics(here::here("figures", "scope-airports-2025.png"))
 ```
 
 

@@ -21,6 +21,8 @@ library(devtools)
 # library(readr)     # included in tidyverse
 # library(tinytex)
 library(arrow)
+library(rnaturalearth)
+
 
 # ============== DEFAULTS and DEFINITIONS =====================================
 # study year
