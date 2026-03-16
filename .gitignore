@@ -11,6 +11,8 @@ figures/~$*
 # local rendering
 _book-local/
 **/*.quarto_ipynb
+BRA-EUR-guide.html
+BRA-EUR-guide_files*
 
 # xx files
 

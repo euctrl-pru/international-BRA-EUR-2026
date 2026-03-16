@@ -15,11 +15,11 @@ It is recognised that Air Navigation Services (ANS) play a critical role in term
 Accordingly, the analysis and regional comparison of operational ANS performance informs about trends over time, the success of change implementation, and potential performance benefit pools for future exploitation.
 
 With a view to a tighter collaboration between Brazil and Europe, DECEA and EUROCONTROL signed a cooperation agreement in 2015.
-This agreement encompasses various activities, most notably the cooperation and joint initiatives in the domain of operational performance benchmarking of ANS.
+This agreement encompasses various activities, including the cooperation and joint initiatives in the domain of operational performance benchmarking of ANS.
 
 The close technical collaboration of the Performance Section of DECEA and EUROCONTROL's Performance Review Unit comprises the further development and validation of proposed ICAO GANP indicators, regular performance related data exchange, and the production of regional or multi-regional performance reports.
 An essential part of this work entails the identification and validation of comparable data sources, the development of a joint data preparatory process, and supporting analyses to produce this report or contribute to the aforementioned international activities.   
-This report represents the fourth edition of a jointly developed comparison report providing insights into the observed operational performance in Brazil and Europe.
+This report represents the fifth edition of a jointly developed comparison report providing insights into the observed operational performance in Brazil and Europe.
 
 ## Performance Areas
 
@@ -154,8 +154,6 @@ These study airports have consolidated systems and structured processes for data
 For the European context, the study airports comprise the busiest airports in several states exhibiting a mix of national, regional, and international air traffic.
 These airports are also characterised by varying operational constraints that make them excellent candidates for an international comparison.
 All of these airports are subject to the performance monitoring under the EUROCONTROL Performance Review System and provide movement related data on the basis of a harmonised data specification.
-
-
 -->
 
 @fig-scope-airports provides an overview of the location of the chosen study airports within both regions.
