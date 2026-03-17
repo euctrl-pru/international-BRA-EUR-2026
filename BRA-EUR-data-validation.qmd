@@ -13,6 +13,7 @@ The report builds on broadly 2 categories of data and may be complemented by spe
 * specific study-data
 
 ```{r}
+#| out-width: 100%
 knitr::include_graphics("./figures/data-source-analytic-perfrelated.png")
 ```
 

@@ -52,6 +52,7 @@ Accordingly, the source data extraction may differ between the parties, e.g. Bra
 The BRA-EUR report builds on the PBWG work and will propose changes to the latter during further developments.
 
 ```{r}
+#| out-width: 100%
 knitr::include_graphics("./figures/data-source-analytic-perfrelated.png")
 ```
 
