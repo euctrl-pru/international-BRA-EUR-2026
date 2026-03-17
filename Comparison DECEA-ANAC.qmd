@@ -1,0 +1,31 @@
+---
+title: "ANAC_DECEA COMPARISON"
+---
+
+COMPARISON BETWEEN DECEA AND ANAC FLIGHT DATA IN JANUARY
+
+
+```{r}
+
+install.packages("flightsbr")
+library(flightsbr)
+library(dplyr)
+
+dfanac <- read_flights(date = 202501)
+dfanac |> 
+  group_by(nr_mes_partida_real) |> 
+  reframe(N= n())
+
+
+
+
+# DECEA
+
+
+dfdecea <- read.csv2("./data-src/movement_data_2023_2024_2025.csv")
+
+dfdecea |> 
+     filter(MÊS == 1 ,ANO_INICIO_BRT == 2025) |> 
+     group_by(MÊS) |> 
+     reframe(N = sum(TOTAL))
+
