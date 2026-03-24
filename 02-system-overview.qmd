@@ -55,7 +55,7 @@ bra_actos     <- c("2023" = 3677, "2024" = 3890)
 bra_atcos_pct <- ((bra_actos / bra_atco_2019) - 1) * 100
 ```
 
-@tbl-HLC summarises the key characteristics of the Brazilian and European air navigation system for 2024.
+@ tbl-HLC summarises the key characteristics of the Brazilian and European air navigation system for 2024.
 Comparing the high-level numbers, Brazil observed a steady increase in the number of Air Traffic Controllers (ATCOs) compared to 2019 (e.g. 2023 vs 2019: `r round(bra_atcos_pct[1], 1)`%, 2024 vs 2019: `r round(bra_atcos_pct[2], 1)`%).
 In contrast, the European system showed only a mild increase in total ATCOs in service following the strong reduction during the pandemic in terms of work force.
 The different behaviour suggests a difference in work force flexibility between the systems.
@@ -71,12 +71,147 @@ Thus, European providers tend to react more conservative to anticipated changes 
 -->
 ```
 
-```{r}
+```{}
 #| label: tbl-HLC
 #| tbl-cap: High Level Comparison 2024
 #| out-width: 95%
 
 knitr::include_graphics("./figures/HLC-table1.png")
+```
+
+
+
+
+<!---
+
+New table
+
+--->
+
+```{r}
+#| label: tbl-HLC1
+#| tbl-cap: "High Level Comparison 2025"
+#| cache: false
+
+
+df <- readr::read_csv(
+  here::here("data", "table_BRA_EUR.csv"),
+  col_types = readr::cols(.default = "c")
+)
+
+colnames(df) <- c(
+  "KPA",
+  "Brazil_2023", "Brazil_2024", "Brazil_2025",
+  "Europe_2023", "Europe_2024", "Europe_2025"
+)
+
+df |>
+  gt::gt() |>
+  gt::tab_spanner(
+    label = "Brazil",
+    columns = c(Brazil_2023, Brazil_2024, Brazil_2025)
+  ) |>
+  gt::tab_spanner(
+    label = "Europe",
+    columns = c(Europe_2023, Europe_2024, Europe_2025)
+  ) |>
+  gt::cols_label(
+    KPA         = "KPA",
+    Brazil_2023 = "2023",
+    Brazil_2024 = "2024",
+    Brazil_2025 = "2025",
+    Europe_2023 = "2023",
+    Europe_2024 = "2024",
+    Europe_2025 = "2025"
+  ) |>
+  gt::tab_footnote(
+    footnote = "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024"
+  ) |>
+  gt::tab_style(
+    style = gt::cell_text(
+      align = "center",
+      v_align = "top",
+      weight = "bold"
+    ),
+    locations = gt::cells_column_labels(columns = KPA)
+  ) |>
+  gt::tab_style(
+    style = gt::cell_text(size = gt::px(14)),
+    locations = gt::cells_body(
+      columns = c(Brazil_2023, Brazil_2024, Brazil_2025,
+                  Europe_2023, Europe_2024, Europe_2025)
+    )
+  ) |>
+  gt::tab_style(
+    style = gt::cell_text(size = gt::px(14)),
+    locations = gt::cells_body(columns = KPA)
+  ) |>
+  gt::tab_style(
+    style = gt::cell_borders(
+      sides = "bottom",
+      color = "#D9D9D9",
+      weight = gt::px(0.5)
+    ),
+    locations = gt::cells_body()
+  ) |>
+  gt::cols_align(
+    align = "center",
+    columns = c(Brazil_2023, Brazil_2024, Brazil_2025,
+                Europe_2023, Europe_2024, Europe_2025)
+  ) |>
+  gt::cols_align(
+    align = "left",
+    columns = KPA
+  ) |>
+  gt::cols_width(
+    KPA ~ gt::pct(40),
+    c(Brazil_2023, Brazil_2024, Brazil_2025,
+      Europe_2023, Europe_2024, Europe_2025) ~ gt::pct(10)
+  ) |>
+  gt::tab_options(
+    table.width = gt::pct(100),
+    data_row.padding = gt::px(2),
+    column_labels.padding = gt::px(2),
+    footnotes.font.size = gt::px(10),
+    table.border.top.width = gt::px(1),
+    table.border.bottom.width = gt::px(1),
+    row.striping.include_table_body = FALSE,
+    stub.border.width = gt::px(0),
+    column_labels.border.bottom.width = gt::px(1),
+    column_labels.border.bottom.color = "#000000",
+    table_body.hlines.width = gt::px(0.5),
+    table_body.hlines.color = "#000000"
+) |>
+  gt::tab_options(
+    table.width = gt::pct(100),
+    data_row.padding = gt::px(2),
+    column_labels.padding = gt::px(2),
+    footnotes.font.size = gt::px(10),
+    table.border.top.width = gt::px(1),
+    table.border.bottom.width = gt::px(1)
+  )
+
+# ============================================================
+# Table 2.1: High Level Comparison
+# ============================================================
+# HOW TO UPDATE THIS TABLE FOR FUTURE YEARS:
+#
+# 1. Open the file: data-src/table_BRA_EUR.csv
+# 2. Add a new column for the new year (e.g. Brazil_2026, Europe_2026)
+# 3. Update the values in each row with the new year's data
+# 4. In the code below, add the new column to:
+#    - tab_spanner: add Brazil_2026 / Europe_2026 to the columns vector
+#    - cols_label: add Brazil_2026 = "2026" / Europe_2026 = "2026"
+# 5. To replace a specific value by row name and column name:
+#    df[df$KPA == "row name here", "column_name"] <- "new value"
+# 6. To find the row and column position of a specific value:
+#    which(df == "value_to_find", arr.ind = TRUE)
+# 7. To replace a specific value by row and column position:
+#    df[row_number, column_number] <- "new value"
+# 8. After fixing values, overwrite the original CSV file:
+#    readr::write_csv(df, here::here("data-src", "table_BRA_EUR.csv"))
+# ============================================================
+
 ```
 
 Another key difference affecting performance in both regions for this report is the development of air traffic demand.
@@ -96,7 +231,7 @@ In particular, the European region faces more considerable challenges in coordin
 ## Network Characterisation
 
 To address the changes in air traffic and develop a better understanding of the nature of the air transportation network, this report expands the characterisation of the network.
-@fig-apt-rank-comparison-2024 depicts the cumulative share of departures from airports in both regions.
+@ fig-apt-rank-comparison-2024 depicts the cumulative share of departures from airports in both regions.
 
 ```{, message=FALSE, warning=FALSE}
 #| label: fig-apt-rank-comparison-2024
@@ -139,7 +274,7 @@ ggplot() +
   theme(legend.position = "inside", legend.position.inside = c(0.85, 0.875) )
 ```
 
-@tbl-HLC lists the overall serviced traffic in both regions.
+@ tbl-HLC lists the overall serviced traffic in both regions.
 In 2024 Brazil observed just under a fifth (18.2%) of the traffic handled in Europe.
 With overflights representing a small share of the traffic in both regions, @fig-apt-rank-comparison-2024 focusses on the aerodrome movements considering all observed departures.
 The distribution of air traffic in Brazil confirms that most flights are concentrated in a small number of airports.
