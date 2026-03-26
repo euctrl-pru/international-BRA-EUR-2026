@@ -91,7 +91,6 @@ New table
 ```{r}
 #| label: tbl-HLC1
 #| tbl-cap: "High Level Comparison 2025"
-#| cache: false
 
 
 df <- readr::read_csv(
@@ -106,90 +105,28 @@ colnames(df) <- c(
 )
 
 df |>
-  gt::gt() |>
-  gt::tab_spanner(
-    label = "Brazil",
-    columns = c(Brazil_2023, Brazil_2024, Brazil_2025)
+  kableExtra::kbl(
+    booktabs = TRUE,
+    col.names = c("KPA", "2023", "2024", "2025", "2023", "2024", "2025"),
+    align = c("l", "c", "c", "c", "c", "c", "c"),
+    escape = FALSE
   ) |>
-  gt::tab_spanner(
-    label = "Europe",
-    columns = c(Europe_2023, Europe_2024, Europe_2025)
+  kableExtra::add_header_above(
+    c(" " = 1, "Brazil" = 3, "Europe" = 3)
   ) |>
-  gt::cols_label(
-    KPA         = "KPA",
-    Brazil_2023 = "2023",
-    Brazil_2024 = "2024",
-    Brazil_2025 = "2025",
-    Europe_2023 = "2023",
-    Europe_2024 = "2024",
-    Europe_2025 = "2025"
+  kableExtra::kable_styling(
+    full_width = ifelse(knitr::is_html_output(), TRUE, FALSE),
+    font_size = ifelse(knitr::is_html_output(), 14, 8),
+    latex_options = c("hold_position", "scale_down"),
+    bootstrap_options = c("striped", "hover")
   ) |>
-  gt::tab_footnote(
-    footnote = "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024"
-  ) |>
-  gt::tab_style(
-    style = gt::cell_text(
-      align = "center",
-      v_align = "top",
-      weight = "bold"
-    ),
-    locations = gt::cells_column_labels(columns = KPA)
-  ) |>
-  gt::tab_style(
-    style = gt::cell_text(size = gt::px(14)),
-    locations = gt::cells_body(
-      columns = c(Brazil_2023, Brazil_2024, Brazil_2025,
-                  Europe_2023, Europe_2024, Europe_2025)
-    )
-  ) |>
-  gt::tab_style(
-    style = gt::cell_text(size = gt::px(14)),
-    locations = gt::cells_body(columns = KPA)
-  ) |>
-  gt::tab_style(
-    style = gt::cell_borders(
-      sides = "bottom",
-      color = "#D9D9D9",
-      weight = gt::px(0.5)
-    ),
-    locations = gt::cells_body()
-  ) |>
-  gt::cols_align(
-    align = "center",
-    columns = c(Brazil_2023, Brazil_2024, Brazil_2025,
-                Europe_2023, Europe_2024, Europe_2025)
-  ) |>
-  gt::cols_align(
-    align = "left",
-    columns = KPA
-  ) |>
-  gt::cols_width(
-    KPA ~ gt::pct(40),
-    c(Brazil_2023, Brazil_2024, Brazil_2025,
-      Europe_2023, Europe_2024, Europe_2025) ~ gt::pct(10)
-  ) |>
-  gt::tab_options(
-    table.width = gt::pct(100),
-    data_row.padding = gt::px(2),
-    column_labels.padding = gt::px(2),
-    footnotes.font.size = gt::px(10),
-    table.border.top.width = gt::px(1),
-    table.border.bottom.width = gt::px(1),
-    row.striping.include_table_body = FALSE,
-    stub.border.width = gt::px(0),
-    column_labels.border.bottom.width = gt::px(1),
-    column_labels.border.bottom.color = "#000000",
-    table_body.hlines.width = gt::px(0.5),
-    table_body.hlines.color = "#000000"
-) |>
-  gt::tab_options(
-    table.width = gt::pct(100),
-    data_row.padding = gt::px(2),
-    column_labels.padding = gt::px(2),
-    footnotes.font.size = gt::px(10),
-    table.border.top.width = gt::px(1),
-    table.border.bottom.width = gt::px(1)
+  kableExtra::column_spec(1, width = "5cm", bold = TRUE) |>
+  kableExtra::column_spec(2:7, width = "1.2cm") |>
+  kableExtra::add_footnote(
+    label = "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024",
+    notation = "none"
   )
+
 
 # ============================================================
 # Table 2.1: High Level Comparison
@@ -203,7 +140,7 @@ df |>
 #    - tab_spanner: add Brazil_2026 / Europe_2026 to the columns vector
 #    - cols_label: add Brazil_2026 = "2026" / Europe_2026 = "2026"
 # 5. To replace a specific value by row name and column name:
-#    df[df$KPA == "row name here", "column_name"] <- "new value"
+#    df[dfKPA == "row name here", "column_name"] <- "new value"
 # 6. To find the row and column position of a specific value:
 #    which(df == "value_to_find", arr.ind = TRUE)
 # 7. To replace a specific value by row and column position:
@@ -213,6 +150,68 @@ df |>
 # ============================================================
 
 ```
+
+<!---
+
+New table test
+
+--->
+
+```{r}
+#| label: tbl-HLC2
+#| tbl-cap: "High Level Comparison 2025"
+
+df <- readr::read_csv(
+  here::here("data", "table_BRA_EUR.csv"),
+  col_types = readr::cols(.default = "c")
+)
+
+colnames(df) <- c(
+  "KPA",
+  "Brazil_2023", "Brazil_2024", "Brazil_2025",
+  "Europe_2023", "Europe_2024", "Europe_2025"
+)
+
+tbl <- df |>
+  gt::gt() |>
+  gt::tab_spanner(label = "Brazil", columns = c(Brazil_2023, Brazil_2024, Brazil_2025)) |>
+  gt::tab_spanner(label = "Europe", columns = c(Europe_2023, Europe_2024, Europe_2025)) |>
+  gt::cols_label(
+    KPA = "KPA",
+    Brazil_2023 = "2023", Brazil_2024 = "2024", Brazil_2025 = "2025",
+    Europe_2023 = "2023", Europe_2024 = "2024", Europe_2025 = "2025"
+  ) |>
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#00B0CA"),
+      gt::cell_text(color = "white", weight = "bold")
+    ),
+    locations = list(
+      gt::cells_column_spanners(),
+      gt::cells_column_labels()
+    )
+  ) |>
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#00B0CA"),
+      gt::cell_text(color = "white", weight = "bold")
+    ),
+    locations = gt::cells_body(columns = KPA)
+  ) |>
+  gt::tab_options(
+    table.width = gt::pct(100),
+    data_row.padding = gt::px(2),
+    table_body.hlines.color = "black",
+    table_body.hlines.width = gt::px(0.5)
+  ) |>
+  gt::tab_footnote(
+    footnote = "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024"
+  )
+
+tbl
+
+```
+
 
 Another key difference affecting performance in both regions for this report is the development of air traffic demand.
 Unlike in Europe, it is interesting to note that Brazil ended 2022 already servicing air traffic movements above the pre-pandemic level.
@@ -227,6 +226,7 @@ Considering the non-oceanic dimension of the airspace, Brazil services an area a
 Brazil, with lower traffic density related to airspace, finds probably a more challenging cost-benefit ratio to maintain communication coverage and surveillance for regions with low-traffic.
 The higher traffic density in Europe may cross all aspects of flight management.
 In particular, the European region faces more considerable challenges in coordinating efforts to address operational constraints and service the current demand.
+
 
 ## Network Characterisation
 
