@@ -79,21 +79,23 @@ Thus, European providers tend to react more conservative to anticipated changes 
 knitr::include_graphics("./figures/HLC-table1.png")
 ```
 
-
-
-
 <!---
 
-New table
+New table GT
 
 --->
 
+
 ```{r}
 #| label: tbl-HLC1
-#| tbl-cap: "High Level Comparison 2025"
+#| tbl-cap: "High Level Comparison 2025-1"
+#| output: asis
 
+options(scipen = 999)
 
-df <- readr::read_csv(
+note_text <- "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024"
+
+df <- readr::read_csv2(
   here::here("data", "table_BRA_EUR.csv"),
   col_types = readr::cols(.default = "c")
 )
@@ -104,36 +106,111 @@ colnames(df) <- c(
   "Europe_2023", "Europe_2024", "Europe_2025"
 )
 
-df |>
-  kableExtra::kbl(
-    booktabs = TRUE,
-    col.names = c("KPA", "2023", "2024", "2025", "2023", "2024", "2025"),
-    align = c("l", "c", "c", "c", "c", "c", "c"),
-    escape = FALSE
-  ) |>
-  kableExtra::add_header_above(
-    c(" " = 1, "Brazil" = 3, "Europe" = 3)
-  ) |>
-  kableExtra::kable_styling(
-    full_width = ifelse(knitr::is_html_output(), TRUE, FALSE),
-    font_size = ifelse(knitr::is_html_output(), 14, 8),
-    latex_options = c("hold_position", "scale_down"),
-    bootstrap_options = c("striped", "hover")
-  ) |>
-  kableExtra::column_spec(1, width = "5cm", bold = TRUE) |>
-  kableExtra::column_spec(2:7, width = "1.2cm") |>
-  kableExtra::add_footnote(
-    label = "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024",
-    notation = "none"
-  )
+if (knitr::is_latex_output()) {
 
+  tbl_latex <- df |>
+    gt::gt() |>
+    gt::tab_spanner(label = "Brazil", columns = c(Brazil_2023, Brazil_2024, Brazil_2025)) |>
+    gt::tab_spanner(label = "Europe", columns = c(Europe_2023, Europe_2024, Europe_2025)) |>
+    gt::cols_label(
+      KPA         = "KPA",
+      Brazil_2023 = "2023", Brazil_2024 = "2024", Brazil_2025 = "2025",
+      Europe_2023 = "2023", Europe_2024 = "2024", Europe_2025 = "2025"
+    ) |>
+    gt::cols_align(align = "center", columns = -KPA) |>
+    gt::cols_align(align = "left",   columns = KPA) |>
+    gt::cols_width(KPA ~ gt::px(220), everything() ~ gt::px(55)) |>
+    gt::tab_source_note(source_note = note_text) |>
+    gt::tab_style(
+      style = gt::cell_text(weight = "bold"),
+      locations = gt::cells_body(columns = KPA)
+    ) |>
+    gt::tab_style(
+  style = gt::cell_text(weight = "bold"),
+  locations = gt::cells_body(columns = KPA)
+    ) |>
+    gt::tab_style(
+  style = gt::cell_text(size = gt::px(12)),
+  locations = gt::cells_body()
+    ) |>
+    gt::tab_style(
+  style = gt::cell_text(align = "center"),
+  locations = gt::cells_column_labels(columns = KPA)
+) |>
+    gt::tab_style(
+  style = gt::cell_text(v_align = "middle"),
+  locations = gt::cells_body(columns = KPA)
+) |> 
+    gt::tab_style(
+  style = gt::cell_text(align = "center"),
+  locations = gt::cells_column_labels(columns = KPA)
+) |> 
+    gt::tab_options(
+      table.font.size       = 14,
+      table.width           = gt::pct(100),
+      data_row.padding      = gt::px(4),
+      column_labels.padding = gt::px(6)
+    ) |>
+    gt::as_latex()
+
+  tbl_latex <- gsub(
+  "\\begin{tabular*}",
+  "\\renewcommand{\\arraystretch}{1.6}\n\\begin{tabular*}",
+  as.character(tbl_latex),
+  fixed = TRUE
+)
+
+  cat(tbl_latex)
+
+} else {
+
+  df |>
+    gt::gt() |>
+    gt::tab_spanner(label = "Brazil", columns = c(Brazil_2023, Brazil_2024, Brazil_2025)) |>
+    gt::tab_spanner(label = "Europe", columns = c(Europe_2023, Europe_2024, Europe_2025)) |>
+    gt::cols_label(
+      KPA = gt::html("<div style='text-align:center; padding-bottom:20px;font-size:25px'>KPA</div>"),
+      Brazil_2023 = "2023", Brazil_2024 = "2024", Brazil_2025 = "2025",
+      Europe_2023 = "2023", Europe_2024 = "2024", Europe_2025 = "2025"
+    ) |>
+    gt::cols_align(align = "center", columns = -KPA) |>
+    gt::cols_align(align = "left",   columns = KPA) |>
+    gt::cols_width(
+      KPA ~ gt::px(200),
+      everything() ~ gt::px(80)
+    ) |>
+    gt::tab_source_note(source_note = note_text) |>
+    gt::tab_style(
+      style = gt::cell_text(weight = "bold"),
+      locations = gt::cells_body(columns = KPA)
+    ) |>
+    gt::opt_row_striping() |>
+    gt::tab_style(
+  style = gt::cell_text(v_align = "middle"),
+  locations = gt::cells_body(columns = KPA)
+) |> 
+    gt::tab_style(
+  style = gt::cell_text(align = "center"),
+  locations = gt::cells_column_labels(columns = KPA)
+) |> 
+    gt::tab_style(
+  style = gt::cell_text(align = "left"),
+  locations = gt::cells_source_notes()
+) |> 
+    gt::tab_options(
+      table.font.size       = 14,
+      table.width           = gt::pct(100),
+      data_row.padding      = gt::px(8),
+      column_labels.padding = gt::px(12)
+    )
+}
 
 # ============================================================
 # Table 2.1: High Level Comparison
 # ============================================================
 # HOW TO UPDATE THIS TABLE FOR FUTURE YEARS:
 #
-# 1. Open the file: data-src/table_BRA_EUR.csv
+# 1. Open the file: data/table_BRA_EUR.csv
 # 2. Add a new column for the new year (e.g. Brazil_2026, Europe_2026)
 # 3. Update the values in each row with the new year's data
 # 4. In the code below, add the new column to:
@@ -150,68 +227,6 @@ df |>
 # ============================================================
 
 ```
-
-<!---
-
-New table test
-
---->
-
-```{r}
-#| label: tbl-HLC2
-#| tbl-cap: "High Level Comparison 2025"
-
-df <- readr::read_csv(
-  here::here("data", "table_BRA_EUR.csv"),
-  col_types = readr::cols(.default = "c")
-)
-
-colnames(df) <- c(
-  "KPA",
-  "Brazil_2023", "Brazil_2024", "Brazil_2025",
-  "Europe_2023", "Europe_2024", "Europe_2025"
-)
-
-tbl <- df |>
-  gt::gt() |>
-  gt::tab_spanner(label = "Brazil", columns = c(Brazil_2023, Brazil_2024, Brazil_2025)) |>
-  gt::tab_spanner(label = "Europe", columns = c(Europe_2023, Europe_2024, Europe_2025)) |>
-  gt::cols_label(
-    KPA = "KPA",
-    Brazil_2023 = "2023", Brazil_2024 = "2024", Brazil_2025 = "2025",
-    Europe_2023 = "2023", Europe_2024 = "2024", Europe_2025 = "2025"
-  ) |>
-  gt::tab_style(
-    style = list(
-      gt::cell_fill(color = "#00B0CA"),
-      gt::cell_text(color = "white", weight = "bold")
-    ),
-    locations = list(
-      gt::cells_column_spanners(),
-      gt::cells_column_labels()
-    )
-  ) |>
-  gt::tab_style(
-    style = list(
-      gt::cell_fill(color = "#00B0CA"),
-      gt::cell_text(color = "white", weight = "bold")
-    ),
-    locations = gt::cells_body(columns = KPA)
-  ) |>
-  gt::tab_options(
-    table.width = gt::pct(100),
-    data_row.padding = gt::px(2),
-    table_body.hlines.color = "black",
-    table_body.hlines.width = gt::px(0.5)
-  ) |>
-  gt::tab_footnote(
-    footnote = "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024"
-  )
-
-tbl
-
-```
-
 
 Another key difference affecting performance in both regions for this report is the development of air traffic demand.
 Unlike in Europe, it is interesting to note that Brazil ended 2022 already servicing air traffic movements above the pre-pandemic level.
