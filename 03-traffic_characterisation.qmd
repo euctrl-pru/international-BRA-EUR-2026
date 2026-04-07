@@ -12,7 +12,7 @@ editor:
 #| message: false
 
 source(here::here("_chapter-setup.R"))
-source(here::here("R","03-traffic_characterization-graphs.R"))
+#source(here::here("R","03-traffic_characterization-graphs.R"))
 ```
 
 To facilitate operational benchmarking comparisons, it is crucial to have a good understanding of the level and composition of air traffic.
@@ -28,8 +28,13 @@ The shown total does not necessarily reflect the total number of flights.
 Another important observation related to the data is that Brazil’s number of airports served with the TATIC tool (Tower ATC System) has increased.
 Despite raising the processed total daily flight number, this difference is mostly transparent for this study as these additional airports handle only a small number of movements on a day-to-day basis.
 
-```{r}
-#| label: fig-annual-traffic-timeline
+
+<!-- Old version 
+
+-->
+
+```{}
+#| label: fig-annual-traffic-timeline1
 #| fig-cap: Regional daily air traffic
 #| warning: false
 
@@ -41,6 +46,78 @@ p_eur <- plot_annual_network_tfc(tfc_eur, eur_col) +
 p_bra / p_eur
 ```
 
+
+<!-- New version 2025 -->
+
+
+```{r}
+
+#| label: fig-annual-traffic-timeline
+#| fig-cap: Regional daily air traffic
+#| warning: false
+
+## Read Brazil file after preparation from TOTALBR data.
+
+tmp_bra <-  arrow::read_parquet(here::here("data", "ndf_bra_totalbr.parquet"))
+
+## Auxiliary function
+
+plot_region <- function(data, color_raw, color_avg, title_label) {
+  ggplot2::ggplot(data, aes(x = DATE)) +
+    geom_point(
+      aes(y = DLY_FLTS),
+      color  = color_raw,
+      alpha  = 0.2,
+      size   = 0.3
+    ) +
+    geom_path(
+      aes(y = MVTS_NORM_ROLLAVG),
+      color     = color_avg,
+      linewidth = 0.7
+    ) +
+    scale_y_continuous(
+      limits = c(0, NA),          # Y começa em 0
+      expand = expansion(mult = c(0, 0.05))
+    ) +
+    scale_x_date(
+      date_breaks = "2 years",
+      date_labels = "%Y"
+    ) +
+    labs(
+      title = title_label,
+      x     = NULL,
+      y     = NULL
+    ) +
+    theme_minimal(base_size = 11) +
+    theme(
+      plot.title   = element_text(hjust = 0.5, size = 11),
+      panel.grid.minor = element_blank()
+    )
+}
+
+# --- Panels ---
+p_brazil <- plot_region(
+  data       = tmp_bra ,                  
+  color_raw  = "#99cc99",             
+  color_avg  = "#2e7d32",            
+  title_label = "Brazil Region daily movement (rolling 7-day average)"
+)
+p_brazil # meanwhile I don't have Europe data
+
+# p_europe <- plot_region(
+#   data       = tmp_eur,              # Europe data
+#   color_raw  = "#90caf9",             
+#   color_avg  = "#1565c0",             
+#   title_label = "European Region daily movement (rolling 7-day average)"
+# )
+# 
+# # --- Combine ---
+# p_brazil / p_europe
+
+
+```
+
+
 Brazilian air traffic continues to exceed 2019 levels, marking a phase of real growth, not just post-pandemic recovery. Since 2022, traffic has grown steadily, showing a structured recovery in demand. However, commercial aviation is still adjusting its route network in some regions to fully match 2019 levels.
 
 @fig-annual-traffic-timeline shows the daily evolution of air traffic in Brazil (7-day moving average) highlights the busiest and quietest periods of recent years. Over the past three years, the day with the lowest average traffic in Brazil typically falls on the Wednesday after Carnival. Meanwhile, the annual peak usually happens in late December, close to Christmas, reinforcing a well-established seasonal pattern in the Brazilian air transport market.
@@ -49,9 +126,10 @@ Overall, despite short-term fluctuations, the general trend is upward, confirmin
 When we compare this with the European Region, a different dynamic becomes visible. In terms of total network-level air traffic, Europe still lags behind its pre-pandemic levels. However, if current trends continue, the region is expected to reach or slightly surpass 2019 traffic levels by 2025. Low-cost carriers have outperformed mainline airlines in the recovery phase. Their business model allowed for faster adjustments in staffing, crewing, and servicing. At the same time, national support programs for legacy carriers often included conditions such as slot restrictions or reduced domestic operations, which contributed to a decrease in overall network connectivity and frequency between airports.
 
 
-```{r}
+```{}
 #| label: fig-annual-network
 #| fig-cap: Evolution of annual network traffic
+#| echo: false
 #| warning: false
 
 this_years = c(2022,2023,2024)
@@ -90,17 +168,19 @@ This demand on terminal and airport air navigation services forms a substantial 
 This report looks at the performance levels observed at 10 key airports in each region (c.f. scope)
 
 
-```{r}
+```{}
  #| label: fig-bra-apt-tfc
  #| fig.cap: Brazilian airport level traffic
+ #| echo: false
  
 fig_bra_apt_tfc(c(2022,2023,2024))
 ```
 
-```{r}
+```{}
 #| label: fig-eur-apt-level-tfc
 #| fig-cap: European airport level traffic
 #| warning: false
+#| echo: false
 
 # TODO - move data loading to here
 
@@ -129,7 +209,7 @@ Europe’s busiest airports have slightly increased their share of total network
 
 
 
-```{r}
+```{}
 #| label: fig-apt-annual-change
 #| fig-cap: Annual traffic at study airports in 2024 and variation 2024/2023
 #| fig-pos: H
@@ -155,7 +235,7 @@ The data illustrates how both the Brazilian and European air networks have adapt
 
 
 
-```{r}
+```{}
 #| label: fig-monthly-tfc-sbgr-lppt
 #| fig-cap: Monthly traffic evolution at SBGR, EDDM and SBSP, LPPT
 #| fig-height: 6
@@ -212,7 +292,7 @@ The latter depends on demand, operational procedures and/or associated constrain
 The peak day traffic is determined as the 99th percentile of the total number of daily movements (arrivals and departures).
 The measure represents thus an upper bound for comparison purposes.
 
-```{r}
+```{}
 #| label: fig-peak-day-3years
 #| fig-cap: Airport peak daily traffic (2022 - 2024)
 
@@ -265,7 +345,7 @@ Regarding the peak day traffic at European airports:
 The comparison between the Brazilian and European contexts reinforces the importance of considering each network's structure, operational model, and geographic distribution when evaluating operational performance at and around airports. 
 It also shows how peak day traffic can offer unique insights — especially during periods of recovery or transition — by highlighting the maximum operational load airport services can sustain regardless of their average daily traffic.
 
-```{r}
+```{}
 #| label: fig-peak-day
 #| fig-cap: Airport peak daily service rate (99th percentile, 2024)
 #| message: false
@@ -298,7 +378,7 @@ Future research may highlight the impact of the runway system configuration on t
 
 ## Fleet Mix
 
-```{r}
+```{}
 #| label: fig-fleet-mix
 #| fig-cap: Fleet mix observed at the study airports in 2024
 #| fig-height: 5

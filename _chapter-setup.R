@@ -22,6 +22,7 @@ library(devtools)
 # library(tinytex)
 library(arrow)
 library(rnaturalearth)
+library(ggplot2)
 
 
 # ============== DEFAULTS and DEFINITIONS =====================================
