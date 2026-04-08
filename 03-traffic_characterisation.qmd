@@ -31,7 +31,6 @@ Despite raising the processed total daily flight number, this difference is most
 
 <!-- Old version 
 
--->
 
 ```{}
 #| label: fig-annual-traffic-timeline1
@@ -46,6 +45,7 @@ p_eur <- plot_annual_network_tfc(tfc_eur, eur_col) +
 p_bra / p_eur
 ```
 
+-->
 
 <!-- New version 2025 -->
 
@@ -58,7 +58,7 @@ p_bra / p_eur
 
 ## Read Brazil file after preparation from TOTALBR data.
 
-tmp_bra <-  arrow::read_parquet(here::here("data", "ndf_bra_totalbr.parquet"))
+tmp_bra <-  arrow::read_parquet(here::here("data", "ndf_bra_totalbr_daily.parquet"))
 
 ## Auxiliary function
 
@@ -126,6 +126,9 @@ Overall, despite short-term fluctuations, the general trend is upward, confirmin
 When we compare this with the European Region, a different dynamic becomes visible. In terms of total network-level air traffic, Europe still lags behind its pre-pandemic levels. However, if current trends continue, the region is expected to reach or slightly surpass 2019 traffic levels by 2025. Low-cost carriers have outperformed mainline airlines in the recovery phase. Their business model allowed for faster adjustments in staffing, crewing, and servicing. At the same time, national support programs for legacy carriers often included conditions such as slot restrictions or reduced domestic operations, which contributed to a decrease in overall network connectivity and frequency between airports.
 
 
+
+<!-- Old version 
+
 ```{}
 #| label: fig-annual-network
 #| fig-cap: Evolution of annual network traffic
@@ -148,6 +151,73 @@ tfc_bra |> mutate(REG = "BRA") |>
   theme(legend.position = "inside", legend.position.inside = c(0.9, 0.6)) +
   facet_wrap(.~ REG, ncol = 1, scales = "free_y") 
 ```
+
+-->
+
+<!-- new version -->
+
+```{r}
+
+
+tmp_bra_yoy <-  arrow::read_parquet(here::here("data", "ndf_bra_totalbr_annually.parquet"))
+
+
+# European data
+
+# plug here
+
+
+
+YEAR_COLORS <- c("2023" = "#E74C3C",   
+                 "2024" = "#2ECC71",   
+                 "2025" = "#5DADE2")   
+
+plot_region_yoy <- function(data, title_label) {
+  ggplot2::ggplot(data, ggplot2::aes(x = DOY, colour = YEAR)) +
+      ggplot2::geom_line(
+      ggplot2::aes(y = MVTS_ROLLAVG),
+      linewidth = 0.7,
+      na.rm     = TRUE        
+) +
+    ggplot2::scale_colour_manual(values = YEAR_COLORS) +
+    ggplot2::scale_x_continuous(
+          breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+          labels = c("Jan","Feb","Mar","Apr","May","Jun",
+                      "Jul","Aug","Sep","Oct","Nov","Dec")
+    ) +
+    ggplot2::scale_y_continuous(
+      limits = c(0, NA),
+      expand = ggplot2::expansion(mult = c(0, 0.05))
+    ) +
+    ggplot2::labs(
+      title  = title_label,
+      x      = NULL,
+      y      = NULL,
+      colour = NULL
+    ) +
+    ggplot2::theme_minimal(base_size = 11) +
+    ggplot2::theme(
+      plot.title       = ggplot2::element_text(hjust = 0.5, size = 11),
+      panel.grid.minor = ggplot2::element_blank(),
+      legend.position  = "bottom"
+    )
+}
+
+# --- Panels ---
+
+p_brazil_yoy <- plot_region_yoy(tmp_bra_yoy, "Brazil Region – Daily Movements by Year")
+
+
+# p_europe_yoy <- plot_region_yoy(tmp_eur_yoy, "European Region – Daily Movements by Year")
+
+p_brazil_yoy
+
+# p_brazil_yoy / p_europe_yoy
+
+
+
+```
+
 
 @fig-annual-network compares the evolution of daily air traffic in the Brazil and European regions across the last three years. Each line represents a 7-day moving average of flight numbers, allowing seasonal patterns and year-over-year changes to be visualised more clearly.
 

@@ -27,10 +27,10 @@ library(ggplot2)
 
 # ============== DEFAULTS and DEFINITIONS =====================================
 # study year
-this_year <- 2024
+this_year <- 2025
 
 # max_date
-max_date <- lubridate::ymd("2024-12-31")
+max_date <- lubridate::ymd("2025-12-31")
 
 # set ggplot2 default theme
 ggplot2::theme_set(theme_minimal())
