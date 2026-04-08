@@ -46,8 +46,8 @@ flextable::set_flextable_defaults(
 ft_border = flextable::fp_border_default(width = 0.5)
 
 # study airports and names ====================================================
-bra_apts <- c("SBGR","SBGL","SBRJ","SBCF","SBBR","SBSV","SBKP","SBSP","SBCT","SBPA")
-eur_apts <- c("EGLL","EGKK","EHAM","EDDF","EDDM","LSZH","LFPG","LEMD","LEBL","LPPT") # ,"LIRF"
+bra_apts <- c("SBGR","SBGL","SBRJ","SBCF","SBBR","SBSV","SBKP","SBSP","SBCT","SBPA","SBRF", "SBEG")
+eur_apts <- c("EGLL","EGKK","EHAM","EDDF","EDDM","LSZH","LFPG","LEMD","LEBL","LPPT" , "LGAV", "LTFM") # ,"LIRF"
 
 bra_apts_names <- tibble::tribble(
   ~ICAO  , ~NAME
@@ -61,6 +61,8 @@ bra_apts_names <- tibble::tribble(
   ,"SBSP", "Congonhas"
   ,"SBCT", "Curitiba"
   ,"SBPA", "Porto Alegre"
+  ,"SBRF", "Recife"
+  ,"SBEG", "Eduardo Gomes"
 )
 
 eur_apts_names <- tibble::tribble(
