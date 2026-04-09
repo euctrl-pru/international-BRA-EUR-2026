@@ -248,15 +248,20 @@ In particular, the European region faces more considerable challenges in coordin
 To address the changes in air traffic and develop a better understanding of the nature of the air transportation network, this report expands the characterisation of the network.
 @ fig-apt-rank-comparison-2024 depicts the cumulative share of departures from airports in both regions.
 
-```{, message=FALSE, warning=FALSE}
+```{r}
 #| label: fig-apt-rank-comparison-2024
 #| fig-cap: "Airport Rank Comparison 2024"
 #| out-width: 90%
-
+#| message: false
+#| 
 # funciton - deactivated as it requires 900MB data file 
 # ==> side-study == to be completed plot_cumulative_percentage_by_apt_rank()
 
-comb_deps_routes <- arrow::read_parquet("./data/BRA-EUR-dep-counts-2024.parquet")
+#comb_deps_routes <- arrow::read_parquet("./data/BRA-EUR-dep-counts-2024.parquet")
+
+comb_deps_routes <- readr::read_csv("./data/BRA-outbound-2019-2025.csv") |> 
+  filter(YEAR %in% 2025)
+
 
 tmp <- comb_deps_routes |> filter(RANK <= 200) |> 
   #------------- patch for missing 0 data ----------------
@@ -275,6 +280,7 @@ tmp_label <- tmp |> filter(RANK %in% c(10,50, 100))
 ggplot() + 
   geom_vline(xintercept = c(10,50, 100), linetype = "dotted") +
   geom_step(data = tmp, aes(x = RANK, y = CUM_SHARE, group = REGION, color = REGION)) +
+  #geom_step(data = tmp, aes(x = RANK, y = CUM_SHARE, group = YEAR, color = YEAR)) +
   geom_point(data = tmp_label, aes(x = RANK, y = CUM_SHARE, color = REGION)
              ,show.legend = FALSE) +
   geom_label(data = tmp_label, aes(x = RANK, y = CUM_SHARE, color = REGION
@@ -282,12 +288,14 @@ ggplot() +
              , nudge_x = 8, nudge_y = -0.03
              , show.legend = FALSE) +
   scale_color_manual(values = c(BRA = bra_col, EUR = eur_col)) +
-  scale_y_continuous(labels = scales::percent_format()) +
+ # scale_y_continuous(labels = scales::percent_format()) +
   labs( x = "airport rank in terms of departures in 2024"
        ,y = "share of regional departures"
        ,color = element_blank()) +
   theme(legend.position = "inside", legend.position.inside = c(0.85, 0.875) )
 ```
+
+
 
 @ tbl-HLC lists the overall serviced traffic in both regions.
 In 2024 Brazil observed just under a fifth (18.2%) of the traffic handled in Europe.
