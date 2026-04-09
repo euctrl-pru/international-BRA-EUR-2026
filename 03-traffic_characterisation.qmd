@@ -279,9 +279,8 @@ p_share + p_col_annual + plot_layout(widths = c(1, 4))
 
 ```{r}
 #| label: fig-eur-apt-level-tfc
-#| fig-cap:Aairport level traffic
+#| fig-cap: Airport level traffic
 #| warning: false
-#| echo: false
 
 bra_apt_share <- readr::read_csv(here::here("data", "bra_apt_lvl_traffic_share.csv")) |>
   dplyr::mutate(YEAR = factor(YEAR))
@@ -339,12 +338,12 @@ plot_apt_share <- function(apt_share, total_share, apts_names, title_label) {
     patchwork::plot_layout(widths = ggplot2::unit(c(3, 12), "cm"))
 }
 
-p_bra <- plot_apt_share(bra_apt_share, bra_total_share, bra_apts_names, "Brazil airport level traffic")
+p_bra_share <- plot_apt_share(bra_apt_share, bra_total_share, bra_apts_names, "Brazil airport level traffic")
 #p_eur <- plot_apt_share(eur_apt_share, eur_total_share, eur_apts_names, "European airport level traffic")
 
 # p_bra / p_eur
 
-p_bra
+p_bra_share
 ```
 
 
@@ -356,7 +355,7 @@ It is also important to emphasize that Brazil’s air traffic is distributed acr
 
 Europe’s busiest airports have slightly increased their share of total network traffic over the same period. This upward trend reflects the growing reliance on major hubs as the region continues progressing toward pre-pandemic traffic levels, supported by more robust infrastructure and concentrated demand.
 
-
+<!-- Old version
 
 ```{}
 #| label: fig-apt-annual-change
@@ -370,6 +369,106 @@ scale_limits <- c(-0.7, 0.8)
 annual_change_bra(study_apt_lvl, 2024,2023,scale_limits) / annual_change_eur(annual_tfc_apt, 2024,2023,scale_limits)
 ```
 
+-->
+
+
+<!-- New version -->
+
+```{r}
+
+#| label: fig-apt-annual-change
+#| fig-cap: Annual traffic at study airports in 2025 and variation 2025/2023
+#| out-width: "70%"
+#| fig-align: cente
+
+
+mov_bra_study <- readr::read_csv(here::here("data" , "bra_mov_lvl_traffic.csv"))
+
+
+
+plot_apt_bar_var <- function(data, apts_names, title_label) {
+  
+  # dados para barras — ano de referência
+  d_bars <- data |>
+    dplyr::filter(YEAR == this_year) |>
+    dplyr::left_join(apts_names, by = "ICAO") |>
+    dplyr::arrange(dplyr::desc(TOT_MOV_YEAR)) |>
+    dplyr::mutate(NAME = factor(NAME, levels = NAME))
+
+   d_var <- data |>
+    dplyr::filter(YEAR %in% c(this_year - 1, this_year)) |>
+    tidyr::pivot_wider(names_from = YEAR, values_from = TOT_MOV_YEAR,
+                       names_prefix = "Y") |>
+    dplyr::mutate(
+      VAR_PCT = (.data[[paste0("Y", this_year)]] - 
+                 .data[[paste0("Y", this_year - 1)]]) / 
+                 .data[[paste0("Y", this_year - 1)]] * 100
+    ) |>
+    dplyr::left_join(apts_names, by = "ICAO") |>
+    dplyr::mutate(
+      NAME  = factor(NAME, levels = levels(d_bars$NAME)),
+      COLOR = ifelse(VAR_PCT >= 0, "pos", "neg")
+    )
+
+    p_bars <- ggplot2::ggplot(
+      d_bars,
+      ggplot2::aes(y = NAME, x = TOT_MOV_YEAR)
+    ) +
+    ggplot2::geom_col(fill = "#2e7d32") +
+    ggplot2::geom_text(
+      ggplot2::aes(label = ICAO),
+      hjust = 0, nudge_x = 1000, size = 2.5, colour = "grey40"
+    ) +
+    ggplot2::scale_x_continuous(
+      labels = scales::label_comma(),
+      expand = ggplot2::expansion(mult = c(0, 0.15))
+    ) +
+    ggplot2::labs(x = NULL, y = NULL, title = title_label) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+  panel.grid.minor = ggplot2::element_blank(),
+  plot.margin      = ggplot2::margin(t = 5, r = 5, b = 5, l = 50)  # <-- l grande
+)
+
+ 
+  p_var <- ggplot2::ggplot(
+      d_var,
+      ggplot2::aes(y = NAME, x = VAR_PCT, fill = COLOR)
+    ) +
+    ggplot2::geom_col() +
+    ggplot2::geom_vline(xintercept = 0, linewidth = 0.4, colour = "grey30") +
+    ggplot2::scale_fill_manual(
+      values = c("pos" = "#2ECC71", "neg" = "#E74C3C"),
+      guide  = "none"
+    ) +
+    ggplot2::scale_x_continuous(
+      labels = scales::label_percent(scale = 1, suffix = "%")
+    ) +
+    ggplot2::labs(
+      x     = NULL,
+      y     = NULL,
+      title = glue::glue("var. {this_year}/{this_year - 1}")
+    ) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      plot.margin      = ggplot2::margin(l = 20) ,
+      axis.text.y      = ggplot2::element_blank()
+    )
+
+  (p_bars | p_var) +
+    patchwork::plot_layout(widths = c(3, 1.5))
+}
+
+p_bra_var <- plot_apt_bar_var(mov_bra_study, bra_apts_names, "Brazil – Annual traffic")
+#p_eur <- plot_apt_bar_var(mov_eur_study, eur_apts_names, "Europe – Annual traffic")
+
+#p_bra / p_eur
+
+p_bra_var
+
+
+```
 
 The 2024 air traffic analysis highlights the importance of understanding the structural differences between the Brazilian and European networks. While Guarulhos (SBGR) remains the busiest airport in Brazil, its traffic volume is comparable to that of the fifth and sixth busiest airports in Europe— Munich and Gatwick. 
 This shows that direct comparisons between the top airports in each region may not fully reflect their operational realities. 

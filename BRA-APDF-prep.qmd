@@ -171,32 +171,16 @@ bra_punc_dist |> group_by(PHASE) |>
 
 ```
 
-
-
-
-
-## Movements data
+## Movements data and share off overall network traffic
 
 ```{r}
 
 # Received an excel from CGNA with movements from 100 AD 
 
-mov_bra <- readr::read_csv2(here::here("data-src" , "movement_data_2023_2024_2025.csv"))
+mov_bra <- readr::read_csv2(here::here("data" , "Movements-Brazil-2023-2024-2025-raw.csv"))
 
-apts_study <- read_csv(here::here("data" , "study_airports_BRA_EUR.csv"))
 
-icao_list <- c(
-  stringr::str_extract(apts_study$Brazil, "(?<=\\()\\w{4}(?=\\))"),
-  stringr::str_extract(apts_study$Europe, "(?<=\\()\\w{4}(?=\\))")
-)
-
-apt_labels_bra <- apts_study |>
-  dplyr::mutate(
-    ICAO  = stringr::str_extract(Brazil, "(?<=\\()\\w{4}(?=\\))"),
-    LABEL = stringr::str_remove(Brazil, "\\s*\\(\\w{4}\\)")   # remove " (SBXX)"
-  ) |>
-  dplyr::select(ICAO, LABEL) |>
-  tibble::deframe()
+# Change names and create a tibble form 100 Brazilian AD
 
 tot_bra_all <- mov_bra |>
   dplyr::mutate(DATE = lubridate::dmy(DATA_INICIO_BRT)) |>
@@ -205,15 +189,18 @@ tot_bra_all <- mov_bra |>
   dplyr::group_by(YEAR) |>
   dplyr::reframe(TOT_MOV_ALL = sum(TOT_MOV))
 
+# Change names and create a tibble form study Brazilian airports
 
 mov_bra_study <- mov_bra |>
   dplyr::mutate(DATE = lubridate::dmy(DATA_INICIO_BRT)) |>
   dplyr::rename(ICAO = SG_ORGAO, TOT_MOV = TOTAL) |>
   dplyr::mutate(YEAR = lubridate::year(DATE)) |>
   dplyr::select(ICAO, YEAR, TOT_MOV) |>
-  dplyr::filter(ICAO %in% icao_list) |>        
+  dplyr::filter(ICAO %in% bra_apts) |>        
   dplyr::group_by(YEAR, ICAO) |>
   dplyr::reframe(TOT_MOV_YEAR = sum(TOT_MOV)) 
+
+# Create a csv to show the share between the 100 AD and the study aiports
 
 bra_apt_share <- mov_bra_study |>
   dplyr::left_join(tot_bra_all, by = "YEAR") |>
@@ -224,6 +211,7 @@ bra_apt_share <- mov_bra_study |>
 
 bra_apt_share |>
   readr::write_csv(here::here("data" , "bra_apt_lvl_traffic_share.csv"))
+
 
 ### Data manipulation stop here ### The line below should be move to BRA-EUR report
 
@@ -286,3 +274,110 @@ p_bra <- plot_apt_share(bra_apt_share, bra_total_share, apt_labels_bra, "Brazil 
 p_eur <- plot_apt_share(eur_apt_share, eur_total_share, apt_labels_eur, "European airport level traffic")
 
 ```
+
+
+## Annual traffic at study airports in current Year and variation 
+
+```{r}
+
+# Received an excel from CGNA with movements from 100 AD 
+
+mov_bra <- readr::read_csv2(here::here("data" , "Movements-Brazil-2023-2024-2025-raw.csv"))
+
+# Change names and create a tibble form study Brazilian airports
+
+mov_bra_study <- mov_bra |>
+  dplyr::mutate(DATE = lubridate::dmy(DATA_INICIO_BRT)) |>
+  dplyr::rename(ICAO = SG_ORGAO, TOT_MOV = TOTAL) |>
+  dplyr::mutate(YEAR = lubridate::year(DATE)) |>
+  dplyr::select(ICAO, YEAR, TOT_MOV) |>
+  dplyr::filter(ICAO %in% bra_apts) |>        
+  dplyr::group_by(YEAR, ICAO) |>
+  dplyr::reframe(TOT_MOV_YEAR = sum(TOT_MOV))
+
+mov_bra_study |>
+  readr::write_csv(here::here("data" , "bra_mov_lvl_traffic.csv"))
+
+### Data manipulation stop here ### The line below should be move to BRA-EUR report
+
+plot_apt_bar_var <- function(data, apts_names, title_label) {
+  
+  # dados para barras — ano de referência
+  d_bars <- data |>
+    dplyr::filter(YEAR == this_year) |>
+    dplyr::left_join(apts_names, by = "ICAO") |>
+    dplyr::arrange(dplyr::desc(TOT_MOV_YEAR)) |>
+    dplyr::mutate(NAME = factor(NAME, levels = NAME))
+
+  # dados para variação
+  d_var <- data |>
+    dplyr::filter(YEAR %in% c(this_year - 1, this_year)) |>
+    tidyr::pivot_wider(names_from = YEAR, values_from = TOT_MOV_YEAR,
+                       names_prefix = "Y") |>
+    dplyr::mutate(
+      VAR_PCT = (.data[[paste0("Y", this_year)]] - 
+                 .data[[paste0("Y", this_year - 1)]]) / 
+                 .data[[paste0("Y", this_year - 1)]] * 100
+    ) |>
+    dplyr::left_join(apts_names, by = "ICAO") |>
+    dplyr::mutate(
+      NAME  = factor(NAME, levels = levels(d_bars$NAME)),
+      COLOR = ifelse(VAR_PCT >= 0, "pos", "neg")
+    )
+
+  # painel esquerdo — barras
+  p_bars <- ggplot2::ggplot(
+      d_bars,
+      ggplot2::aes(y = NAME, x = TOT_MOV_YEAR)
+    ) +
+    ggplot2::geom_col(fill = "#2e7d32") +
+    ggplot2::geom_text(
+      ggplot2::aes(label = ICAO),
+      hjust = 0, nudge_x = 1000, size = 2.5, colour = "grey40"
+    ) +
+    ggplot2::scale_x_continuous(
+      labels = scales::label_comma(),
+      expand = ggplot2::expansion(mult = c(0, 0.15))
+    ) +
+    ggplot2::labs(x = NULL, y = NULL, title = title_label) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
+
+  # painel direito — variação %
+  p_var <- ggplot2::ggplot(
+      d_var,
+      ggplot2::aes(y = NAME, x = VAR_PCT, fill = COLOR)
+    ) +
+    ggplot2::geom_col() +
+    ggplot2::geom_vline(xintercept = 0, linewidth = 0.4, colour = "grey30") +
+    ggplot2::scale_fill_manual(
+      values = c("pos" = "#2ECC71", "neg" = "#E74C3C"),
+      guide  = "none"
+    ) +
+    ggplot2::scale_x_continuous(
+      labels = scales::label_percent(scale = 1, suffix = "%")
+    ) +
+    ggplot2::labs(
+      x     = NULL,
+      y     = NULL,
+      title = glue::glue("var. {this_year}/{this_year - 1}")
+    ) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      axis.text.y      = ggplot2::element_blank()
+    )
+
+  (p_bars | p_var) +
+    patchwork::plot_layout(widths = ggplot2::unit(c(12, 4), "cm"))
+}
+
+p_bra_var <- plot_apt_bar_var(mov_bra_study, bra_apts_names, "Brazil – Annual traffic")
+#p_eur <- plot_apt_bar_var(mov_eur_study, eur_apts_names, "Europe – Annual traffic")
+
+#p_bra / p_eur
+
+p_bra_var
+
+```
+
