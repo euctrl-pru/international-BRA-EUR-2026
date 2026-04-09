@@ -271,6 +271,7 @@ Old version Below
 #| label: fig-scope-airports1
 #| fig-cap: Study airports of Brazil/Europe Comparison1
 #| out-width: 90%
+
 knitr::include_graphics("./figures/scope-airports-map.png")
 ```
 
