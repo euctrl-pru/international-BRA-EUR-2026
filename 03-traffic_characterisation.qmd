@@ -242,18 +242,18 @@ This report looks at the performance levels observed at 10 key airports in each 
 <!-- Old version
 
 ```{}
- #| label: fig-bra-apt-tfc
- #| fig.cap: Brazilian airport level traffic
- #| echo: false
+ #| label: fig-bra-apt-tfc1
+ #| fig.cap: Brazilian airport level traffic1
+ #| echo: false1
  
 fig_bra_apt_tfc(c(2022,2023,2024))
 ```
 
 ```{}
 #| label: fig-eur-apt-level-tfc
-#| fig-cap: European airport level traffic
-#| warning: false
-#| echo: false
+#| fig-cap: European airport level traffic1
+#| warning: false1
+#| echo: false1
 
 # TODO - move data loading to here
 
@@ -278,6 +278,10 @@ p_share + p_col_annual + plot_layout(widths = c(1, 4))
 <!-- new one -->
 
 ```{r}
+#| label: fig-eur-apt-level-tfc
+#| fig-cap:Aairport level traffic
+#| warning: false
+#| echo: false
 
 bra_apt_share <- readr::read_csv(here::here("data", "bra_apt_lvl_traffic_share.csv")) |>
   dplyr::mutate(YEAR = factor(YEAR))
@@ -332,7 +336,7 @@ plot_apt_share <- function(apt_share, total_share, apts_names, title_label) {
     )
 
   (p_share | p_bars) +
-    patchwork::plot_layout(widths = ggplot2::unit(c(4, 15), "cm"))
+    patchwork::plot_layout(widths = ggplot2::unit(c(3, 12), "cm"))
 }
 
 p_bra <- plot_apt_share(bra_apt_share, bra_total_share, bra_apts_names, "Brazil airport level traffic")
@@ -340,7 +344,7 @@ p_bra <- plot_apt_share(bra_apt_share, bra_total_share, bra_apts_names, "Brazil 
 
 # p_bra / p_eur
 
-
+p_bra
 ```
 
 

@@ -1,0 +1,582 @@
+---
+title: "BRA - data preparation - network"
+---
+
+## Overview
+
+There are several data sets to exploit for the network data portions.
+
+* all movements
+* ANAC
+* punctuality data
+* TOTALBR data (CGNA - Setamillenium)
+
+## Data Loading
+
+Punctuality data is currently stored in the BRA-EUR datalake.    
+Download by hand and convert to parquet for reduced storage.    
+Afterwards we "deactivate the code chunks by removing the r from {r}
+
+
+```{}
+# shortcut to download folder
+pth_downloads <- here::here(here::here() |> dirname() |> dirname(), "Downloads")  
+
+# movement data
+mvts_fn <- fs::dir_ls(pth_downloads, regexp = "movement_data")
+mvts <- readr::read_csv2(mvts_fn)
+mvts |> arrow::write_parquet("./data-src/BRA-mvts-2023-2025.parquet")
+
+# punctuality data
+punc_fns <- fs::dir_ls(pth_downloads, regexp = "punctuality-BR")  # downloaded zip
+archive  <- punc_fns |> basename()
+
+# get out "raw data", helper functions rqutils-zip loaded outside this qmd
+punc_raw_fns <- check_zip_content(pth_downloads, archive) |> 
+  filter(grepl("-raw-", Name)) |> pull(Name)
+
+punc_raw <- read_zip_content(pth_downloads, archive, punc_raw_fns, .type = "csv_auto") |> 
+  bind_rows()
+punc_raw |> arrow::write_parquet("./data-src/BRA-punc-raw.parquet")
+
+# get other punc file - negate -raw-
+punc_other_fn <- check_zip_content(pth_downloads, archive) |> 
+  filter(! grepl("-raw-", Name)) |> pull(Name)
+punc_other <- read_zip_content(pth_downloads, archive, punc_other_fn, .type = "csv_auto") 
+```
+
+punctuality0data-2025.csv is the combined and renamed raw-data files for 2025 with a row-number index.
+
+let's do the same operation and write out as punc-2025.
+
+```{}
+punc_bra <- punc_raw |> 
+    dplyr::rename(
+       FLTID = Callsign
+      , ADEP = `Sigla ADEP`, ADES = `Sigla ADES`
+      , ICAO = `Sigla LOCALITY`
+      , PHASE = Evento
+      , SCHED_TIME = `DH Prev Calco Strat BRT`
+      , BLOCK_TIME = `DH Real Calco Tat BRT`
+      ) |> 
+    dplyr::mutate(
+        SCHED_TIME = lubridate::dmy_hms(SCHED_TIME)
+      , BLOCK_TIME = lubridate::dmy_hms(BLOCK_TIME)
+      )
+
+punc_bra |> arrow::write_parquet("./data-src/BRA-punc-analytic-2025.parquet")
+```
+
+Get ANAC data - for 2025    
+had to go quarter by quarter - apparently full year clashes with internet speed/access quota
+
+```{}
+# ensure latest package version
+# install.packages("flightsbr")
+
+month_codes <- sprintf(fmt = "%02d", seq(1,12, 1))   # 2 digits with leading zero
+month_codes <- paste0("2025", month_codes)           # year-month
+
+anac_2025_1 <- month_codes[1:3] |>                          # download data as loop
+  purrr::map(.f = ~ flightsbr::read_flights(.x))
+anac_2025_2 <- month_codes[4:6] |> 
+  purrr::map(.f = ~ flightsbr::read_flights(.x))
+# anac_2025_3 <- month_codes[7:9] |> 
+#   purrr::map(.f = ~ flightsbr::read_flights(.x))
+# anac_2025_4 <- month_codes[10:12] |> 
+#   purrr::map(.f = ~ flightsbr::read_flights(.x))
+# failed ... per month
+#anac_202507 <- flightsbr::read_flights(month_codes[7])  # CRASHES - DATA FORMAT
+anac_202508 <- flightsbr::read_flights(month_codes[8])
+anac_202509 <- flightsbr::read_flights(month_codes[9])
+#anac_202510 <- flightsbr::read_flights(month_codes[10]) # SERVER TIMEOUT/FAILURE
+anac_202511 <- flightsbr::read_flights(month_codes[11])
+anac_202512 <- flightsbr::read_flights(month_codes[12])
+
+# glue everything together
+anac_2025 <- list(
+    anac_2025_1 |> bind_rows() |> as_tibble()
+  , anac_2025_2 |> bind_rows() |> as_tibble()
+  , anac_202508 |> as_tibble()
+  , anac_202509 |> as_tibble()
+  , anac_202511 |> as_tibble()
+  , anac_202512 |> as_tibble() 
+  ) |> 
+  bind_rows()
+  
+# remove breadcrumbs
+rm(anac_2025_1, anac_2025_2, anac_202508, anac_202509, anac_202511, anac_202512)
+```
+
+let's work with 2025 without the missing months
+
+```{}
+anac_2025 |> dplyr::rename(
+   OPR_ICAO = sg_empresa_icao
+  ,OPR_IATA = sg_empresa_iata
+  ,FLT_NBR  = nr_voo
+  ,DOF      = dt_referencia
+  ,SVC      = cd_tipo_linha        # looks like service types - tbd
+  ,TFC_TYPE = ds_natureza_etapa    # not sure about naming
+  ,ADEP     = sg_icao_origem 
+  ,ADEP_CNTRY = nm_pais_origem
+  ,DEP_DAY  = dt_partida_real
+  ,DEP_HR   = hr_partida_real
+  , TYPE    = sg_equipamento_icao
+  ,REG      = ds_matricula        # could be part of registration - tbd
+  ,ADES     = sg_icao_destino 
+  ,ADES_CNTRY = nm_pais_destino
+  ,ARR_DAY  = dt_chegada_real
+  ,ARR_HR   = hr_chegada_real
+  
+) |> 
+  arrow::write_parquet("./data-src/BRA-ANAC-2025p.parquet")
+```
+
+
+read in ANAC data, trim to payload and apply standard naming (old maybe we can delete)
+
+```{r}
+anac_2025 <- arrow::read_parquet("./data-src/BRA-ANAC-2025p.parquet")
+
+anac_2025 <- anac_2025 |> 
+  dplyr::select(OPR_ICAO, FLT_NBR, TYPE, REG
+                , ADEP, ADES
+                , DEP_DAY, DEP_HR
+                , ARR_DAY, ARR_HR 
+                , ADEP_CNTRY, ADES_CNTRY
+                , TFC_TYPE, SVC
+                , DOF 
+                , OPR_IATA
+                ) |> 
+  dplyr::mutate(
+     FLTID = paste0(OPR_ICAO, FLT_NBR)
+    , ATOT = lubridate::ymd_hms(paste(DEP_DAY, DEP_HR))
+    , ALDT = lubridate::ymd_hms(paste(ARR_DAY, ARR_HR))
+    ) |> 
+  dplyr::select(FLTID, REG, TYPE, ADEP, ADES, ATOT, ALDT, everything())
+
+anac_2025 |> arrow::write_parquet("./data-src/BRA-ANAC-2025p-trimmed.parquet")
+```
+
+
+
+
+### TotalBR
+
+Read the file separate by year received from CGNA
+
+```{}
+# Step 1: Open the partitioned parquet dataset (year/month structure)
+#ds <- arrow::open_dataset(here::here("data-src", "TOTALBR"))
+
+# Step 2: Define the years to load
+#target_years <- c(2023, 2024, 2025)
+
+# Step 3: Filter by years and collect into a single tibble
+#totalbr <- ds |>
+#  dplyr::filter(year %in% target_years) |>
+#  dplyr::collect()
+
+# Step 4: Save the final dataset as a single parquet file
+#arrow::write_parquet(totalbr, here::here("data-src", "totalbr.parquet"))
+```
+
+
+
+
+```{}
+totalbr <- arrow::read_parquet(here::here("data-src", "totalbr.parquet"))
+
+#unique_icaos <- c(bra_flt$ADEP, bra_flt$ADES) |> unique()
+
+iso_meta <- readr::read_csv("./data/country-icao-iso-etc.csv", show_col_types = F) |> 
+  dplyr::rename(CNTRY_ISO = iso2c, CNTRY_NAME = country.name.en, ICAO_REGION = icao.region)
+
+oa <- read_csv(here::here("data","oa-202603.csv"), show_col_types = FALSE) |> 
+  filter(!is.na(icao_code)) |> 
+  select(ICAO = icao_code, CNTRY_ISO = iso_country)
+
+# path oa for Brazil
+patch_oa <- tibble::tribble(
+  ~ ICAO, ~ CNTRY_ISO
+  ,"SBCO", "BR"
+  ,"SBJD",  "BR"    
+  ,"SBJI",  "BR"
+  ,"SBMI",  "BR"
+ ,"SBMT" ,  "BR"
+ ,"SBPO",  "BR"
+ ,"SBRD" , "BR"
+ ,"SBSG" , "BR"
+ ,"SBSI",  "BR"
+ ,"SBSO",  "BR"
+,"SBUY",  "BR"
+,"SBVC" , "BR"
+,'GQNN',  "MR"    # Maritania
+,'SDAG', 'BR'
+,'SDIY', 'BR'
+,'SDJV', 'BR'
+,'SDLO', 'BR'
+,'SDVZ', 'BR'
+,'SIFC', 'BR'
+,'SIRI', 'BR'
+,'SIUA', 'BR'
+,'SIXE', 'BR'
+,'SJZA', 'BR'
+,'SN6L', 'BR'
+,'SNAB', 'BR'
+,'SNBA', 'BR'
+,'SNCL', 'BR'
+,"SNEB",  "BR"
+,"SNIG" , "BR"
+,"SNJM"  , "BR"
+,"SNLN" , "BR"
+,"SNRJ"  , "BR"
+,"SNSM"  ,  "BR"
+,"SNSS"  ,  "BR"
+,"SNTS"  ,  "BR"
+,"SNWS"  ,  "BR"
+,"SNZR"  ,  "BR"
+,"SSBN"  ,  "BR"
+,"SSGG"  ,  "BR"
+,"SSQO"  ,  "BR"
+,"SSRS"  ,  "BR"
+,"SSVL"  ,  "BR"
+,"SWBE"  ,  "BR"
+,"SWKQ"  ,  "BR"
+,"SWYN"  ,  "BR"
+,"SYEC"  ,  "GN"
+, "SADF" ,  "AG" #argentina
+, "FOAR" , "ZA" # South africa
+)
+oa <- oa |> dplyr::bind_rows(patch_oa)
+
+ndf <- totalbr |> dplyr::select(
+    FLTID  = co_indicativo,
+    ADEP   = co_addep,
+    ADES   = co_addes,
+    TYPE   = co_modelo,
+    DATE   = dt_dia,
+    SVC    = li_tipovoo
+) 
+
+#oa <- read_csv(here::here("data","oa-202603.csv")) |> 
+ # filter(!is.na(icao_code)) |> 
+  #select(ICAO = icao_code, CNTRY = iso_country)
+
+ndf2 <- ndf |> 
+  left_join(oa, join_by(ADEP == ICAO)) |> 
+  rename(ADEP_CNTRY = CNTRY_ISO) |> 
+  left_join(oa, join_by(ADES == ICAO)) |> 
+  rename(ADES_CNTRY = CNTRY_ISO) 
+ 
+ndf3 <- ndf2 |> 
+    mutate(
+        ADEP_CNTRY = case_when(
+            grepl("^S[BDNSWISJ]|9|^Z|AFIL|NI", ADEP) & is.na(ADEP_CNTRY) ~ "BR"
+            ,.default = ADEP_CNTRY
+        )
+        , ADES_CNTRY = case_when(
+            grepl("^S[BDNSWISJ]|9|^Z|AFIL|NI", ADES) & is.na(ADES_CNTRY) ~ "BR"
+            ,.default = ADES_CNTRY
+        )
+    ) |> 
+    mutate(DAIO = case_when(
+         ADEP_CNTRY == "BR" & ADES_CNTRY == "BR" ~ "I"
+        ,ADEP_CNTRY != "BR" & ADES_CNTRY != "BR" ~ "O"
+        ,ADEP_CNTRY == "BR" & ADES_CNTRY != "BR" ~ "D"
+        ,ADEP_CNTRY != "BR" & ADES_CNTRY == "BR" ~ "A"
+        ,.default = NA
+    )
+  )
+
+
+ 
+
+```
+
+Traffic overview
+
+```{r}
+#| message: false
+
+magic_number <- 1.28
+
+bra_tfc <- dplyr::bind_rows(
+   readr::read_csv("./data/BRA-network-tfc-movts-all-RafHug.csv") |> mutate(SOURCE = "RafHug")
+  ,readr::read_csv("./data/BRA-network-tfc-2025.csv") |> 
+    mutate(SOURCE = "Bene") |> 
+    rename(DLY_FLTS = N, MVTS_NORM_ROLLAVG = N_NORM) |> 
+    mutate(DLY_FLTS = magic_number * DLY_FLTS
+           ,MVTS_NORM_ROLLAVG = magic_number * MVTS_NORM_ROLLAVG)
+)
+```
+
+```{r}
+bra_tfc |> 
+    ggplot(aes(x = DATE)) +
+    geom_path(aes(y = MVTS_NORM_ROLLAVG, group = SOURCE, color = SOURCE) ) +    #, colour = bra_col) +
+    geom_point(aes(y = DLY_FLTS, color = SOURCE) #, colour = bra_col
+               , alpha = 0.2, size = 0.2)
+```
+
+aerodrome ranking based on departures
+
+create lookup table based on NM-flt
+
+```{r}
+# get some of the rq helper functions to read NM flight table - only works on RQ's machine
+# path-to-flight-table
+pth_nm <- here::here( here::here() |> dirname(), "__DATA", "NM-flight-table")
+nm_flt <- read_zip_content(pth_nm, "NM-flt-2025.zip")
+```
+
+```{r}
+patch_unknown_icao_location_indicators <- function(
+      df_with_iso2c
+    , icao_var  = ICAO  
+    , iso2c_var = CNTRY_ISO
+){
+  df_patched <- df_with_iso2c |> 
+  #------- patch unknown airports ------------------
+  dplyr::mutate({{ iso2c_var  }} := dplyr::case_when(
+     grepl(pattern = "^EB", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "BE"
+    ,grepl(pattern = "^E[DT]", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "DE"
+    ,grepl(pattern = "^EF", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "FI"
+    ,grepl(pattern = "^EG", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "GB"
+    ,grepl(pattern = "^EH", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "NL"
+    ,grepl(pattern = "^EI", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "IE"
+    ,grepl(pattern = "^EN", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "NO"
+    ,grepl(pattern = "^EK", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "DK"
+    ,grepl(pattern = "^EP", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "PL"
+    ,grepl(pattern = "^ES", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "SE"
+    ,grepl(pattern = "^LE", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "ES"
+    ,grepl(pattern = "^LF", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "FR"
+    ,grepl(pattern = "^LG", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "GR"
+    ,grepl(pattern = "^LH", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "HU"
+    ,grepl(pattern = "^LI", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "IT"
+    ,grepl(pattern = "^LK", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "CZ"
+    ,grepl(pattern = "^LL", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "IL"    # Israel
+    ,grepl(pattern = "^LO", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "AT"
+    ,grepl(pattern = "^LP", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "PT"
+    ,grepl(pattern = "^LR", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "RO"
+    ,grepl(pattern = "^LS", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "CH"
+    ,grepl(pattern = "^GM", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "MA"    # Morocco
+    #--------------- international / non-ECTRL
+    # RQ "old knowledge"  or https://en.wikipedia.org/wiki/Lists_of_airports#By_code
+    ,grepl(pattern = "^FY", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "NA"    # Namibia
+    ,grepl(pattern = "^HE", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "EG"    # Egypt
+    ,grepl(pattern = "^K", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "US" # USA -> KL?
+    ,grepl(pattern = "^OK", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "KW" # Brazil 
+    ,grepl(pattern = "^UD", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "AM" # Armenia
+    ,grepl(pattern = "^UT", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "TJ" # Tajikistan, Turkmenistan
+    ,grepl(pattern = "^SB", {{ icao_var }}) & is.na({{ iso2c_var}}) ~ "BR" # Brazil 
+    ,.default = {{ iso2c_var }}
+  )) 
+  return(df_patched)
+}
+```
+
+
+
+
+Test regions
+
+```{r}
+
+tmp <- ndf3 |> left_join(isometa2 , join_by(ADEP_CNTRY == CNTRY_ISO)) |> 
+  rename( DEPREG = eurocontrol_pru) |> 
+  left_join(isometa2 , join_by(ADES_CNTRY == CNTRY_ISO)) |> 
+  rename( ARRREG = eurocontrol_pru)
+
+
+
+
+
+```
+
+
+# DATA PREPARATION for movement graph since 2019 Chapter 3
+
+
+```{r}
+
+# Brazil data
+
+#totalbr <- arrow::read_parquet(here::here("data-src", "totalbr.parquet")) #local file 1gb
+
+# ndf <- totalbr |> dplyr::select(
+#     FLTID  = co_indicativo,
+#     ADEP   = co_addep,
+#     ADES   = co_addes,
+#     TYPE   = co_modelo,
+#     DATE   = dt_dia,
+#     SVC    = li_tipovoo
+# )
+# 
+# ndf |> arrow::write_parquet(here::here("data" , "ndf_bra_totalbr.parquet"))
+
+## -------  BRA standart data stopped here ---------
+
+tmp_bra <- ndf |> mutate(DATE = as.Date(DATE)) |>
+    dplyr::group_by(DATE) |>
+  dplyr::reframe(DLY_FLTS = n()) |>
+  dplyr::mutate(
+  MVTS_NORM_ROLLAVG = zoo::rollmedian(DLY_FLTS, k = 7, na.pad=TRUE))
+ 
+tmp_bra |> arrow::write_parquet(here::here("data" , "ndf_bra_totalbr_daily.parquet"))
+
+
+## -------  BRA standart data stopped here ---------
+
+## Auxiliary function to plot. 
+
+## ------ Lines below should be move to report -----
+
+tmp_bra <- arrow::read_parquet(here::here("data-src", "ndf_bra_totalbr_daily.parquet"))
+
+plot_region <- function(data, color_raw, color_avg, title_label) {
+  ggplot2::ggplot(data, aes(x = DATE)) +
+    geom_point(
+      aes(y = DLY_FLTS),
+      color  = color_raw,
+      alpha  = 0.2,
+      size   = 0.3
+    ) +
+    geom_path(
+      aes(y = MVTS_NORM_ROLLAVG),
+      color     = color_avg,
+      linewidth = 0.7
+    ) +
+    scale_y_continuous(
+      limits = c(0, NA),          
+      expand = expansion(mult = c(0, 0.05))
+    ) +
+    scale_x_date(
+      date_breaks = "2 years",
+      date_labels = "%Y"
+    ) +
+    labs(
+      title = title_label,
+      x     = NULL,
+      y     = NULL
+    ) +
+    theme_minimal(base_size = 11) +
+    theme(
+      plot.title   = element_text(hjust = 0.5, size = 11),
+      panel.grid.minor = element_blank()
+    )
+}
+
+# --- Panels ---
+p_brazil <- plot_region(
+  data       = tmp_bra,                  
+  color_raw  = "#99cc99",             
+  color_avg  = "#2e7d32",            
+  title_label = "Brazil Region daily movement (rolling 7-day average)"
+)
+
+p_europe <- plot_region(
+  data       = tmp_eur,              
+  color_raw  = "#90caf9",            # azul claro (pontos)
+  color_avg  = "#1565c0",            # azul escuro (linha)
+  title_label = "European Region daily movement (rolling 7-day average)"
+)
+
+# --- Combine ---
+p_brazil / p_europe
+
+
+```
+
+
+# Figure 3.2 Comparing traffic
+
+
+```{r}
+
+
+
+
+# Brazilian data
+
+# tmp_bra_yoy <- ndf |>
+#   dplyr::mutate(DATE = as.Date(DATE)) |>
+#   dplyr::filter(
+#     lubridate::year(DATE) %in% c(2023, 2024, 2025)
+#   ) |>
+#   dplyr::group_by(DATE) |>
+#   dplyr::reframe(DLY_FLTS = n()) |>
+#   dplyr::mutate(
+#     YEAR = factor(lubridate::year(DATE)),
+#     DOY  = lubridate::yday(DATE)
+#   ) |>
+#   dplyr::group_by(YEAR) |>
+#   dplyr::mutate(
+#     MVTS_ROLLAVG = zoo::rollapply(
+#       DLY_FLTS, width = 28, FUN = median,
+#       partial = TRUE, align = "center"
+#     )
+#   ) |>
+#   dplyr::ungroup()
+# 
+# tmp_bra_yoy |> arrow::write_parquet(here::here("data" , "ndf_bra_totalbr_annually.parquet"))
+
+# European data
+
+
+## -------  BRA standart data stopped here ---------
+
+## ------ Lines below should be move to report -----
+
+tmp_bra_yoy <- arrow::read_parquet(here::here("data-src", "ndf_bra_totalbr_annually.parquet"))
+
+YEAR_COLORS <- c("2023" = "#E74C3C",   
+                 "2024" = "#2ECC71",   
+                 "2025" = "#5DADE2")   
+
+plot_region_yoy <- function(data, title_label) {
+  ggplot2::ggplot(data, ggplot2::aes(x = DOY, colour = YEAR)) +
+      ggplot2::geom_line(
+      ggplot2::aes(y = MVTS_ROLLAVG),
+      linewidth = 0.7,
+      na.rm     = TRUE        
+) +
+    ggplot2::scale_colour_manual(values = YEAR_COLORS) +
+    ggplot2::scale_x_continuous(
+          breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+          labels = c("Jan","Feb","Mar","Apr","May","Jun",
+                      "Jul","Aug","Sep","Oct","Nov","Dec")
+    ) +
+    ggplot2::scale_y_continuous(
+      limits = c(0, NA),
+      expand = ggplot2::expansion(mult = c(0, 0.05))
+    ) +
+    ggplot2::labs(
+      title  = title_label,
+      x      = NULL,
+      y      = NULL,
+      colour = NULL
+    ) +
+    ggplot2::theme_minimal(base_size = 11) +
+    ggplot2::theme(
+      plot.title       = ggplot2::element_text(hjust = 0.5, size = 11),
+      panel.grid.minor = ggplot2::element_blank(),
+      legend.position  = "bottom"
+    )
+}
+
+# --- Panels ---
+
+p_brazil_yoy <- plot_region_yoy(tmp_bra_yoy, "Brazil Region – Daily Movements by Year")
+
+
+p_europe_yoy <- plot_region_yoy(tmp_eur_yoy, "European Region – Daily Movements by Year")
+
+
+
+p_brazil_yoy / p_europe_yoy
+
+
+```
+

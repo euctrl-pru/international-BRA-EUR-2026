@@ -1,0 +1,288 @@
+---
+title: "Data preparation Airport"
+editor: visual
+---
+
+## Overview
+
+There are several data sets to exploit for the airport data portions.
+
+-   ANAC (FlightBr package and file from VRA)
+-   punctuality data
+-   TATIC data
+-   dsTAXI data
+-   KPI08 Data
+
+## Data Loading
+
+### DsTAXI
+
+```         
+
+# shortcut to download folder
+pth_downloads <- here::here(here::here() |> dirname() |> dirname(), "Downloads") 
+
+# dsTaxi
+
+
+# first step read files, in a specific folder 
+dstaxi_fn <- fs::dir_ls("data-src", regexp = "(?i)taxi")
+
+# second step: read all files and combine into a single dataframe
+dstaxitmp <- dstaxi_fn |>
+  purrr::map(~readr::read_csv2(.x) |>
+    dplyr::mutate(
+      match_vra = as.character(match_vra),
+      dh_vra = lubridate::as_datetime(dh_vra)
+    )
+  ) |>
+  purrr::list_rbind() 
+
+#Third step: rename  and select collums
+dstaxi <- dstaxitmp |> dplyr::rename(
+       FLTID = `indicativo`
+      , REG = `matricula`
+      , ADEP = `adpartida`
+      , ADES = `addestino`
+      , PHASE = mov
+      , MVT_TIME = `dh_bimtra`
+      , BLOCK_TIME = `dh_vra`
+      , ARCTYP = `tipoaeronave`
+      , STND = `box`
+      , RWY = `pista`
+      ) |> 
+  dplyr::select(FLTID 
+      , REG
+      , ADEP 
+      , ADES 
+      , MVT_TIME
+      , BLOCK_TIME
+      , ARCTYP
+      , PHASE
+      , STND
+      , RWY
+       )
+```
+
+## Punctuality data
+
+```{r}
+
+punc2025 <- read_csv(here::here("data-src" , "puncutality-data-2025.csv"))
+
+
+bra_punc_raw <- punc2025 |>                          
+  mutate(
+    SCHED_DT = dmy_hms(SCHED_TIME),
+    BLOCK_DT = dmy_hms(BLOCK_TIME),
+    
+    DELAY_MIN = as.numeric(difftime(BLOCK_DT, SCHED_DT, units = "mins"))
+  )
+
+delay_breaks <- c(-Inf, -60, -55, -50, -45, -40, -35, -30, -25,
+                  -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30,
+                  35, 40, 45, 50, 55, 60, Inf)
+
+delay_labels <- c(
+  "(-INF,-60]","(-60,-55]","(-55,-50]","(-50,-45]","(-45,-40]",
+  "(-40,-35]","(-35,-30]","(-30,-25]","(-25,-20]","(-20,-15]",
+  "(-15,-10]","(-10,-5]","(-5,0]","(0,5)",          
+  "[5,10)","[10,15)","[15,20)","[20,25)","[25,30)",  
+  "[30,35)","[35,40)","[40,45)","[45,50)","[50,55)",
+  "[55,60)","[60,INF)"
+)
+
+
+bra_punc_binned <- bra_punc_raw |>
+  filter(!is.na(DELAY_MIN)) |>
+  mutate(
+    APT   = ICAO,
+    DATE  = as.Date(SCHED_DT),
+    MONTH = floor_date(DATE, "month"),
+    DELAY_BIN = cut(DELAY_MIN,
+                    breaks = delay_breaks,
+                    labels = delay_labels,
+                    right  = TRUE,
+                    include.lowest = FALSE)
+  )
+
+# Contagem por bin
+counts_daily <- bra_punc_binned |>
+  count(APT, DATE, PHASE, DELAY_BIN, name = "n_flights")
+
+# N_VALID por APT+DATE+PHASE
+n_valid_daily <- bra_punc_binned |>
+  count(APT, DATE, PHASE, name = "N_VALID")
+
+# N_VALID_MONTH por APT+PHASE+month
+n_valid_month <- bra_punc_binned |>
+  mutate(MONTH = floor_date(DATE, "month")) |>
+  count(APT, PHASE, MONTH, name = "N_VALID_MONTH")
+
+# ── 4. Pivot wide 
+bra_punc_dist |> group_by(PHASE) |>
+  reframe(CHECK = n(),
+          across(`(-INF,-60]`:`[60,INF)`, .fns = ~ sum(.x))) |>
+  add_dly_early_late_groupings2() |>
+  mutate(N = rowSums(across(`(-INF,-60]`:`[60,INF)`))) |>
+  mutate(across(.cols = EARLY:WITHIN_M15P15, .fns = ~ .x / N)) |>
+  select(PHASE, WITHIN_M15P15) |>
+  mutate(REG = "BRA", YEAR = "2025") |>
+    left_join(
+    bra_punc_binned |>
+      group_by(PHASE) |>
+      summarise(
+        MED_DELAY_MIN = median(DELAY_MIN[DELAY_MIN > 15  & DELAY_MIN <= 60],  na.rm = TRUE),
+        MED_EARLY_MIN = abs(median(DELAY_MIN[DELAY_MIN < -15 & DELAY_MIN >= -60], na.rm = TRUE)),
+        .groups = "drop"
+      ),
+    by = "PHASE"
+  ) |> 
+  print()
+
+bra_punc_dist |> write_csv(here::here("data-src" , "BRA-punc-2025.csv"))
+
+# Rainer function
+
+add_dly_early_late_groupings2 <- function(.punc_df){
+     df <- .punc_df |>
+         dplyr::mutate(
+             EARLY        = rowSums(across(.cols = `(-INF,-60]`:`(-20,-15]`), na.rm = TRUE)
+             ,EARLY_M15M05 = (`(-15,-10]` + `(-10,-5]`)
+             ,EARLY_M05M00 =  `(-5,0]`
+             ,LATE_P00P05  =  `(0,5)`
+             ,LATE_P05P15  = (`[5,10)` + `[10,15)`)
+             ,LATE         = rowSums(across(.cols = `[15,20)`:`[60,INF)`), na.rm = TRUE)
+             ,WITHIN_M05P05= (`(-5,0]` + `(0,5)`)
+             ,WITHIN_M15P15= (`(-15,-10]`+`(-10,-5]`+`(-5,0]`+`(0,5)`+`[5,10)`+`[10,15)`)
+         )
+}
+
+
+bra_punc_dist |> group_by(PHASE) |>
+     reframe(CHECK = n()
+             , across(`(-INF,-60]`:`[60,INF)`, .fns = ~ sum(.x) )
+     ) |>
+     add_dly_early_late_groupings2() |>
+     mutate(N = rowSums(across(`(-INF,-60]`:`[60,INF)`)) )|>
+     mutate(across(.cols = EARLY:WITHIN_M15P15,.fns =  ~ .x / N) ) |> 
+     select(PHASE , WITHIN_M15P15) |>
+     mutate(REG = "BRA" , YEAR = "2025") 
+
+```
+
+
+
+
+
+## Movements data
+
+```{r}
+
+# Received an excel from CGNA with movements from 100 AD 
+
+mov_bra <- readr::read_csv2(here::here("data-src" , "movement_data_2023_2024_2025.csv"))
+
+apts_study <- read_csv(here::here("data" , "study_airports_BRA_EUR.csv"))
+
+icao_list <- c(
+  stringr::str_extract(apts_study$Brazil, "(?<=\\()\\w{4}(?=\\))"),
+  stringr::str_extract(apts_study$Europe, "(?<=\\()\\w{4}(?=\\))")
+)
+
+apt_labels_bra <- apts_study |>
+  dplyr::mutate(
+    ICAO  = stringr::str_extract(Brazil, "(?<=\\()\\w{4}(?=\\))"),
+    LABEL = stringr::str_remove(Brazil, "\\s*\\(\\w{4}\\)")   # remove " (SBXX)"
+  ) |>
+  dplyr::select(ICAO, LABEL) |>
+  tibble::deframe()
+
+tot_bra_all <- mov_bra |>
+  dplyr::mutate(DATE = lubridate::dmy(DATA_INICIO_BRT)) |>
+  dplyr::rename(ICAO = SG_ORGAO, TOT_MOV = TOTAL) |>
+  dplyr::mutate(YEAR = lubridate::year(DATE)) |>
+  dplyr::group_by(YEAR) |>
+  dplyr::reframe(TOT_MOV_ALL = sum(TOT_MOV))
+
+
+mov_bra_study <- mov_bra |>
+  dplyr::mutate(DATE = lubridate::dmy(DATA_INICIO_BRT)) |>
+  dplyr::rename(ICAO = SG_ORGAO, TOT_MOV = TOTAL) |>
+  dplyr::mutate(YEAR = lubridate::year(DATE)) |>
+  dplyr::select(ICAO, YEAR, TOT_MOV) |>
+  dplyr::filter(ICAO %in% icao_list) |>        
+  dplyr::group_by(YEAR, ICAO) |>
+  dplyr::reframe(TOT_MOV_YEAR = sum(TOT_MOV)) 
+
+bra_apt_share <- mov_bra_study |>
+  dplyr::left_join(tot_bra_all, by = "YEAR") |>
+  dplyr::mutate(
+    SHARE = TOT_MOV_YEAR / TOT_MOV_ALL * 100,
+    YEAR  = factor(YEAR)
+  )
+
+bra_apt_share |>
+  readr::write_csv(here::here("data" , "bra_apt_lvl_traffic_share.csv"))
+
+### Data manipulation stop here ### The line below should be move to BRA-EUR report
+
+
+bra_total_share <- bra_apt_share |>
+  dplyr::group_by(YEAR) |>
+  dplyr::reframe(
+    TOT_STUDY = sum(TOT_MOV_YEAR),
+    TOT_ALL   = dplyr::first(TOT_MOV_ALL),
+    SHARE     = TOT_STUDY / TOT_ALL * 100
+  )
+  
+
+plot_apt_share <- function(apt_share, total_share, icao_labels, title_label) {
+
+  p_share <- ggplot2::ggplot(
+      total_share,
+      ggplot2::aes(x = YEAR, y = SHARE, group = 1)
+    ) +
+    ggplot2::geom_line(colour = "grey50", linewidth = 0.4) +
+    ggplot2::geom_point(colour = "grey30", size = 2) +
+    ggplot2::scale_y_continuous(
+      limits = c(0, 100),
+      labels = scales::label_percent(scale = 1, suffix = "%")
+    ) +
+    ggplot2::labs(x = NULL, y = NULL,
+                  title = "share of overall\nnetwork traffic") +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      plot.title       = ggplot2::element_text(size = 9, hjust = 0.5)
+    )
+
+  p_bars <- ggplot2::ggplot(
+      apt_share,
+      ggplot2::aes(x = ICAO, y = TOT_MOV_YEAR, fill = YEAR)
+    ) +
+    ggplot2::geom_col(position = "dodge") +
+    ggplot2::scale_fill_manual(values = YEAR_COLORS) +
+    ggplot2::scale_x_discrete(labels = icao_labels) +
+    ggplot2::scale_y_continuous(
+      limits = c(0, NA),
+      expand = ggplot2::expansion(mult = c(0, 0.05)),
+      labels = scales::label_comma()
+    ) +
+    ggplot2::labs(x = NULL, y = NULL, fill = NULL,
+                  title = title_label) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      legend.position  = "top",
+      axis.text.x      = ggplot2::element_text(angle = 45, hjust = 1)
+    )
+
+  (p_share | p_bars) +
+    patchwork::plot_layout(widths = ggplot2::unit(c(4, 15), "cm"))
+}
+
+p_bra <- plot_apt_share(bra_apt_share, bra_total_share, apt_labels_bra, "Brazil airport level traffic")
+p_eur <- plot_apt_share(eur_apt_share, eur_total_share, apt_labels_eur, "European airport level traffic")
+
+```
