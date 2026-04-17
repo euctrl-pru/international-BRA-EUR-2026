@@ -15,150 +15,46 @@ source(here::here("_chapter-setup.R"))
 #source(here::here("R","03-traffic_characterization-graphs.R"))
 ```
 
-To facilitate operational benchmarking comparisons, it is crucial to have a good understanding of the level and composition of air traffic.
-The preceding section provided an overview of the context and organisation of air navigation services in Brazil and Europe, and the overall network characteristics.
-This chapter presents some air traffic characteristics for both regions to provide a framework for the observed operational performance in subsequent parts of the report.
-
-## Network Level Air Traffic
-
-@fig-annual-traffic-timeline shows the regional traffic development in Brazil and Europe for the period 2019 to 2024.
- 
-For Brazil, it is important to remember that @fig-annual-traffic-timeline shows the aggregated movements per airport at the whole network level.
-The shown total does not necessarily reflect the total number of flights.
-Another important observation related to the data is that Brazil’s number of airports served with the TATIC tool (Tower ATC System) has increased.
-Despite raising the processed total daily flight number, this difference is mostly transparent for this study as these additional airports handle only a small number of movements on a day-to-day basis.
+To facilitate operational benchmarking comparisons, it is crucial to have a good understanding of the
+level and composition of air traffic. This chapter presents air traffic characteristics for both regions,
+structured progressively from a network-level overview to an airport-level assessment covering traffic
+volumes, peak day demand, and fleet composition at the 12 study airports in each region.
 
 
-<!-- Old version 
+## Network Characterisation
 
 
-```{}
-#| label: fig-annual-traffic-timeline1
-#| fig-cap: Regional daily air traffic
-#| warning: false
+To address the changes in air traffic and develop a better understanding of the nature of the air
+transportation network, this section characterises the network structure of both regions — progressing
+from overall traffic volumes to the distribution within each region, the flows connecting Brazil and Europe,
+and the broader international context.
 
-p_bra <- plot_annual_network_tfc(tfc_bra, bra_col) +
-  labs(subtitle = "Brazil Region daily movement (rolling 7-day average)")
-p_eur <- plot_annual_network_tfc(tfc_eur, eur_col) +
-  labs(subtitle = "European Region daily movement (rolling 7-day average)")
 
-p_bra / p_eur
-```
 
--->
+### Overall Traffic Volume
 
-<!-- New version 2025 -->
+In 2025, Brazil handled approximately [X] million controlled flights, representing approximately [X]% of the traffic serviced in Europe over the same period. Overflights account for a small share of the total in both regions. As shown in @fig-traffic-volume, both regions recorded growth over the 2023–2025 period, though the underlying dynamics differ significantly.
+Brazil continued to expand its aviation sector, with traffic growing consistently across the three years — a trajectory that reflects sustained organic demand rather than cyclical fluctuation. In Europe, traffic levels also grew over the period, though at a more moderate pace, with the network continuing to consolidate. The different pace of growth across both regions reinforces the importance of understanding each system's structural context when comparing operational performance.
+
+
 
 
 ```{r}
-
-#| label: fig-annual-traffic-timeline
-#| fig-cap: Regional daily air traffic
-#| warning: false
-
-## Read Brazil file after preparation from TOTALBR data.
-
-tmp_bra <-  arrow::read_parquet(here::here("data", "ndf_bra_totalbr_daily.parquet"))
-
-## Auxiliary function
-
-plot_region <- function(data, color_raw, color_avg, title_label) {
-  ggplot2::ggplot(data, aes(x = DATE)) +
-    geom_point(
-      aes(y = DLY_FLTS),
-      color  = color_raw,
-      alpha  = 0.2,
-      size   = 0.3
-    ) +
-    geom_path(
-      aes(y = MVTS_NORM_ROLLAVG),
-      color     = color_avg,
-      linewidth = 0.7
-    ) +
-    scale_y_continuous(
-      limits = c(0, NA),          # Y começa em 0
-      expand = expansion(mult = c(0, 0.05))
-    ) +
-    scale_x_date(
-      date_breaks = "2 years",
-      date_labels = "%Y"
-    ) +
-    labs(
-      title = title_label,
-      x     = NULL,
-      y     = NULL
-    ) +
-    theme_minimal(base_size = 11) +
-    theme(
-      plot.title   = element_text(hjust = 0.5, size = 11),
-      panel.grid.minor = element_blank()
-    )
-}
-
-# --- Panels ---
-p_brazil <- plot_region(
-  data       = tmp_bra ,                  
-  color_raw  = "#99cc99",             
-  color_avg  = "#2e7d32",            
-  title_label = "Brazil Region daily movement (rolling 7-day average)"
-)
-p_brazil # meanwhile I don't have Europe data
-
-# p_europe <- plot_region(
-#   data       = tmp_eur,              # Europe data
-#   color_raw  = "#90caf9",             
-#   color_avg  = "#1565c0",             
-#   title_label = "European Region daily movement (rolling 7-day average)"
-# )
-# 
-# # --- Combine ---
-# p_brazil / p_europe
-
+#| label: fig-traffic-volume
+#| fig-cap: "Overall traffic volume"
+#| fig-align: "center"
+#| out-width: 95%
+knitr::include_graphics("./figures/03_overall_traffic_2025.png")
 
 ```
 
+```{r}
 
-Brazilian air traffic continues to exceed 2019 levels, marking a phase of real growth, not just post-pandemic recovery. Since 2022, traffic has grown steadily, showing a structured recovery in demand. However, commercial aviation is still adjusting its route network in some regions to fully match 2019 levels.
-
-@fig-annual-traffic-timeline shows the daily evolution of air traffic in Brazil (7-day moving average) highlights the busiest and quietest periods of recent years. Over the past three years, the day with the lowest average traffic in Brazil typically falls on the Wednesday after Carnival. Meanwhile, the annual peak usually happens in late December, close to Christmas, reinforcing a well-established seasonal pattern in the Brazilian air transport market.
-Overall, despite short-term fluctuations, the general trend is upward, confirming that Brazil is on a steady growth path. It is important to note that the Brazilian data only includes commercial flights (excluding general and military aviation) and is based on UTC time.
-
-When we compare this with the European Region, a different dynamic becomes visible. In terms of total network-level air traffic, Europe still lags behind its pre-pandemic levels. However, if current trends continue, the region is expected to reach or slightly surpass 2019 traffic levels by 2025. Low-cost carriers have outperformed mainline airlines in the recovery phase. Their business model allowed for faster adjustments in staffing, crewing, and servicing. At the same time, national support programs for legacy carriers often included conditions such as slot restrictions or reduced domestic operations, which contributed to a decrease in overall network connectivity and frequency between airports.
-
-
-
-<!-- Old version 
-
-```{}
 #| label: fig-annual-network
 #| fig-cap: Evolution of annual network traffic
 #| echo: false
 #| warning: false
-
-this_years = c(2022,2023,2024)
-
-# data loaded in supporting file - lift to here
-# i.e. tfc_bra, tfc_eur
-
-tfc_bra |> mutate(REG = "BRA") |> 
-  bind_rows(tfc_eur) |> 
-  
-  # plot combined timelines
-  plot_timeline_per_year(this_years) + 
-  
-  # beautify combined plot
-  scale_y_continuous(limits = c(0,NA)) + 
-  theme(legend.position = "inside", legend.position.inside = c(0.9, 0.6)) +
-  facet_wrap(.~ REG, ncol = 1, scales = "free_y") 
-```
-
--->
-
-<!-- new version -->
-
-```{r}
-
-
+#| 
 tmp_bra_yoy <-  arrow::read_parquet(here::here("data", "ndf_bra_totalbr_annually.parquet"))
 
 
@@ -218,24 +114,244 @@ p_brazil_yoy
 
 ```
 
+@fig-annual-timeline shows the 7-day rolling average of daily movements in Brazil and Europe from 2019 to 2025. In Brazil, traffic levels recovered swiftly from the sharp drop observed in 2020 and have continued to grow steadily since 2022, surpassing 2019 levels and maintaining a stable profile with only modest seasonal variation throughout the year. The Brazilian air transport market does not exhibit strong seasonal peaks, reflecting a demand pattern driven primarily by domestic and regional connectivity rather than leisure-driven flows.
+In the European region, the recovery trajectory is clearly visible — from the sharp collapse in 2020 through a gradual rebuilding of demand across 2021 and 2022, reaching and consolidating at 2019 levels by 2024 and 2025. Europe's traffic pattern, however, remains characterised by strong seasonal variation, with a pronounced surge in demand during the summer months that stands in clear contrast to the more stable Brazilian profile. This seasonal asymmetry is an important structural feature to bear in mind when comparing operational performance indicators across both regions throughout this report.
 
-@fig-annual-network compares the evolution of daily air traffic in the Brazil and European regions across the last three years. Each line represents a 7-day moving average of flight numbers, allowing seasonal patterns and year-over-year changes to be visualised more clearly.
+<!-- New version 2025 -->
 
-In the Brazilian region, the data shows a consistent upward trend, with each year positioned above the previous one, especially in the first and second quarters. This indicates that Brazil's aviation sector not only recovered from the pandemic but has entered a period of sustained organic growth. The seasonal curve in Brazil is more stable throughout the year, reflecting a demand pattern that is less affected by strong seasonal variations.
+```{r}
 
-In contrast, the European region displays strong seasonality, with pronounced peaks during the summer months (June to September) and sharp drops in winter. This pattern aligns with Europe’s tourism-driven traffic, where demand is concentrated in holiday periods.
-While there is a general growth trend during the post-pandemic phase, a clear step change took place between 2022 and 2023. Comparing 2023 to 2024 reveals a shallow, but continual, growth across the year signalling a certain level of saturation in terms of network connections.
+#| label: fig-annual-timeline
+#| fig-cap: Regional daily air traffic
+#| warning: false
 
-The analysis of annual trends also reveals how regional disruptions can impact national networks. In Brazil, traffic volume dropped significantly in May 2024, due to heavy rainfall in the south starting in late April. The floods led to the prolonged closure of Salgado Filho International Airport (SBPA) in Porto Alegre, which remained out of operation until October. This disruption had a clear impact on domestic commercial aviation and reduced overall national traffic during that period.
+## Read Brazil file after preparation from TOTALBR data.
 
-While Brazil shows less seasonal fluctuation overall, Europe's variation in traffic volume is much more pronounced. This contrast points to the importance of adjusting capacity and optimizing airport infrastructure to better respond to periods of high demand.
+tmp_bra <-  arrow::read_parquet(here::here("data", "ndf_bra_totalbr_daily.parquet"))
+
+## Auxiliary function
+
+plot_region <- function(data, color_raw, color_avg, title_label) {
+  ggplot2::ggplot(data, aes(x = DATE)) +
+    geom_point(
+      aes(y = DLY_FLTS),
+      color  = color_raw,
+      alpha  = 0.2,
+      size   = 0.3
+    ) +
+    geom_path(
+      aes(y = MVTS_NORM_ROLLAVG),
+      color     = color_avg,
+      linewidth = 0.7
+    ) +
+    scale_y_continuous(
+      limits = c(0, NA),          # Y começa em 0
+      expand = expansion(mult = c(0, 0.05))
+    ) +
+    scale_x_date(
+      date_breaks = "2 years",
+      date_labels = "%Y"
+    ) +
+    labs(
+      title = title_label,
+      x     = NULL,
+      y     = NULL
+    ) +
+    theme_minimal(base_size = 11) +
+    theme(
+      plot.title   = element_text(hjust = 0.5, size = 11),
+      panel.grid.minor = element_blank()
+    )
+}
+
+# --- Panels ---
+p_brazil <- plot_region(
+  data       = tmp_bra ,                  
+  color_raw  = "#99cc99",             
+  color_avg  = "#2e7d32",            
+  title_label = "Brazil Region daily movement (rolling 7-day average)"
+)
+print(p_brazil) # meanwhile I don't have Europe data
+
+# p_europe <- plot_region(
+#   data       = tmp_eur,              # Europe data
+#   color_raw  = "#90caf9",             
+#   color_avg  = "#1565c0",             
+#   title_label = "European Region daily movement (rolling 7-day average)"
+# )
+# 
+# # --- Combine ---
+# p_brazil / p_europe
+
+
+```
+
+### Traffic Distribution Within Each Region
+
+While the total volume of traffic provides a first measure of the scale of operations in each region, it does not capture how that traffic is distributed across the network. @fig-traffic-share presents the cumulative share of departures by airport rank for both regions in 2025.
+The distribution of air traffic in Brazil confirms that most flights are concentrated in a small number of airports. In 2025, the 10 busiest airports in Brazil handled [X]% of all departing flights, whereas in Europe the top 10 airports account for [X]% of all departures. The spread remains broadly constant up to the 50th rank, narrowing with the top 100 airports — marking [X]% of all departures in Brazil and [X]% in Europe. This reflects the historical development of the European network, where the traditional focus on national hubs resulted in a higher number of major aerodromes interconnecting across the continent.
+
+```{r}
+#| label: fig-traffic-share
+#| fig-cap: "traffic share"
+#| fig-align: "center"
+#| out-width: 95%
+knitr::include_graphics("./figures/03_traffic_share_departure.png")
+
+```
+
+@fig-traffic-distribution shows the distribution of domestic/regional and international departures in 2024. In both
+regions, the share of flights operating externally accounts for less than [X]% of total traffic. The majority of
+flights operate within each region. This domestic dominance is particularly pronounced in Brazil, where
+the continental scale of the country sustains a large volume of intra-national movements. In Europe, the
+relatively short distances between states mean that many flights classified as international are
+functionally comparable to domestic short-haul routes in Brazil.
+
+```{r}
+#| label: fig-traffic-distribution
+#| fig-cap: "traffic distribution"
+#| fig-align: "center"
+#| out-width: 95%
+knitr::include_graphics("./figures/03_traffic_share_distribution.png")
+
+```
+
+
+
+
+### Flows Between Brazil and Europe
+
+@fig-flow shows the connections between Europe and Brazil in 2024. Individual connections with fewer
+than 90 flights per year are aggregated into an "other" group. Traffic from Brazil to Europe accounts for
+just under [X]% of the total traffic volume in Brazil. Guarulhos (SBGR) and Lisbon (LPPT) are the main
+airports sustaining connectivity between both regions. Due to its prominent role as the primary gateway,
+this edition considers operations at LPPT in a more prominent manner throughout the report
+
+
+```{r}
+#| label: fig-flow
+#| fig-cap: "flow Brazil and Europe"
+#| fig-align: "center"
+#| out-width: 95%
+knitr::include_graphics("./figures/03_flow_2025.png")
+
+```
+
+### Connections to Other World Regions
+
+From a broader international perspective, both regions are interconnected with the rest of the world in
+distinct ways. @fig-share-regions shows the spread of international traffic from each region. For Brazil,
+connections to other South American states represent the major international destinations. For Europe,
+the Middle East, North America, and Africa represent the largest international markets, ranging between
+[X]% and [X]% of all departures.
+
+
+```{r}
+#| label: fig-share-regions
+#| fig-cap: "Connections to Others Regions"
+#| fig-align: "center"
+#| out-width: 95%
+knitr::include_graphics("./figures/03_share_others_regions.png")
+
+```
+
+
+@fig-share-south-america provides a closer look at Brazil's regional connections, showing just under 46,000 flights
+operated to adjacent countries in South America in 2024. Argentina and Chile together account for
+approximately half of these movements, confirming the strength of the southern cone corridor. Flights to
+Colombia and Uruguay represent a smaller fraction, complemented by a range of other connections
+across South America and the Caribbean.
+
+
+```{r}
+#| label: fig-share-south-america
+#| fig-cap: "Connections Brazil and South America"
+#| fig-align: "center"
+#| out-width: 95%
+knitr::include_graphics("./figures/03_share_south_america.png")
+
+```
+
+<!-- Old version 
+
+@fig-annual-traffic-timeline shows the regional traffic development in Brazil and Europe for the period 2019 to 2024.
+ 
+For Brazil, it is important to remember that @fig-annual-traffic-timeline shows the aggregated movements per airport at the whole network level.
+The shown total does not necessarily reflect the total number of flights.
+Another important observation related to the data is that Brazil’s number of airports served with the TATIC tool (Tower ATC System) has increased.
+Despite raising the processed total daily flight number, this difference is mostly transparent for this study as these additional airports handle only a small number of movements on a day-to-day basis.
+
+
+
+
+
+```{}
+#| label: fig-annual-traffic-timeline1
+#| fig-cap: Regional daily air traffic
+#| warning: false
+
+p_bra <- plot_annual_network_tfc(tfc_bra, bra_col) +
+  labs(subtitle = "Brazil Region daily movement (rolling 7-day average)")
+p_eur <- plot_annual_network_tfc(tfc_eur, eur_col) +
+  labs(subtitle = "European Region daily movement (rolling 7-day average)")
+
+p_bra / p_eur
+```
+
+
+
+
+
+
+
+
+
+
+
+Brazilian air traffic continues to exceed 2019 levels, marking a phase of real growth, not just post-pandemic recovery. Since 2022, traffic has grown steadily, showing a structured recovery in demand. However, commercial aviation is still adjusting its route network in some regions to fully match 2019 levels.
+
+@fig-annual-traffic-timeline shows the daily evolution of air traffic in Brazil (7-day moving average) highlights the busiest and quietest periods of recent years. Over the past three years, the day with the lowest average traffic in Brazil typically falls on the Wednesday after Carnival. Meanwhile, the annual peak usually happens in late December, close to Christmas, reinforcing a well-established seasonal pattern in the Brazilian air transport market.
+Overall, despite short-term fluctuations, the general trend is upward, confirming that Brazil is on a steady growth path. It is important to note that the Brazilian data only includes commercial flights (excluding general and military aviation) and is based on UTC time.
+
+When we compare this with the European Region, a different dynamic becomes visible. In terms of total network-level air traffic, Europe still lags behind its pre-pandemic levels. However, if current trends continue, the region is expected to reach or slightly surpass 2019 traffic levels by 2025. Low-cost carriers have outperformed mainline airlines in the recovery phase. Their business model allowed for faster adjustments in staffing, crewing, and servicing. At the same time, national support programs for legacy carriers often included conditions such as slot restrictions or reduced domestic operations, which contributed to a decrease in overall network connectivity and frequency between airports.
+
+-->
+
+<!-- Old version 
+
+```{}
+#| label: fig-annual-network1
+#| fig-cap: Evolution of annual network traffic1
+#| echo: false
+#| warning: false
+
+this_years = c(2022,2023,2024)
+
+# data loaded in supporting file - lift to here
+# i.e. tfc_bra, tfc_eur
+
+tfc_bra |> mutate(REG = "BRA") |> 
+  bind_rows(tfc_eur) |> 
+  
+  # plot combined timelines
+  plot_timeline_per_year(this_years) + 
+  
+  # beautify combined plot
+  scale_y_continuous(limits = c(0,NA)) + 
+  theme(legend.position = "inside", legend.position.inside = c(0.9, 0.6)) +
+  facet_wrap(.~ REG, ncol = 1, scales = "free_y") 
+```
+
+-->
+
+
+I stopped here.
 
 ## Airport Level Air Traffic
 
-The previous section showed the air traffic development on the network level.
-As airports represent nodes in this overall network, changes to the overall traffic situation will ripple down to the airport level.
-This demand on terminal and airport air navigation services forms a substantial input to understand how the operational performance measures in this report developed over time for the selected study airports.
-This report looks at the performance levels observed at 10 key airports in each region (c.f. scope)
+The previous section characterised the air traffic network at a macro level. As airports represent nodes in this overall network, changes to the overall traffic situation ripple down to the airport level. This demand on terminal and airport air navigation services forms a substantial input to understand how the operational performance measures in this report developed over time. This report looks at the performance levels observed at 12 key airports in each region.
+
+@fig-eur-apt-level-tfc presents the airport-level traffic evolution for the study airports from 2023 to 2025. In Europe, airports have generally observed increases in movement levels across the period, reflecting a network in a phase of gradual consolidation. The Brazilian scenario is more heterogeneous — while some airports such as Galeão (SBGL) and Guarulhos (SBGR) registered increases, others such as Santos Dumont (SBRJ) and Porto Alegre (SBPA) saw declines in 2024. Meanwhile, Congonhas (SBSP) and Brasília (SBBR) showed very little variation overall. This divergence highlights the uneven pace of growth among Brazil's major airports, reflecting broader structural and operational differences in the national aviation landscape.
 
 
 
@@ -250,7 +366,7 @@ fig_bra_apt_tfc(c(2022,2023,2024))
 ```
 
 ```{}
-#| label: fig-eur-apt-level-tfc
+#| label: fig-eur-apt-level-tfc1
 #| fig-cap: European airport level traffic1
 #| warning: false1
 #| echo: false1
