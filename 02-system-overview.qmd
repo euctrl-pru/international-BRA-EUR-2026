@@ -22,11 +22,11 @@ Its mission encompasses the management and control of all air traffic within the
 To achieve this, DECEA operates a comprehensive and fully integrated civil-military system.
 
 In 2021, a public company, NAV Brasil, was created to take over some facilities that were linked to an older airport infrastructure provider company in Brazil (INFRAERO).
-Today, NAV Brasil has 1698 employees in 44 different units, providing aerodrome control services, non-radar approach, meteorology and aeronautical information for the respective locations.
+Today, NAV Brasil has xxxx employees in xx different units, providing aerodrome control services, non-radar approach, meteorology and aeronautical information for the respective locations.
 Despite serving a significant number of air transport movements, NAV Brasil does not plan to establish radar facilities or provide en-route services.
 
 The Brazilian airspace, covering an area of approximately 22 million square kilometres (8.5 million square nautical miles of non-oceanic airspace), is divided into five Flight Information Regions.
-These regions are further subdivided and managed by five Area Control Centers (ACC), 57 Tower facilities (TWR), one digital tower (D-TWR), 41 Approach Units (APP) and 79 AFIS/Remote-AFIS.
+These regions are further subdivided and managed by five Area Control Centers (ACC), xx Tower facilities (TWR), one digital tower (D-TWR), xx Approach Units (APP) and xx AFIS/Remote-AFIS.
 
 The non-oceanic airspace in Europe covers an area of 11.5 million square kilometres.
 When it comes to the provision of air traffic services, the European approach involves a multitude of service providers, with 37 distinct en-route Air Navigation Service Providers (ANSPs), each responsible for different geographical regions.
@@ -55,36 +55,14 @@ bra_actos     <- c("2023" = 3677, "2024" = 3890)
 bra_atcos_pct <- ((bra_actos / bra_atco_2019) - 1) * 100
 ```
 
-@ tbl-HLC summarises the key characteristics of the Brazilian and European air navigation system for 2024.
-Comparing the high-level numbers, Brazil observed a steady increase in the number of Air Traffic Controllers (ATCOs) compared to 2019 (e.g. 2023 vs 2019: `r round(bra_atcos_pct[1], 1)`%, 2024 vs 2019: `r round(bra_atcos_pct[2], 1)`%).
-In contrast, the European system showed only a mild increase in total ATCOs in service following the strong reduction during the pandemic in terms of work force.
-The different behaviour suggests a difference in work force flexibility between the systems.
-Brazil reacted swiftly to the increase of air traffic ranging at `r ( ((1935139/1594442) - 1) * 100) |> round(1)`% higher than in 2019.
-Europe has seen a mild modulation of ATCO numbers with the annual traffic in 2024 ranging about 4% below the 2019 level.\
-This may be partly explained by the fact that DECEA shares part of the structure used in basic training with other Air Force training processes.
-This leads to a more centralised and rigid process, in which abrupt reactions in hiring planning are unwanted due to the lengthy process of calling for candidates according to Brazilian laws related to public service jobs.
-In Europe, there exists a mix of organisational models and labour contracts ranging from public service to fully commercial organisation.
-Thus, European providers tend to react more conservative to anticipated changes in air traffic demand.
+@tbl-HLC1 summarises the key characteristics of the Brazilian and European air navigation systems for 2023, 2024, and 2025. The data reflects a period of consolidation and growth in both regions, albeit at different paces and driven by distinct structural factors.
 
-```{=html}
-<!-- Note: this table is imported from powerpoint - check for figures-handmade.pptx in ./figures or the file / data specifically created for this iteration
--->
-```
-
-```{}
-#| label: tbl-HLC
-#| tbl-cap: High Level Comparison 2024
-#| out-width: 95%
-
-knitr::include_graphics("./figures/HLC-table1.png")
-```
 
 <!---
 
 New table GT
 
 --->
-
 
 ```{r}
 #| label: tbl-HLC1
@@ -228,20 +206,91 @@ if (knitr::is_latex_output()) {
 
 ```
 
+
+In Brazil, the number of Air Traffic Controllers (ATCOs) in operations has continued to grow steadily, increasing from [X] in 2023 to [X] in 2025 — a rise of [X]%. This growth closely followed the sustained increase in air traffic demand over the same period, reflecting a proactive approach to capacity building in line with the country's continued aviation expansion. This behaviour may be partly explained by the fact that DECEA shares part of the structure used in basic training with other Air Force training processes, which, despite leading to a more centralised and rigid hiring process, has allowed for a consistent pipeline of new controllers to meet growing operational needs.
+
+In Europe, ATCO numbers showed only a mild variation over the period, moving from [X] in 2023 to [X] in 2025. This more conservative modulation reflects not only the slower pace of traffic recovery in the region but also a strategic orientation toward investment in technology, automation, and operational efficiency as levers to absorb demand. In Europe, there exists a mix of organisational models and labour contracts ranging from public service to fully commercial organisation, which tends to produce more measured responses to anticipated changes in air traffic demand. @fig-ATCO illustrates this divergence in workforce evolution alongside the traffic index for both regions.
+
+```{r}
+#| label: fig-ATCO
+#| fig-cap: "ATCO comparison"
+#| fig-align: "center"
+#| out-width: 95%
+knitr::include_graphics("./figures/02_system_ATCO_new_comparison.png")
+
+```
+
+The traffic density indicator — expressed as controlled flights per square kilometre of non-oceanic airspace — provides a structural lens through which the operational differences between both regions can be better understood. In 2025, Europe operated at a density of [X] flights/km², significantly higher than Brazil's [X] flights/km². Despite this gap, Brazil's density has grown consistently over the period, reflecting the continued expansion of domestic aviation. This contrast underpins many of the operational differences discussed throughout this report, particularly regarding coordination complexity, capacity constraints, and network organisation.
+
+Beyond the absolute number of controllers, the ratio of controlled flights per ATCO in operations offers a complementary perspective on how each system organises its workforce relative to demand. @fig-ATCO-ratio shows that Europe consistently records a higher flights-per-ATCO ratio compared to Brazil. This difference reflects not only the traffic density gap between the two regions but also distinctions in airspace organisation, sector design, and the distribution of responsibilities across control units.
+
+
+```{r}
+#| label: fig-ATCO-ratio
+#| fig-cap: "ATCO ratio"
+#| fig-align: "center"
+#| out-width: 95%
+knitr::include_graphics("./figures/02_system_ATCO_new_ratio.png")
+
+```
+
+
+
+<!-- Old text
+
+Comparing the high-level numbers, Brazil observed a steady increase in the number of Air Traffic Controllers (ATCOs) compared to 2019 (e.g. 2023 vs 2019: `r round(bra_atcos_pct[1], 1)`%, 2024 vs 2019: `r round(bra_atcos_pct[2], 1)`%).
+In contrast, the European system showed only a mild increase in total ATCOs in service following the strong reduction during the pandemic in terms of work force.
+
+
+The different behaviour suggests a difference in work force flexibility between the systems.
+Brazil reacted swiftly to the increase of air traffic ranging at `r ( ((1935139/1594442) - 1) * 100) |> round(1)`% higher than in 2019.
+Europe has seen a mild modulation of ATCO numbers with the annual traffic in 2024 ranging about 4% below the 2019 level.\
+This may be partly explained by the fact that DECEA shares part of the structure used in basic training with other Air Force training processes.
+This leads to a more centralised and rigid process, in which abrupt reactions in hiring planning are unwanted due to the lengthy process of calling for candidates according to Brazilian laws related to public service jobs.
+In Europe, there exists a mix of organisational models and labour contracts ranging from public service to fully commercial organisation.
+Thus, European providers tend to react more conservative to anticipated changes in air traffic demand.
+
 Another key difference affecting performance in both regions for this report is the development of air traffic demand.
 Unlike in Europe, it is interesting to note that Brazil ended 2022 already servicing air traffic movements above the pre-pandemic level.
 There is a continual increase in air traffic in Brazil accounting now for 21,4% of more traffic than in 2019.
-<!-- However, as will be shown later, much of this growth was due to the strong increase in general aviation and only to a lower extent in commercial aviation.\ --> Overall, the volume of air traffic also rebounded in Europe.
+<!-- However, as will be shown later, much of this growth was due to the strong increase in general aviation and only to a lower extent in commercial aviation.\  Overall, the volume of air traffic also rebounded in Europe.
 At the end of 2023, the level reached about 90% of the pre-pandemic air traffic, and with 2024 the gap is closing to about 96%.
 These recovery numbers are impacted by the geo-political developments.
 Due to the Russian invasion of Ukraine, a certain share of flights is currently banned to operate to/from Europe.
 
-Both regions operate with similar operational concepts, procedures and supporting technology.
-Considering the non-oceanic dimension of the airspace, Brazil services an area about 22% smaller than Europe.
-Brazil, with lower traffic density related to airspace, finds probably a more challenging cost-benefit ratio to maintain communication coverage and surveillance for regions with low-traffic.
-The higher traffic density in Europe may cross all aspects of flight management.
-In particular, the European region faces more considerable challenges in coordinating efforts to address operational constraints and service the current demand.
+-->
 
+
+
+
+<!-- Note: this table is imported from powerpoint - check for figures-handmade.pptx in ./figures or the file / data specifically created for this iteration
+-->
+
+
+
+<!--
+
+
+#| label: tbl-HLC
+#| tbl-cap: High Level Comparison 2024
+#| out-width: 95%
+
+knitr::include_graphics("./figures/HLC-table1.png")
+
+-->
+
+
+Both regions operate with similar operational concepts, procedures, and supporting technology. Considering the non-oceanic dimension of the airspace, Brazil services an area approximately 22% smaller than Europe. Brazil, with lower traffic density relative to its airspace, faces a more challenging cost-benefit ratio in maintaining communication coverage and surveillance for regions with low traffic volumes. The higher traffic density in Europe influences all aspects of flight management — in particular, the European region faces more considerable challenges in coordinating efforts to address operational constraints and service current demand.
+The contrast between one single en-route ANSP in Brazil and 37 in Europe is one of the most structurally significant differences between the two systems. This fragmentation is precisely the rationale behind the Network Manager's coordinating role in Europe — ensuring that flow management decisions, route network design, and capacity planning are addressed collectively rather than in isolation. Brazil's unified structure under DECEA allows for more centralised decision-making, which may offer advantages in terms of system-wide responsiveness, though it also places considerable institutional responsibility on a single entity
+
+
+:::{.callout-warning}
+
+Section Network Characterisation was moved to chapter 03
+
+:::
+
+<!--
 
 ## Network Characterisation
 
@@ -467,6 +516,8 @@ Due to its prominent role, this edition considers operations at LPPT in a more p
 
 Future work may highlight to what extent resources within both regions are bound to establishing basic connectivity and what type of services are provided to accommodate the demand.
 Further research can explore how both regions can maximise installed capacity, benefit from novel operational or technical concepts, and suggest improvements for ANS provision.
+
+-->
 
 ## Regional Approach to Operational Performance Monitoring
 
