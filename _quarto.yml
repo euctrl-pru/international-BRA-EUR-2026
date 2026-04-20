@@ -18,6 +18,7 @@ book:
   downloads: pdf # [pdf, docx]
   chapters:
   - index.qmd
+  #- xx-quarto-gt-word.qmd
   - 00-foreword.qmd
   - 00-executive-summary.qmd
   - 01-intro.qmd
@@ -25,7 +26,7 @@ book:
   - 03-traffic_characterisation.qmd
   #- 04-predictability.qmd
   #- 05-capacity_and_throughput.qmd
-  #- 06-efficiency.qmd
+  - 06-efficiency.qmd
   # - 07-environment.qmd
   #- 09-studies.qmd
   #- 10-conclusions.qmd
