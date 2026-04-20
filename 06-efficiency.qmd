@@ -1,0 +1,279 @@
+# Efficiency
+
+```{r}
+source(here::here("_chapter-setup.R"))
+```
+
+<!-- First 2025 working draft: copied from the 2024 chapter wording, then rebuilt from local PBWG daily taxi-time files. Taxi-in/out now includes Europe and the harmonised Brazil extract. ASMA is intentionally parked for this pass. -->
+
+Operational efficiency is a critical component in assessing the management and execution of operations. It provides insights in the management of arrival and departure flows and the associated separation and synchronisation activities.
+Inefficiencies can have an impact on user operations in terms of delays or excessive fuel burn.
+In light of the previous chapters, it is therefore interesting to study how the available capacity was utilised to service demand during the different flight phases.
+
+The measures reported in this comparison report are based on the observed travel time for surface operations (i.e. taxi-in and taxi-out) and during the arrival phase.
+These travel times are compared with an associated reference time for a group of flights showing similar operational characteristics.
+The determined difference (i.e. additional time) measures the level of inefficiency.
+It must be noted that high performance operations will still yield a certain share of measured additional times.
+Operational efficiency is therefore aiming at minimising rather than eliminating these additional times as they cannot be zero.
+
+```{r}
+txxt_years <- 2023:this_year
+txxt_regions <- c("BRA", "EUR")
+airport_names <- dplyr::bind_rows(
+  bra_apts_names |> dplyr::mutate(REG = "BRA"),
+  eur_apts_names |> dplyr::mutate(REG = "EUR")
+)
+
+read_txxt_year <- function(.region, .year) {
+  readr::read_csv(
+    here::here("data", glue::glue("PBWG-{.region}-txxt-analytic-{.year}-ref2024-icao_ganp_p20.csv")),
+    show_col_types = FALSE
+  ) |>
+    dplyr::mutate(
+      REG = .region,
+      DATE = lubridate::ymd(DATE),
+      YEAR = lubridate::year(DATE),
+      AVG_TXXT = dplyr::if_else(MVTS_VALID > 0, TOT_TXXT / MVTS_VALID, NA_real_),
+      AVG_ADD_TIME = dplyr::if_else(MVTS_VALID > 0, TOT_ADD_TIME / MVTS_VALID, NA_real_)
+    )
+}
+
+txxt_daily <- tidyr::expand_grid(REG = txxt_regions, YEAR = txxt_years) |>
+  purrr::pmap_dfr(\(REG, YEAR) read_txxt_year(REG, YEAR)) |>
+  dplyr::filter(
+    (REG == "BRA" & ICAO %in% bra_apts) |
+      (REG == "EUR" & ICAO %in% eur_apts)
+  )
+
+txxt_annual <- txxt_daily |>
+  dplyr::summarise(
+    MVTS_VALID = sum(MVTS_VALID, na.rm = TRUE),
+    MVTS_NA = sum(MVTS_NA, na.rm = TRUE),
+    TOT_TXXT = sum(TOT_TXXT, na.rm = TRUE),
+    TOT_REF = sum(TOT_REF, na.rm = TRUE),
+    TOT_ADD_TIME = sum(TOT_ADD_TIME, na.rm = TRUE),
+    AVG_TXXT = TOT_TXXT / MVTS_VALID,
+    AVG_ADD_TIME = TOT_ADD_TIME / MVTS_VALID,
+    .by = c(REG, ICAO, PHASE, YEAR)
+  )
+
+txxt_monthly <- txxt_daily |>
+  dplyr::mutate(MONTH = lubridate::floor_date(DATE, "month")) |>
+  dplyr::summarise(
+    MVTS_VALID = sum(MVTS_VALID, na.rm = TRUE),
+    MVTS_NA = sum(MVTS_NA, na.rm = TRUE),
+    TOT_TXXT = sum(TOT_TXXT, na.rm = TRUE),
+    TOT_REF = sum(TOT_REF, na.rm = TRUE),
+    TOT_ADD_TIME = sum(TOT_ADD_TIME, na.rm = TRUE),
+    AVG_TXXT = TOT_TXXT / MVTS_VALID,
+    AVG_ADD_TIME = TOT_ADD_TIME / MVTS_VALID,
+    .by = c(REG, ICAO, PHASE, MONTH)
+  )
+
+label_airports <- function(.data, .airport_col = ICAO) {
+  .data |>
+    dplyr::inner_join(airport_names, by = dplyr::join_by(REG, {{ .airport_col }} == ICAO)) |>
+    dplyr::mutate(APT_LABEL = paste0({{ .airport_col }}, "\n", NAME))
+}
+
+plot_annual_txxt <- function(.phase, .region, .ylabel) {
+  txxt_annual |>
+    dplyr::filter(PHASE == .phase, REG == .region, YEAR %in% txxt_years) |>
+    label_airports() |>
+    dplyr::mutate(YEAR = as.factor(YEAR)) |>
+    ggplot2::ggplot(ggplot2::aes(x = AVG_ADD_TIME, y = APT_LABEL, fill = YEAR)) +
+    ggplot2::geom_col(position = ggplot2::position_dodge(-0.9), width = 0.9) +
+    ggplot2::geom_vline(xintercept = c(2, 4), linetype = "dotted") +
+    ggplot2::scale_fill_brewer(palette = "GnBu") +
+    ggplot2::scale_x_continuous(limits = c(0, NA)) +
+    ggplot2::labs(x = .ylabel, y = NULL, fill = NULL) +
+    ggplot2::theme(
+      legend.position = "top",
+      legend.text = ggplot2::element_text(size = 8),
+      legend.key.size = ggplot2::unit(0.3, "cm")
+    )
+}
+
+plot_monthly_txxt <- function(.phase, .region, .ylabel, .ylim = NULL) {
+  region_col <- getElement(bra_eur_colours, .region)
+  p <- txxt_monthly |>
+    dplyr::filter(PHASE == .phase, REG == .region) |>
+    label_airports() |>
+    ggplot2::ggplot(ggplot2::aes(x = MONTH, y = AVG_ADD_TIME, group = ICAO)) +
+    ggplot2::geom_line(colour = region_col, linewidth = 0.35) +
+    ggplot2::facet_wrap(. ~ APT_LABEL, ncol = 3) +
+    ggplot2::labs(x = NULL, y = .ylabel) +
+    ggplot2::theme(panel.spacing = ggplot2::unit(0.45, "cm"))
+  if (!is.null(.ylim)) p <- p + ggplot2::coord_cartesian(ylim = .ylim)
+  p
+}
+
+plot_txxt_mapping <- function() {
+  txxt_annual |>
+    dplyr::filter(YEAR %in% c(2024, 2025)) |>
+    dplyr::mutate(PHASE = dplyr::recode(PHASE, ARR = "TXIT", DEP = "TXOT")) |>
+    dplyr::select(REG, ICAO, PHASE, YEAR, AVG_ADD_TIME) |>
+    tidyr::pivot_wider(names_from = PHASE, values_from = AVG_ADD_TIME) |>
+    label_airports() |>
+    dplyr::mutate(
+      YEAR = as.character(YEAR),
+      LABEL = dplyr::if_else(YEAR == "2025", ICAO, NA_character_)
+    ) |>
+    ggplot2::ggplot(ggplot2::aes(x = TXOT, y = TXIT, group = ICAO)) +
+    ggplot2::geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "grey60") +
+    ggplot2::geom_path(colour = "lightblue") +
+    ggplot2::geom_point(ggplot2::aes(shape = YEAR, colour = YEAR), size = 2) +
+    ggplot2::facet_wrap(. ~ REG) +
+    ggplot2::scale_colour_manual(values = c("lightblue", "blue")) +
+    ggrepel::geom_label_repel(
+      ggplot2::aes(label = LABEL),
+      force = 100,
+      max.overlaps = Inf,
+      box.padding = 0.15,
+      na.rm = TRUE,
+      colour = "grey70",
+      segment.colour = "grey70",
+      size = 3
+    ) +
+    ggplot2::scale_x_continuous(limits = c(0, NA)) +
+    ggplot2::scale_y_continuous(limits = c(0, NA)) +
+    ggplot2::guides(shape = ggplot2::guide_legend(""), colour = ggplot2::guide_legend("")) +
+    ggplot2::labs(
+      x = "average additional taxi-out time [min/dep]",
+      y = "average additional taxi-in time [min/arr]"
+    ) +
+    ggplot2::theme(
+      legend.position = "top",
+      legend.text = ggplot2::element_text(size = 8),
+      legend.key.size = ggplot2::unit(0.3, "cm")
+    )
+}
+```
+
+## Additional Taxi-In Time
+
+The additional taxi-in time measures the travel time of an arriving aircraft from its touchdown, i.e. the actual landing time, to its stand/gate position, i.e. actual in-block time).
+This elapsed taxi-in time is compared to an anticipated reference time for aircraft arriving at the same runway and taxiing to the same (group of) stand/gate position(s).
+Research showed that the taxi-times are not dependent on the type of aircraft.
+The additional taxi-in time indicator provides a measure of the management of inbound surface traffic.
+
+For this first 2025 update, the European taxi-in results are calculated from the PBWG APDF extraction.
+The Brazilian taxi-in results use the harmonised DECEA taxi extract documented in `BRA-ingestion.qmd`.
+For both regions, the reference time is determined from the 2024 sample using the ICAO GANP 20th percentile method by airport, phase, runway, and stand/gate position.
+The analytic files retain the total observed taxi time (`TOT_TXXT`) across movements that are valid for the metric (`MVTS_VALID`), while `MVTS_NA` captures movements that could not be used because the taxi-time inputs were incomplete or no reference time was available.
+
+### Annual Evolution of Additional Taxi-in Times
+
+```{r}
+#| label: fig-eur-txit-annual
+#| fig-cap: Europe - Additional taxi-in time [min/arr] (2023-2025, 2024 GANP p20 reference)
+#| fig-height: 4.8
+
+plot_annual_txxt("ARR", "EUR", "average additional taxi-in time [min/arr]")
+```
+
+```{r}
+#| label: fig-bra-txit-annual
+#| fig-cap: Brazil - Additional taxi-in time [min/arr] (2023-2025, 2024 GANP p20 reference)
+#| fig-height: 4.8
+
+plot_annual_txxt("ARR", "BRA", "average additional taxi-in time [min/arr]")
+```
+
+The annual development of the average additional taxi-in times at the study airports is depicted by @fig-eur-txit-annual and @fig-bra-txit-annual.
+The 2-minute threshold per arrival continues to serve as a practical reference point for evaluating taxi-in efficiency.
+The 2025 update expands the European airport set to 12 airports, adding Athens (LGAV) and Istanbul (LTFM) to the comparison scope used in `_chapter-setup.R`.
+
+### Monthly Variation of Additional Taxi-in Times
+
+```{r}
+#| label: fig-eur-txit-timeline
+#| fig-cap: Europe - Monthly evolution of average additional taxi-in time
+#| fig-height: 7.2
+
+plot_monthly_txxt("ARR", "EUR", "avg. add. taxi-in time [min/arr]", .ylim = c(0, 8))
+```
+
+```{r}
+#| label: fig-bra-txit-timeline
+#| fig-cap: Brazil - Monthly evolution of average additional taxi-in time
+#| fig-height: 7.2
+
+plot_monthly_txxt("ARR", "BRA", "avg. add. taxi-in time [min/arr]", .ylim = c(0, 8))
+```
+
+The evolution of the taxi-in time at the study airports, shown in @fig-eur-txit-timeline and @fig-bra-txit-timeline, reinforces the annual comparison and provides a check on the seasonal variation of the surface movement indicator.
+The interpretation remains deliberately light in this first draft until the harmonised Brazilian extract has been reviewed with DECEA.
+
+## Taxi-Out Times
+
+### Annual Evolution of Additional Taxi-out Times
+
+```{r}
+#| label: fig-eur-txot-annual
+#| fig-cap: Europe - Average additional taxi-out time [min/dep] (2023-2025, 2024 GANP p20 reference)
+#| fig-height: 4.8
+
+plot_annual_txxt("DEP", "EUR", "average additional taxi-out time [min/dep]")
+```
+
+```{r}
+#| label: fig-bra-txot-annual
+#| fig-cap: Brazil - Average additional taxi-out time [min/dep] (2023-2025, 2024 GANP p20 reference)
+#| fig-height: 4.8
+
+plot_annual_txxt("DEP", "BRA", "average additional taxi-out time [min/dep]")
+```
+
+On average, higher additional times for taxi-out are observed across airports (c.f. @fig-eur-txot-annual and @fig-bra-txot-annual).
+The taxi-out phase requires a higher level of management of the surface movements.
+Departure procedures and flow control can impact the departure queue.
+
+### Monthly Variation of Additional Taxi-out Times
+
+```{r}
+#| label: fig-eur-txot-timeline
+#| fig-cap: Europe - Monthly evolution of average additional taxi-out time
+#| fig-height: 7.2
+
+plot_monthly_txxt("DEP", "EUR", "avg. add. taxi-out time [min/dep]", .ylim = c(0, 12))
+```
+
+```{r}
+#| label: fig-bra-txot-timeline
+#| fig-cap: Brazil - Monthly evolution of average additional taxi-out time
+#| fig-height: 7.2
+
+plot_monthly_txxt("DEP", "BRA", "avg. add. taxi-out time [min/dep]", .ylim = c(0, 12))
+```
+
+The monthly evolution in @fig-eur-txot-timeline and @fig-bra-txot-timeline provides the working view for updating the narrative once the Brazilian surface movement data are confirmed on the same basis.
+
+## Mapping Additional Taxi-in and Taxi-out Times
+
+```{r}
+#| label: fig-txot-txit-mapping
+#| fig-cap: Mapping of additional taxi-in and taxi-out times (2024-2025)
+#| fig-height: 4.8
+
+plot_txxt_mapping()
+```
+
+This analysis builds on the previous sections.
+@fig-txot-txit-mapping compares the relationship between the taxi-in and taxi-out performance observed at the study airports.
+It also shows that on average taxi-out operations accrue more additional time than taxi-in operations.
+
+## Additional Time in Terminal Airspace
+
+The additional time in terminal airspace is calculated as the difference of the actual flying time from entering the sequencing area to the actual landing time.
+Previous research and guidance suggest that reference time can be built for flights sharing similar operational characteristics.
+
+For this first 2025 run, the ASMA section is intentionally excluded because the sector boundaries still need to be agreed.
+
+## Summary
+
+This chapter analysed operational efficiency through the assessment of additional taxi-in and taxi-out times.
+For Europe, the first 2025 update now uses the PBWG APDF extraction with a 2024 ICAO GANP 20th percentile reference and covers the 12 airports defined in `_chapter-setup.R`.
+For Brazil, the chapter now uses the harmonised DECEA taxi extract prepared in APDF-like form and processed through the same PBWG taxi-time pipeline.
+The chapter uses `TOT_TXXT` as the observed taxi-time total for the metric-ready sample and derives the additional-time averages from `MVTS_VALID`.
+The next update should review the Brazilian harmonisation diagnostics and then move to the ASMA/DSMA sectorisation.

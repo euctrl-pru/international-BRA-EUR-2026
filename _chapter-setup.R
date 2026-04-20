@@ -78,6 +78,8 @@ eur_apts_names <- tibble::tribble(
   ,"LEMD", "Madrid"
   ,"LEBL", "Barcelona"
   ,"LPPT", "Lisbon"
+  ,"LGAV", "Athens"
+  ,"LTFM", "Istanbul"
 )
 
 
