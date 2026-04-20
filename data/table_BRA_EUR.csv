@@ -1,10 +1,10 @@
-﻿KPA;Brazil_2023;Brazil_2024;Brazil_2025;Europe_2023;Europe_2024;Europe_2025
+KPA;Brazil_2023;Brazil_2024;Brazil_2025;Europe_2023;Europe_2024;Europe_2025
 geographic area (non-oceanic million km²);8.5;8.5;8.5;10,9;10.9;10,9
 number of en-route ANSPs;1;1;1;37;37;37
 number of TWR;57+1 DTWR;57+1 DTWR;57+1 DTWR;375;n/a;200
 number of APP;41;41;44;268;n/a;200
 number of ACC;5;5;7;57;57;57
-number of ATCOs in OPS;3677;3890;4000;16973;n/a;200
+number of ATCOs in OPS;3677;3890;4000;16973;16973;16973
 controlled flights;1801109;1995139;2133030;10144258;10633991;11000000
 flights ATCO;490;497;500;598;n/a;200
 traffic density (non-oceanic flights/km²);0.211;0.227;0.235;0,93;0.976;0,985
