@@ -522,50 +522,12 @@ Further research can explore how both regions can maximise installed capacity, b
 ## Regional Approach to Operational Performance Monitoring
 
 The previous report detailed the historic setup of the performance monitoring systems in Brazil and Europe.
-
-The implementation of the performance-based approach is not a fundamental new activity in Europe.
-The Performance Review Commission (PRC) was established within EUROCONTROL in 1998 aiming to establish and implement an independent European air traffic management (ATM) performance review capability in response to the European Civil Aviation Conference (ECAC) Institutional Strategy.
-The main goal of the PRC is to offer impartial advice on pan-European ATM performance to EUROCONTROL's governing bodies.
-Supported by the Performance Review Unit (PRU), the PRC conducts extensive research, data analysis, and consultations to provide objective insights and recommendations.
-EUROCONTROL's performance review system, a pioneering initiative in the late 1990s, has influenced broader forums like ICAO's global performance approach and the Single European Sky (SES) performance scheme.
-Collaborating internationally, particularly with ICAO, the PRC aims to harmonise air navigation practices.
-The PRC produces annual reports (ACE and PRR) and provides operational performance monitoring through various data products and online tools.
-Continuous efforts are made to expand the online reporting for stakeholders and ensure access to independent performance data for informed decision-making.
-
-It is noteworthy to recall that DECEA, influenced by ICAO publications, embraced a performance-based approach, notably advancing the national state-of-the-art in collaboration with EUROCONTROL.
-Beginning with the SIRIUS Brazil Program in 2012, DECEA faced challenges defining metrics, but made significant progress after signing a Cooperation Agreement with EUROCONTROL in 2015.
-DECEA published crucial documents for ICAO's Global Air Navigation Plan, prompting an organisational transformation and adaptation of practices.
-Establishing the ATM Performance Section in 2019, akin to EUROCONTROL's PRU, DECEA accelerated the build-up of expertise in operational performance monitoring.
-This culminated in the publication of the first Brazilian ATM Performance Plan for 2022-2023.
-Actively fostering an open culture of knowledge-sharing within South America, DECEA engaged in workshops and seminars, and inviting EUROCONTROL for collaboration.
-
-Finally, it should be noted that the recurrent use of indicators by EUROCONTROL and DECEA and the close technical collaboration taking place during the analysis periods for joint conclusions enrich not only the two regions but also have a global impact.
-Embracing transparency, both agencies made indicators and databases publicly accessible, perpetuating a culture of reciprocity and transparency for mutual advancement.
-Looking for broader validation and harmonisation, the lessons learned from this scheme are systematically shared with the multi-national Performance Benchmarking Working Group (PBWG) and the Performance Expert Group of the ICAO GANP Study Group, which deals with the development of GANP Key Performance Indicators (KPIs).
-In this respect, this collaboration between both parties serves as a role model for ANS performance management on a global level.
-
-Updated dashboards, previous work, and supporting historical data are available at <https://ansperformance.eu/global/brazil/> or <https://performance.decea.mil.br/>.
+The implementation of the performance-based approach is not a fundamental new activity in Europe. The Performance Review Commission (PRC) was established within EUROCONTROL in 1998 aiming to establish and implement an independent European air traffic management (ATM) performance review capability in response to the European Civil Aviation Conference (ECAC) Institutional Strategy. The main goal of the PRC is to offer impartial advice on pan-European ATM performance to EUROCONTROL's governing bodies. Supported by the Performance Review Unit (PRU), the PRC conducts extensive research, data analysis, and consultations to provide objective insights and recommendations. EUROCONTROL's performance review system, a pioneering initiative in the late 1990s, has influenced broader forums like ICAO's global performance approach and the Single European Sky (SES) performance scheme. Collaborating internationally, particularly with ICAO, the PRC aims to harmonise air navigation practices. The PRC produces annual reports (ACE and PRR) and provides operational performance monitoring through various data products and online tools. Continuous efforts are made to expand the online reporting for stakeholders and ensure access to independent performance data for informed decision-making.
+It is noteworthy to recall that DECEA, influenced by ICAO publications, embraced a performance-based approach, notably advancing the national state-of-the-art in collaboration with EUROCONTROL. Beginning with the SIRIUS Brazil Program in 2012, DECEA faced challenges defining metrics, but made significant progress after signing a Cooperation Agreement with EUROCONTROL in 2015. DECEA published crucial documents for ICAO's Global Air Navigation Plan, prompting an organisational transformation and adaptation of practices. Establishing the ATM Performance Section in 2019, akin to EUROCONTROL's PRU, DECEA accelerated the build-up of expertise in operational performance monitoring. This culminated in the publication of the first Brazilian ATM Performance Plan for 2022–2023.
+Building on this foundation, DECEA has continued to strengthen and broaden its performance management culture in recent years. This has been achieved through dedicated training courses on ATM performance, the organisation of an annual performance seminar bringing together national and international stakeholders, and successive updates to the national ATM Performance Plan. In parallel, DECEA has made significant technical advances in the calculation of new indicators that had not previously been assessed at the national level, most notably Vertical Flight Efficiency (VFE) and Horizontal Flight Efficiency (HFE). These additions represent a meaningful step forward in aligning Brazil's performance monitoring framework with international best practices and expanding the analytical scope of the national system.
+Actively fostering an open culture of knowledge-sharing within South America, DECEA has engaged in workshops and seminars, inviting EUROCONTROL for collaboration. The recurrent use of common indicators and the close technical collaboration during joint analysis periods enrich not only both regions but also carry a broader global impact. Embracing transparency, both agencies have made their indicators and databases publicly accessible, perpetuating a culture of reciprocity for mutual advancement. The lessons learned from this scheme are systematically shared with the multinational Performance Benchmarking Working Group (PBWG) and the Performance Expert Group of the ICAO GANP Study Group, responsible for developing GANP Key Performance Indicators (KPIs) — reinforcing this collaboration as a reference model for ANS performance management globally.
+Updated dashboards, previous work, and supporting historical data are available at https://ansperformance.eu/global/brazil/ or https://performance.decea.mil.br/.
 
 ## Summary
 
-While both regions operate on similar operational concepts and technologies, there exists key characteristics and distinctions in both regions.
-One of the key differences is the overall organisation of air navigation services.
-Brazil's air navigation services are centralised under DECEA, overseeing all airspace control and contributing to national defence.
-In contrast, Europe's air navigation services are provided by multiple entities and ANSPs operating predominantly within their national state boundaries and FIR borders.
-
-Also remarkable is the comparison of the number of air traffic controllers between Brazil and Europe during the pandemic.
-This revealed contrasting trends.
-Brazil experienced an increase in ATCOs in line with the overall traffic growth.
-ATCO numbers in Europe marginally increased in comparison to 2019 in 2023.
-This disparity underscores a significant difference in the systems' responsiveness, partly attributed to Brazil's centralised and rigid hiring process.
-At the same time, European providers operate with greater independence with varying organisational setups (public vs private organisation, unions).
-Adjustments of the ATCO workforce tend to be more conservative.
-
-The distribution of commercial flights in 2022 indicated that only a subset of airports handled 80% of commercial take-offs.
-In 2024 - with the stabilising air traffic levels - the top-10 airports in Europe handled 19% of the network departures, while in Brazil the top-10 accounted for 61%; considering the top-100 airports in both regions, this group handled 67% of all departures in Europe, and 97% in Brazil.
-The concentration effect is higher in Brazil than in Europe.
-On the other hand, the distribution also showed that a significant number of airports operating commercial flights handle only a marginal share of the movements in both systems.
-This duality may inform decision-makers about potential performance benefit pools with a view to allocate scarce ANS resources and capabilities and ensure the proper balancing of demand and capacity.
-
-This report documents the close collaboration between DECEA and EUROCONTROL.
-The effort benefits the two regions and contributes globally by sharing insights and lessons learned with international aviation communities, aiding the development of ATM performance management worldwide.
+The characteristics of the air navigation systems in Brazil and Europe presented in this chapter highlight both the commonalities and the structural differences that shape operational performance in each region. Both systems rely on similar operational concepts, procedures, and supporting technology, yet they differ significantly in their organisational models, workforce dynamics, and traffic density. In 2025, Brazil continued to expand its aviation sector, with a growing controller workforce closely aligned with sustained traffic demand, while Europe consolidated its network with a more measured approach to capacity building. The traffic density gap — with Europe operating at approximately four times the density of Brazil — remains a fundamental structural feature that underpins many of the performance differences documented throughout this report. At the institutional level, both DECEA and EUROCONTROL have continued to deepen their performance monitoring frameworks, with Brazil advancing the calculation of new efficiency indicators such as Vertical Flight Efficiency (VFE) and Horizontal Flight Efficiency (HFE) and strengthening its performance culture through training and annual seminars. Together, these developments reinforce the value of the bilateral collaboration and set the analytical foundation for the traffic and performance analysis presented in the following chapters.
