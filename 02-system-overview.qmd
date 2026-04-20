@@ -51,7 +51,7 @@ Subsequently, the NMOC implements the relevant flow management initiatives as re
 #| label: HLC-numbers
 # BRA ATCO increase
 bra_atco_2019 <- 3126
-bra_actos     <- c("2023" = 3677, "2024" = 3890)
+bra_actos     <- c("2023" = 3677, "2024" = 3890 , "2025" = 4000)
 bra_atcos_pct <- ((bra_actos / bra_atco_2019) - 1) * 100
 ```
 
@@ -73,12 +73,12 @@ options(scipen = 999)
 
 note_text <- "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024"
 
-df <- readr::read_csv2(
+hlc_raw <- readr::read_csv2(
   here::here("data", "table_BRA_EUR.csv"),
   col_types = readr::cols(.default = "c")
 )
 
-colnames(df) <- c(
+colnames(hlc_raw) <- c(
   "KPA",
   "Brazil_2023", "Brazil_2024", "Brazil_2025",
   "Europe_2023", "Europe_2024", "Europe_2025"
@@ -86,7 +86,7 @@ colnames(df) <- c(
 
 if (knitr::is_latex_output()) {
 
-  tbl_latex <- df |>
+  tbl_latex <- hlc_raw |>
     gt::gt() |>
     gt::tab_spanner(label = "Brazil", columns = c(Brazil_2023, Brazil_2024, Brazil_2025)) |>
     gt::tab_spanner(label = "Europe", columns = c(Europe_2023, Europe_2024, Europe_2025)) |>
@@ -142,7 +142,7 @@ if (knitr::is_latex_output()) {
 
 } else {
 
-  df |>
+  hlc_raw |>
     gt::gt() |>
     gt::tab_spanner(label = "Brazil", columns = c(Brazil_2023, Brazil_2024, Brazil_2025)) |>
     gt::tab_spanner(label = "Europe", columns = c(Europe_2023, Europe_2024, Europe_2025)) |>
@@ -207,7 +207,7 @@ if (knitr::is_latex_output()) {
 ```
 
 
-In Brazil, the number of Air Traffic Controllers (ATCOs) in operations has continued to grow steadily, increasing from [X] in 2023 to [X] in 2025 — a rise of [X]%. This growth closely followed the sustained increase in air traffic demand over the same period, reflecting a proactive approach to capacity building in line with the country's continued aviation expansion. This behaviour may be partly explained by the fact that DECEA shares part of the structure used in basic training with other Air Force training processes, which, despite leading to a more centralised and rigid hiring process, has allowed for a consistent pipeline of new controllers to meet growing operational needs.
+In Brazil, the number of Air Traffic Controllers (ATCOs) in operations has continued to grow steadily, increasing from `r hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)` in 2023 to `r hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)` in 2025 — a rise of `r round((as.numeric(hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)) / as.numeric(hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)) - 1) * 100, 1)`%. This growth closely followed the sustained increase in air traffic demand over the same period, reflecting a proactive approach to capacity building in line with the country's continued aviation expansion. This behaviour may be partly explained by the fact that DECEA shares part of the structure used in basic training with other Air Force training processes, which, despite leading to a more centralised and rigid hiring process, has allowed for a consistent pipeline of new controllers to meet growing operational needs.
 
 In Europe, ATCO numbers showed only a mild variation over the period, moving from [X] in 2023 to [X] in 2025. This more conservative modulation reflects not only the slower pace of traffic recovery in the region but also a strategic orientation toward investment in technology, automation, and operational efficiency as levers to absorb demand. In Europe, there exists a mix of organisational models and labour contracts ranging from public service to fully commercial organisation, which tends to produce more measured responses to anticipated changes in air traffic demand. @fig-ATCO illustrates this divergence in workforce evolution alongside the traffic index for both regions.
 
@@ -220,7 +220,7 @@ knitr::include_graphics("./figures/02_system_ATCO_new_comparison.png")
 
 ```
 
-The traffic density indicator — expressed as controlled flights per square kilometre of non-oceanic airspace — provides a structural lens through which the operational differences between both regions can be better understood. In 2025, Europe operated at a density of [X] flights/km², significantly higher than Brazil's [X] flights/km². Despite this gap, Brazil's density has grown consistently over the period, reflecting the continued expansion of domestic aviation. This contrast underpins many of the operational differences discussed throughout this report, particularly regarding coordination complexity, capacity constraints, and network organisation.
+The traffic density indicator — expressed as controlled flights per square kilometre of non-oceanic airspace — provides a structural lens through which the operational differences between both regions can be better understood. In 2025, Europe operated at a density of `r hlc_raw |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Europe_2025)` flights/km², significantly higher than Brazil's `r hlc_raw |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Brazil_2025)` flights/km². Despite this gap, Brazil's density has grown consistently over the period, reflecting the continued expansion of domestic aviation. This contrast underpins many of the operational differences discussed throughout this report, particularly regarding coordination complexity, capacity constraints, and network organisation.
 
 Beyond the absolute number of controllers, the ratio of controlled flights per ATCO in operations offers a complementary perspective on how each system organises its workforce relative to demand. @fig-ATCO-ratio shows that Europe consistently records a higher flights-per-ATCO ratio compared to Brazil. This difference reflects not only the traffic density gap between the two regions but also distinctions in airspace organisation, sector design, and the distribution of responsibilities across control units.
 
