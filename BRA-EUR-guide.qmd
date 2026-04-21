@@ -14,6 +14,7 @@ This document serves as an aide memoire to guide the production of the BRA-EUR r
 * reserved folders
   + figures -- keeps all embedded figures (e.g. maps), if required "tailored" figures may be composed using powerpoint (and save as): __figures-handmade.pptx
   + R -- all R functions (once steady and industrialised)
+  + scripts -- temporary, report-specific ingestion/build scripts that are needed for reproducibility but are not yet part of the PBWG package
   + data -- the data to reproduce (and render) the report, ideally in (harmonised) PBWG format
   + docs -- reserved, this folder is used for the hosting of the html report on github
   + (gitignored) _book-local -- to support local rendering of contributors
@@ -59,6 +60,34 @@ knitr::include_graphics("./figures/data-source-analytic-perfrelated.png")
 The report broadly distinguishes between network-level and airport-level reporting.
 
 ## Network-level Data
+
+Current temporary ingestion/build scripts are kept in `scripts/`.
+They are report-specific and should remain outside the PBWG package until the data flow is stable enough to generalise.
+
+* `scripts/build-bra-network-traffic-from-totalbr-temporary.R` prepares the Brazil network traffic series from the TotalBR extract.
+  It writes the harmonised APDF-like movement extract and PBWG network traffic CSVs to `../PBWG-BRA/data/network-traffic` and `../PBWG-BRA/outputs/network-traffic`, then copies the report-facing combined file to `data/PBWG-BRA-network-traffic-2023-2025.csv`.
+  The script treats the official Brazil indicator prefixes (`SB`, `SD`, `SI`, `SJ`, `SN`, `SS`, `SW`) and numeric/non-standard TotalBR indicators as regional, and applies the temporary `AFIL` handling described in the traffic characterisation notes.
+* `scripts/build-network-flow-summary-temporary.R` prepares the Chapter 3 network-flow canonical form for the airport-rank curve, DAIO share, Brazil-Europe flow view, and destination-region charts.
+  The core output is `data/PBWG-BRA-EUR-network-flow-pairs-2025.csv`, with one row per reporting region, year, airport pair, DAIO class, origin/destination country, origin/destination world region, and flight count.
+  This form should be straightforward for other benchmarking parties to reproduce: provide `YEAR`, `ADEP`, `ADES`, `FLTS`, a local regional-airport classifier, and an airport/country/region lookup.
+  The derived report-facing summaries are kept in `data/PBWG-BRA-EUR-airport-departure-rank-2025.csv`, `data/PBWG-BRA-EUR-daio-share-2025.csv`, `data/PBWG-BRA-EUR-world-region-departures-2025.csv`, and `data/PBWG-BRA-EUR-country-departures-2025.csv`.
+  Placeholder destinations such as `ZZZZ` are retained as `Unmapped` in the canonical product, but excluded from mapped world-region shares in the report figures.
+* `scripts/build-bra-apt-tfc-2023-2025-temporary.R` prepares the temporary Brazil airport traffic file used by Chapter 3 until the upstream APDF airport-traffic pipeline provides the standard dataset.
+* These scripts should be revisited once Brazil APDF/network outputs are available from the regular PBWG workflow.
+  At that point the report should consume the standard PBWG outputs directly and these temporary scripts can either be retired or converted into documentation-only provenance records.
+
+Current data placement:
+
+* Raw TotalBR input is kept outside git at `../PBWG-BRA/data-src/raw/totalbr.parquet`.
+  This file is large and should not be committed to GitHub.
+* Brazil reusable network outputs are kept under `../PBWG-BRA/outputs/network-traffic/`.
+  The APDF-like TotalBR coercion output is kept under `../PBWG-BRA/data/network-traffic/`.
+* Europe reusable network outputs are kept under `../PBWG-data/network-traffic/`.
+* The reusable cross-region canonical flow-pair file is mirrored under `../PBWG-BRA/outputs/network-flow/` and `../PBWG-data/network-flow/`.
+* Report-facing analytical cuts are committed in this repository under `data/` so the chapter can be rendered reproducibly without rebuilding the heavy raw extracts.
+  These include the airport departure rank, DAIO share, external world-region, and country-level summaries derived from the canonical flow-pair file.
+* The Chapter 3 airport movement visualisations are intentionally scoped to the 12 study airports in each region.
+  A future report may expand this study panel to the top 15 or 20 airports if omitted airports have material performance relevance.
 
 ## Airport-level Data
 

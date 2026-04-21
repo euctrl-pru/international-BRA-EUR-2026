@@ -6,7 +6,7 @@ editor:
 
 # Traffic Characterisation
 
-```{r, echo=FALSE}
+```{r}
 #| label: setup
 #| echo: false
 #| message: false
@@ -33,7 +33,49 @@ and the broader international context.
 
 ### Overall Traffic Volume
 
-In 2025, Brazil handled approximately [X] million controlled flights, representing approximately [X]% of the traffic serviced in Europe over the same period. Overflights account for a small share of the total in both regions. As shown in @fig-traffic-volume, both regions recorded growth over the 2023–2025 period, though the underlying dynamics differ significantly.
+```{r}
+#| label: traffic-volume-data
+#| echo: false
+#| warning: false
+#| message: false
+network_traffic <- dplyr::bind_rows(
+  readr::read_csv(
+    here::here("data", "PBWG-BRA-network-traffic-2023-2025.csv"),
+    show_col_types = FALSE
+  ),
+  readr::read_csv(
+    here::here("data", "PBWG-EUR-network-traffic-2023-2025.csv"),
+    show_col_types = FALSE
+  )
+) |>
+  dplyr::mutate(
+    YEAR = lubridate::year(DATE),
+    REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe")
+  )
+
+network_traffic_annual <- network_traffic |>
+  dplyr::summarise(
+    FLTS = sum(FLTS, na.rm = TRUE),
+    OVERFLIGHTS = sum(O, na.rm = TRUE),
+    .by = c(REG, REGION, YEAR)
+  ) |>
+  dplyr::mutate(
+    FLTS_M = FLTS / 1e6,
+    OVERFLIGHT_SHARE = OVERFLIGHTS / FLTS
+  )
+
+bra_2025_flts <- network_traffic_annual |>
+  dplyr::filter(REG == "BRA", YEAR == 2025) |>
+  dplyr::pull(FLTS)
+eur_2025_flts <- network_traffic_annual |>
+  dplyr::filter(REG == "EUR", YEAR == 2025) |>
+  dplyr::pull(FLTS)
+bra_vs_eur_2025 <- bra_2025_flts / eur_2025_flts
+```
+
+In 2025, Brazil handled approximately `r scales::number(bra_2025_flts / 1e6, accuracy = 0.1)` million controlled flights, representing approximately `r scales::percent(bra_vs_eur_2025, accuracy = 1)` of the traffic serviced in Europe over the same period.
+Overflights account for a small share of the total in both regions.
+As shown in @fig-traffic-volume, both regions recorded growth over the 2023–2025 period, though the underlying dynamics differ significantly.
 Brazil continued to expand its aviation sector, with traffic growing consistently across the three years — a trajectory that reflects sustained organic demand rather than cyclical fluctuation. In Europe, traffic levels also grew over the period, though at a more moderate pace, with the network continuing to consolidate. The different pace of growth across both regions reinforces the importance of understanding each system's structural context when comparing operational performance.
 
 
@@ -44,25 +86,61 @@ Brazil continued to expand its aviation sector, with traffic growing consistentl
 #| fig-cap: "Overall traffic volume"
 #| fig-align: "center"
 #| out-width: 95%
-knitr::include_graphics("./figures/03_overall_traffic_2025.png")
+ggplot2::ggplot(
+  network_traffic_annual,
+  ggplot2::aes(x = factor(YEAR), y = FLTS_M, fill = REG)
+) +
+  ggplot2::geom_col(
+    position = ggplot2::position_dodge2(width = 0.72, padding = 0.12),
+    width = 0.62
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(label = scales::number(FLTS_M, accuracy = 0.1)),
+    position = ggplot2::position_dodge2(width = 0.72, padding = 0.12),
+    vjust = -0.25,
+    size = 3.2
+  ) +
+  ggplot2::scale_fill_manual(
+    values = bra_eur_colours,
+    labels = c(BRA = "Brazil", EUR = "Europe")
+  ) +
+  ggplot2::scale_y_continuous(
+    limits = c(0, NA),
+    expand = ggplot2::expansion(mult = c(0, 0.08))
+  ) +
+  ggplot2::labs(x = NULL, y = "Controlled flights (million)", fill = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    legend.position = "bottom",
+    panel.grid.minor = ggplot2::element_blank()
+  )
 
 ```
 
 ```{r}
-
 #| label: fig-annual-network
 #| fig-cap: Evolution of annual network traffic
 #| echo: false
 #| warning: false
 #| 
-tmp_bra_yoy <-  arrow::read_parquet(here::here("data", "ndf_bra_totalbr_annually.parquet"))
-
-
-# European data
-
-# plug here
-
-
+tmp_network_yoy <- network_traffic |>
+  dplyr::filter(YEAR %in% c(2023, 2024, 2025)) |>
+  dplyr::transmute(
+    DATE,
+    REGION,
+    YEAR = factor(YEAR),
+    DOY = lubridate::yday(DATE),
+    DLY_FLTS = FLTS
+  ) |>
+  dplyr::arrange(REGION, YEAR, DOY) |>
+  dplyr::group_by(REGION, YEAR) |>
+  dplyr::mutate(
+    MVTS_ROLLAVG = zoo::rollapply(
+      DLY_FLTS, width = 28, FUN = median,
+      partial = TRUE, align = "center"
+    )
+  ) |>
+  dplyr::ungroup()
 
 YEAR_COLORS <- c("2023" = "#E74C3C",   
                  "2024" = "#2ECC71",   
@@ -101,14 +179,15 @@ plot_region_yoy <- function(data, title_label) {
 
 # --- Panels ---
 
-p_brazil_yoy <- plot_region_yoy(tmp_bra_yoy, "Brazil Region – Daily Movements by Year")
+p_brazil_yoy <- tmp_network_yoy |>
+  dplyr::filter(REGION == "Brazil") |>
+  plot_region_yoy("Brazil Region - Daily Movements by Year")
 
+p_europe_yoy <- tmp_network_yoy |>
+  dplyr::filter(REGION == "Europe") |>
+  plot_region_yoy("European Region - Daily Movements by Year")
 
-# p_europe_yoy <- plot_region_yoy(tmp_eur_yoy, "European Region – Daily Movements by Year")
-
-p_brazil_yoy
-
-# p_brazil_yoy / p_europe_yoy
+p_brazil_yoy / p_europe_yoy
 
 
 
@@ -120,14 +199,30 @@ In the European region, the recovery trajectory is clearly visible — from the 
 <!-- New version 2025 -->
 
 ```{r}
-
 #| label: fig-annual-timeline
 #| fig-cap: Regional daily air traffic
 #| warning: false
 
-## Read Brazil file after preparation from TOTALBR data.
-
-tmp_bra <-  arrow::read_parquet(here::here("data", "ndf_bra_totalbr_daily.parquet"))
+tmp_network_daily_recovery <- dplyr::bind_rows(
+  readr::read_csv(
+    here::here("data", "BRA-network-traffic-2019-2025.csv"),
+    show_col_types = FALSE
+  ),
+  readr::read_csv(
+    here::here("data", "EUR-network-traffic-2019-2025.csv"),
+    show_col_types = FALSE
+  )
+) |>
+  dplyr::mutate(
+    REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe"),
+    DLY_FLTS = FLTS
+  ) |>
+  dplyr::arrange(REGION, DATE) |>
+  dplyr::group_by(REGION) |>
+  dplyr::mutate(MVTS_NORM_ROLLAVG = zoo::rollmedian(
+    DLY_FLTS, k = 7, fill = NA, align = "center"
+  )) |>
+  dplyr::ungroup()
 
 ## Auxiliary function
 
@@ -166,42 +261,198 @@ plot_region <- function(data, color_raw, color_avg, title_label) {
 
 # --- Panels ---
 p_brazil <- plot_region(
-  data       = tmp_bra ,                  
+  data       = dplyr::filter(tmp_network_daily_recovery, REGION == "Brazil"),                  
   color_raw  = "#99cc99",             
   color_avg  = "#2e7d32",            
   title_label = "Brazil Region daily movement (rolling 7-day average)"
 )
-print(p_brazil) # meanwhile I don't have Europe data
 
-# p_europe <- plot_region(
-#   data       = tmp_eur,              # Europe data
-#   color_raw  = "#90caf9",             
-#   color_avg  = "#1565c0",             
-#   title_label = "European Region daily movement (rolling 7-day average)"
-# )
-# 
-# # --- Combine ---
-# p_brazil / p_europe
+p_europe <- plot_region(
+  data       = dplyr::filter(tmp_network_daily_recovery, REGION == "Europe"),
+  color_raw  = "#90caf9",
+  color_avg  = "#1565c0",
+  title_label = "European Region daily movement (rolling 7-day average)"
+)
+
+p_brazil / p_europe
 
 
 ```
 
 ### Traffic Distribution Within Each Region
 
+```{r}
+#| label: network-flow-data
+#| echo: false
+#| warning: false
+#| message: false
+network_flow_pairs <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-network-flow-pairs-2025.csv"),
+  show_col_types = FALSE
+) |>
+  dplyr::mutate(REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe"))
+
+airport_departure_rank <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-airport-departure-rank-2025.csv"),
+  show_col_types = FALSE
+) |>
+  dplyr::mutate(REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe"))
+
+daio_share <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-daio-share-2025.csv"),
+  show_col_types = FALSE
+) |>
+  dplyr::mutate(
+    REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe"),
+    DAIO_LABEL = dplyr::recode(
+      DAIO,
+      D = "departures",
+      A = "arrivals",
+      I = "regional",
+      O = "overflights"
+    ),
+    DAIO_LABEL = factor(
+      DAIO_LABEL,
+      levels = c("regional", "departures", "arrivals", "overflights")
+    )
+  )
+
+external_region_levels <- c(
+  "Counterpart region",
+  "North America",
+  "Latin America and Caribbean",
+  "South America",
+  "Middle East",
+  "Africa",
+  "Asia/Pacific",
+  "Other Europe"
+)
+
+world_region_departures_raw <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-world-region-departures-2025.csv"),
+  show_col_types = FALSE
+) |>
+  dplyr::filter(ADES_WORLD_REGION != "Unmapped") |>
+  dplyr::mutate(
+    REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe"),
+    DISPLAY_REGION = dplyr::case_when(
+      REG == "BRA" & ADES_WORLD_REGION == "Europe" ~ "Counterpart region",
+      REG == "EUR" & ADES_WORLD_REGION == "Brazil" ~ "Counterpart region",
+      REG == "EUR" & ADES_WORLD_REGION == "Europe" ~ "Other Europe",
+      TRUE ~ ADES_WORLD_REGION
+    )
+  ) |>
+  dplyr::summarise(FLTS = sum(FLTS), .by = c(REG, REGION, YEAR, DISPLAY_REGION))
+
+world_region_departures <- world_region_departures_raw |>
+  tidyr::complete(
+    REG,
+    REGION,
+    YEAR,
+    DISPLAY_REGION = external_region_levels,
+    fill = list(FLTS = 0)
+  ) |>
+  dplyr::group_by(REG, REGION, YEAR) |>
+  dplyr::mutate(SHARE_MAPPED = FLTS / sum(FLTS)) |>
+  dplyr::ungroup() |>
+  dplyr::mutate(DISPLAY_REGION = factor(DISPLAY_REGION, levels = rev(external_region_levels)))
+
+country_departures <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-country-departures-2025.csv"),
+  show_col_types = FALSE
+) |>
+  dplyr::filter(!is.na(ADES_COUNTRY), ADES_WORLD_REGION != "Unmapped") |>
+  dplyr::mutate(REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe"))
+
+rank_share <- function(reg, rank) {
+  airport_departure_rank |>
+    dplyr::filter(REG == reg, RANK == rank) |>
+    dplyr::pull(CUM_SHARE)
+}
+
+bra_top10_share <- rank_share("BRA", 10)
+eur_top10_share <- rank_share("EUR", 10)
+bra_top50_share <- rank_share("BRA", 50)
+eur_top50_share <- rank_share("EUR", 50)
+bra_top100_share <- rank_share("BRA", 100)
+eur_top100_share <- rank_share("EUR", 100)
+
+external_share <- daio_share |>
+  dplyr::filter(DAIO %in% c("D", "A")) |>
+  dplyr::summarise(SHARE = sum(SHARE), .by = REG)
+bra_external_share <- external_share |> dplyr::filter(REG == "BRA") |> dplyr::pull(SHARE)
+eur_external_share <- external_share |> dplyr::filter(REG == "EUR") |> dplyr::pull(SHARE)
+
+bra_eur_deps <- network_flow_pairs |>
+  dplyr::filter(REG == "BRA", ADEP_IN_REGION, ADES_WORLD_REGION == "Europe") |>
+  dplyr::summarise(FLTS = sum(FLTS)) |>
+  dplyr::pull(FLTS)
+bra_total_deps <- airport_departure_rank |>
+  dplyr::filter(REG == "BRA") |>
+  dplyr::summarise(DEPS = sum(DEPS)) |>
+  dplyr::pull(DEPS)
+bra_eur_dep_share <- bra_eur_deps / bra_total_deps
+
+bra_sa_deps <- country_departures |>
+  dplyr::filter(REG == "BRA", ADES_WORLD_REGION == "South America") |>
+  dplyr::summarise(FLTS = sum(FLTS)) |>
+  dplyr::pull(FLTS)
+
+main_country_connections <- dplyr::bind_rows(
+  country_departures |>
+    dplyr::filter(REG == "BRA", ADES_WORLD_REGION == "South America") |>
+    dplyr::mutate(CONNECTION_PANEL = "Brazil to South America"),
+  country_departures |>
+    dplyr::filter(
+      REG == "EUR",
+      !ADES_WORLD_REGION %in% c("Brazil", "Europe", "South America")
+    ) |>
+    dplyr::slice_max(FLTS, n = 12, with_ties = FALSE) |>
+    dplyr::mutate(CONNECTION_PANEL = "Europe to main external countries")
+) |>
+  dplyr::mutate(
+    ADES_COUNTRY_NAME = dplyr::if_else(is.na(ADES_COUNTRY_NAME), ADES_COUNTRY, ADES_COUNTRY_NAME),
+    COUNTRY_LABEL = paste0(ADES_COUNTRY_NAME, " (", ADES_COUNTRY, ")")
+  ) |>
+  dplyr::group_by(CONNECTION_PANEL) |>
+  dplyr::mutate(COUNTRY_LABEL = forcats::fct_reorder(COUNTRY_LABEL, FLTS)) |>
+  dplyr::ungroup()
+```
+
 While the total volume of traffic provides a first measure of the scale of operations in each region, it does not capture how that traffic is distributed across the network. @fig-traffic-share presents the cumulative share of departures by airport rank for both regions in 2025.
-The distribution of air traffic in Brazil confirms that most flights are concentrated in a small number of airports. In 2025, the 10 busiest airports in Brazil handled [X]% of all departing flights, whereas in Europe the top 10 airports account for [X]% of all departures. The spread remains broadly constant up to the 50th rank, narrowing with the top 100 airports — marking [X]% of all departures in Brazil and [X]% in Europe. This reflects the historical development of the European network, where the traditional focus on national hubs resulted in a higher number of major aerodromes interconnecting across the continent.
+The distribution of air traffic in Brazil confirms that most flights are concentrated in a small number of airports. In 2025, the 10 busiest airports in Brazil handled `r scales::percent(bra_top10_share, accuracy = 1)` of all departing flights, whereas in Europe the top 10 airports account for `r scales::percent(eur_top10_share, accuracy = 1)` of all departures. The spread remains broadly constant up to the 50th rank, narrowing with the top 100 airports — marking `r scales::percent(bra_top100_share, accuracy = 1)` of all departures in Brazil and `r scales::percent(eur_top100_share, accuracy = 1)` in Europe. This reflects the historical development of the European network, where the traditional focus on national hubs resulted in a higher number of major aerodromes interconnecting across the continent.
 
 ```{r}
 #| label: fig-traffic-share
 #| fig-cap: "traffic share"
 #| fig-align: "center"
 #| out-width: 95%
-knitr::include_graphics("./figures/03_traffic_share_departure.png")
+ggplot2::ggplot(
+  dplyr::filter(airport_departure_rank, RANK <= 250),
+  ggplot2::aes(x = RANK, y = CUM_SHARE, colour = REG)
+) +
+  ggplot2::geom_line(linewidth = 0.8) +
+  ggplot2::geom_point(
+    data = dplyr::filter(airport_departure_rank, RANK %in% c(10, 50, 100)),
+    size = 1.8
+  ) +
+  ggplot2::scale_colour_manual(
+    values = bra_eur_colours,
+    labels = c(BRA = "Brazil", EUR = "Europe")
+  ) +
+  ggplot2::scale_y_continuous(labels = scales::percent) +
+  ggplot2::scale_x_continuous(breaks = c(1, 10, 50, 100, 150, 200, 250)) +
+  ggplot2::labs(x = "Airport rank", y = "Cumulative share of departures", colour = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    legend.position = "bottom",
+    panel.grid.minor = ggplot2::element_blank()
+  )
 
 ```
 
-@fig-traffic-distribution shows the distribution of domestic/regional and international departures in 2024. In both
-regions, the share of flights operating externally accounts for less than [X]% of total traffic. The majority of
+@fig-traffic-distribution shows the distribution of domestic/regional and international departures in 2025. In both
+regions, the share of flights operating externally accounts for `r scales::percent(bra_external_share, accuracy = 1)` of total traffic in Brazil and `r scales::percent(eur_external_share, accuracy = 1)` in Europe. The majority of
 flights operate within each region. This domestic dominance is particularly pronounced in Brazil, where
 the continental scale of the country sustains a large volume of intra-national movements. In Europe, the
 relatively short distances between states mean that many flights classified as international are
@@ -212,7 +463,25 @@ functionally comparable to domestic short-haul routes in Brazil.
 #| fig-cap: "traffic distribution"
 #| fig-align: "center"
 #| out-width: 95%
-knitr::include_graphics("./figures/03_traffic_share_distribution.png")
+ggplot2::ggplot(
+  daio_share,
+  ggplot2::aes(x = REGION, y = SHARE, fill = DAIO_LABEL)
+) +
+  ggplot2::geom_col(width = 0.55, colour = "white", linewidth = 0.2) +
+  ggplot2::geom_text(
+    ggplot2::aes(label = dplyr::if_else(SHARE >= 0.03, scales::percent(SHARE, accuracy = 1), "")),
+    position = ggplot2::position_stack(vjust = 0.5),
+    size = 3,
+    colour = "white"
+  ) +
+  ggplot2::scale_y_continuous(labels = scales::percent) +
+  ggplot2::scale_fill_brewer(palette = "Set2", direction = -1) +
+  ggplot2::labs(x = NULL, y = "Share of controlled flights", fill = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    legend.position = "bottom",
+    panel.grid.minor = ggplot2::element_blank()
+  )
 
 ```
 
@@ -221,9 +490,9 @@ knitr::include_graphics("./figures/03_traffic_share_distribution.png")
 
 ### Flows Between Brazil and Europe
 
-@fig-flow shows the connections between Europe and Brazil in 2024. Individual connections with fewer
+@fig-flow shows the connections between Europe and Brazil in 2025. Individual connections with fewer
 than 90 flights per year are aggregated into an "other" group. Traffic from Brazil to Europe accounts for
-just under [X]% of the total traffic volume in Brazil. Guarulhos (SBGR) and Lisbon (LPPT) are the main
+`r scales::percent(bra_eur_dep_share, accuracy = 0.1)` of the total departures from Brazilian airports. Guarulhos (SBGR) and Lisbon (LPPT) are the main
 airports sustaining connectivity between both regions. Due to its prominent role as the primary gateway,
 this edition considers operations at LPPT in a more prominent manner throughout the report
 
@@ -233,7 +502,34 @@ this edition considers operations at LPPT in a more prominent manner throughout 
 #| fig-cap: "flow Brazil and Europe"
 #| fig-align: "center"
 #| out-width: 95%
-knitr::include_graphics("./figures/03_flow_2025.png")
+flow_bra_eur <- network_flow_pairs |>
+  dplyr::filter(
+    (REG == "BRA" & ADEP_IN_REGION & ADES_WORLD_REGION == "Europe") |
+      (REG == "EUR" & ADEP_IN_REGION & ADES_WORLD_REGION == "Brazil")
+  ) |>
+  dplyr::mutate(
+    FLOW = dplyr::if_else(REG == "BRA", "Brazil to Europe", "Europe to Brazil"),
+    PAIR = paste(ADEP, ADES, sep = "-")
+  ) |>
+  dplyr::summarise(FLTS = sum(FLTS), .by = c(FLOW, PAIR)) |>
+  dplyr::mutate(PAIR = dplyr::if_else(FLTS < 90, "Other", PAIR)) |>
+  dplyr::summarise(FLTS = sum(FLTS), .by = c(FLOW, PAIR)) |>
+  dplyr::group_by(FLOW) |>
+  dplyr::slice_max(FLTS, n = 12, with_ties = FALSE) |>
+  dplyr::ungroup() |>
+  dplyr::mutate(PAIR = forcats::fct_reorder(PAIR, FLTS))
+
+ggplot2::ggplot(flow_bra_eur, ggplot2::aes(x = FLTS, y = PAIR, fill = FLOW)) +
+  ggplot2::geom_col(width = 0.72) +
+  ggplot2::facet_wrap(~ FLOW, scales = "free_y") +
+  ggplot2::scale_x_continuous(labels = scales::label_number(scale = 1e-3, suffix = "k")) +
+  ggplot2::scale_fill_manual(values = c("Brazil to Europe" = bra_col, "Europe to Brazil" = eur_col)) +
+  ggplot2::labs(x = "Annual flights", y = NULL, fill = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    legend.position = "none",
+    panel.grid.minor = ggplot2::element_blank()
+  )
 
 ```
 
@@ -242,8 +538,10 @@ knitr::include_graphics("./figures/03_flow_2025.png")
 From a broader international perspective, both regions are interconnected with the rest of the world in
 distinct ways. @fig-share-regions shows the spread of international traffic from each region. For Brazil,
 connections to other South American states represent the major international destinations. For Europe,
-the Middle East, North America, and Africa represent the largest international markets, ranging between
-[X]% and [X]% of all departures.
+the Middle East, North America, and Africa represent the largest international markets. The chart aligns
+Brazil-to-Europe and Europe-to-Brazil traffic on a common counterpart-region row to support comparison. Placeholder
+destinations that cannot be mapped to a world region are retained in the canonical data product but
+excluded from this mapped-region comparison.
 
 
 ```{r}
@@ -251,24 +549,73 @@ the Middle East, North America, and Africa represent the largest international m
 #| fig-cap: "Connections to Others Regions"
 #| fig-align: "center"
 #| out-width: 95%
-knitr::include_graphics("./figures/03_share_others_regions.png")
+ggplot2::ggplot(
+  world_region_departures,
+  ggplot2::aes(
+    x = SHARE_MAPPED,
+    y = DISPLAY_REGION,
+    fill = REG
+  )
+) +
+  ggplot2::geom_col(width = 0.72) +
+  ggplot2::geom_text(
+    ggplot2::aes(label = dplyr::if_else(SHARE_MAPPED >= 0.005, scales::percent(SHARE_MAPPED, accuracy = 1), "")),
+    hjust = -0.08,
+    size = 2.8
+  ) +
+  ggplot2::facet_wrap(~ REGION) +
+  ggplot2::scale_x_continuous(labels = scales::percent) +
+  ggplot2::scale_fill_manual(values = bra_eur_colours) +
+  ggplot2::labs(
+    x = "Share of mapped external departures",
+    y = NULL,
+    fill = NULL,
+    subtitle = "Reminder: rethink grouping / breakdown of regions, including EUROCONTROL Europe versus other Europe."
+  ) +
+  ggplot2::coord_cartesian(clip = "off") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    legend.position = "none",
+    panel.grid.minor = ggplot2::element_blank(),
+    plot.subtitle = ggplot2::element_text(size = 9, colour = "grey35"),
+    plot.margin = ggplot2::margin(5.5, 24, 5.5, 5.5)
+  )
 
 ```
 
 
-@fig-share-south-america provides a closer look at Brazil's regional connections, showing just under 46,000 flights
-operated to adjacent countries in South America in 2024. Argentina and Chile together account for
-approximately half of these movements, confirming the strength of the southern cone corridor. Flights to
-Colombia and Uruguay represent a smaller fraction, complemented by a range of other connections
-across South America and the Caribbean.
+@fig-share-south-america provides a closer look at the main country-level external connections. For Brazil,
+the focus remains on South America, with just under `r scales::number(bra_sa_deps, accuracy = 1000, scale = 1e-3, suffix = ",000")` flights
+operated to adjacent countries in 2025. Argentina and Chile together account for approximately half of
+these movements, confirming the strength of the southern cone corridor. For Europe, the comparison
+shows the main external country destinations across North America, the Middle East, Africa, and
+Asia/Pacific, balancing the number of displayed bars with the Brazilian panel.
 
 
 ```{r}
 #| label: fig-share-south-america
-#| fig-cap: "Connections Brazil and South America"
+#| fig-cap: "Main external country connections"
 #| fig-align: "center"
 #| out-width: 95%
-knitr::include_graphics("./figures/03_share_south_america.png")
+ggplot2::ggplot(
+  main_country_connections,
+  ggplot2::aes(x = FLTS, y = COUNTRY_LABEL, fill = CONNECTION_PANEL)
+) +
+  ggplot2::geom_col(width = 0.72) +
+  ggplot2::facet_wrap(~ CONNECTION_PANEL, scales = "free") +
+  ggplot2::scale_x_continuous(labels = scales::label_number(scale = 1e-3, suffix = "k")) +
+  ggplot2::scale_fill_manual(
+    values = c(
+      "Brazil to South America" = bra_col,
+      "Europe to main external countries" = eur_col
+    )
+  ) +
+  ggplot2::labs(x = "Annual flights", y = NULL, fill = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    legend.position = "none",
+    panel.grid.minor = ggplot2::element_blank()
+  )
 
 ```
 
@@ -397,7 +744,43 @@ p_share + p_col_annual + plot_layout(widths = c(1, 4))
 bra_apt_share <- readr::read_csv(here::here("data", "bra_apt_lvl_traffic_share.csv")) |>
   dplyr::mutate(YEAR = factor(YEAR))
 
+eur_apt_daily <- dplyr::bind_rows(
+  readr::read_csv(here::here("data", "EUR-apt-tfc-2019-2024.csv"), show_col_types = FALSE),
+  readr::read_csv(here::here("data", "EUR-apt-tfc-2025.csv"), show_col_types = FALSE)
+) |>
+  dplyr::mutate(
+    YEAR = lubridate::year(.data$DATE),
+    TOT_MOV = .data$ARRS + .data$DEPS
+  ) |>
+  dplyr::filter(.data$YEAR %in% sort(unique(as.integer(as.character(bra_apt_share$YEAR)))))
+
+eur_total_movements <- eur_apt_daily |>
+  dplyr::summarise(
+    TOT_MOV_ALL = sum(.data$TOT_MOV, na.rm = TRUE),
+    .by = "YEAR"
+  )
+
+eur_apt_share <- eur_apt_daily |>
+  dplyr::filter(.data$ICAO %in% eur_apts) |>
+  dplyr::summarise(
+    TOT_MOV_YEAR = sum(.data$TOT_MOV, na.rm = TRUE),
+    .by = c("YEAR", "ICAO")
+  ) |>
+  dplyr::left_join(eur_total_movements, by = "YEAR") |>
+  dplyr::mutate(
+    SHARE = .data$TOT_MOV_YEAR / .data$TOT_MOV_ALL * 100,
+    YEAR = factor(.data$YEAR)
+  )
+
 bra_total_share <- bra_apt_share |>
+  dplyr::group_by(YEAR) |>
+  dplyr::reframe(
+    TOT_STUDY = sum(TOT_MOV_YEAR),
+    TOT_ALL   = dplyr::first(TOT_MOV_ALL),
+    SHARE     = TOT_STUDY / TOT_ALL * 100
+  )
+
+eur_total_share <- eur_apt_share |>
   dplyr::group_by(YEAR) |>
   dplyr::reframe(
     TOT_STUDY = sum(TOT_MOV_YEAR),
@@ -419,7 +802,7 @@ plot_apt_share <- function(apt_share, total_share, apts_names, title_label) {
       labels = scales::label_percent(scale = 1, suffix = "%")
     ) +
     ggplot2::labs(x = NULL, y = NULL,
-                  title = "share of overall\nnetwork traffic") +
+                  title = "share of airport\nmovement sample") +
     ggplot2::theme_minimal(base_size = 10) +
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
@@ -451,11 +834,9 @@ plot_apt_share <- function(apt_share, total_share, apts_names, title_label) {
 }
 
 p_bra_share <- plot_apt_share(bra_apt_share, bra_total_share, bra_apts_names, "Brazil airport level traffic")
-#p_eur <- plot_apt_share(eur_apt_share, eur_total_share, eur_apts_names, "European airport level traffic")
+p_eur_share <- plot_apt_share(eur_apt_share, eur_total_share, eur_apts_names, "European airport level traffic")
 
-# p_bra / p_eur
-
-p_bra_share
+p_bra_share / p_eur_share
 ```
 
 
@@ -488,23 +869,44 @@ annual_change_bra(study_apt_lvl, 2024,2023,scale_limits) / annual_change_eur(ann
 #| label: fig-apt-annual-change
 #| fig-cap: Annual traffic at study airports in 2025 and variation 2025/2023
 #| out-width: "70%"
-#| fig-align: cente
+#| fig-align: center
 
 
 mov_bra_study <- readr::read_csv(here::here("data" , "bra_mov_lvl_traffic.csv"))
 
+mov_eur_study <- dplyr::bind_rows(
+  readr::read_csv(here::here("data", "EUR-apt-tfc-2019-2024.csv"), show_col_types = FALSE),
+  readr::read_csv(here::here("data", "EUR-apt-tfc-2025.csv"), show_col_types = FALSE)
+) |>
+  dplyr::mutate(
+    YEAR = lubridate::year(.data$DATE),
+    TOT_MOV = .data$ARRS + .data$DEPS
+  ) |>
+  dplyr::filter(
+    .data$ICAO %in% eur_apts,
+    .data$YEAR %in% sort(unique(mov_bra_study$YEAR))
+  ) |>
+  dplyr::summarise(
+    TOT_MOV_YEAR = sum(.data$TOT_MOV, na.rm = TRUE),
+    .by = c("YEAR", "ICAO")
+  )
 
 
-plot_apt_bar_var <- function(data, apts_names, title_label) {
+
+plot_apt_bar_var <- function(data, apts_names, title_label, bar_fill, x_limit, variation_limits,
+                             variation_notes = NULL) {
   
   # dados para barras — ano de referência
   d_bars <- data |>
     dplyr::filter(YEAR == this_year) |>
     dplyr::left_join(apts_names, by = "ICAO") |>
     dplyr::arrange(dplyr::desc(TOT_MOV_YEAR)) |>
-    dplyr::mutate(NAME = factor(NAME, levels = NAME))
+    dplyr::mutate(
+      NAME = factor(NAME, levels = rev(NAME)),
+      MOV_LABEL = scales::label_number(scale = 1e-3, suffix = "k", accuracy = 0.1)(TOT_MOV_YEAR)
+    )
 
-   d_var <- data |>
+  d_var <- data |>
     dplyr::filter(YEAR %in% c(this_year - 1, this_year)) |>
     tidyr::pivot_wider(names_from = YEAR, values_from = TOT_MOV_YEAR,
                        names_prefix = "Y") |>
@@ -519,38 +921,65 @@ plot_apt_bar_var <- function(data, apts_names, title_label) {
       COLOR = ifelse(VAR_PCT >= 0, "pos", "neg")
     )
 
+  if (!is.null(variation_notes)) {
+    d_var <- d_var |>
+      dplyr::left_join(variation_notes, by = "ICAO") |>
+      dplyr::mutate(EXCLUDE_VARIATION = !is.na(.data$NOTE))
+  } else {
+    d_var <- d_var |>
+      dplyr::mutate(
+        NOTE = NA_character_,
+        EXCLUDE_VARIATION = FALSE
+      )
+  }
+
     p_bars <- ggplot2::ggplot(
       d_bars,
       ggplot2::aes(y = NAME, x = TOT_MOV_YEAR)
     ) +
-    ggplot2::geom_col(fill = "#2e7d32") +
+    ggplot2::geom_col(fill = bar_fill) +
     ggplot2::geom_text(
-      ggplot2::aes(label = ICAO),
-      hjust = 0, nudge_x = 1000, size = 2.5, colour = "grey40"
+      ggplot2::aes(x = x_limit * 0.015, label = ICAO),
+      hjust = 0, size = 2.5, colour = "white", fontface = "bold"
+    ) +
+    ggplot2::geom_text(
+      ggplot2::aes(label = MOV_LABEL),
+      hjust = -0.12, size = 2.5, colour = "grey35"
     ) +
     ggplot2::scale_x_continuous(
+      limits = c(0, x_limit),
       labels = scales::label_comma(),
-      expand = ggplot2::expansion(mult = c(0, 0.15))
+      expand = ggplot2::expansion(mult = c(0, 0))
     ) +
     ggplot2::labs(x = NULL, y = NULL, title = title_label) +
+    ggplot2::coord_cartesian(clip = "off") +
     ggplot2::theme_minimal(base_size = 10) +
     ggplot2::theme(
-  panel.grid.minor = ggplot2::element_blank(),
-  plot.margin      = ggplot2::margin(t = 5, r = 5, b = 5, l = 50)  # <-- l grande
-)
+      panel.grid.minor = ggplot2::element_blank(),
+      plot.margin      = ggplot2::margin(t = 5, r = 24, b = 5, l = 50)
+    )
 
  
   p_var <- ggplot2::ggplot(
-      d_var,
+      dplyr::filter(d_var, !.data$EXCLUDE_VARIATION),
       ggplot2::aes(y = NAME, x = VAR_PCT, fill = COLOR)
     ) +
     ggplot2::geom_col() +
     ggplot2::geom_vline(xintercept = 0, linewidth = 0.4, colour = "grey30") +
+    ggplot2::geom_text(
+      data = dplyr::filter(d_var, .data$EXCLUDE_VARIATION),
+      ggplot2::aes(y = NAME, x = 0, label = NOTE),
+      inherit.aes = FALSE,
+      hjust = 0,
+      size = 2.5,
+      colour = "grey35"
+    ) +
     ggplot2::scale_fill_manual(
       values = c("pos" = "#2ECC71", "neg" = "#E74C3C"),
       guide  = "none"
     ) +
     ggplot2::scale_x_continuous(
+      limits = variation_limits,
       labels = scales::label_percent(scale = 1, suffix = "%")
     ) +
     ggplot2::labs(
@@ -569,48 +998,60 @@ plot_apt_bar_var <- function(data, apts_names, title_label) {
     patchwork::plot_layout(widths = c(3, 1.5))
 }
 
-p_bra_var <- plot_apt_bar_var(mov_bra_study, bra_apts_names, "Brazil – Annual traffic")
-#p_eur <- plot_apt_bar_var(mov_eur_study, eur_apts_names, "Europe – Annual traffic")
+sbpa_variation_note <- tibble::tibble(
+  ICAO = "SBPA",
+  NOTE = "2024 flood closure"
+)
 
-#p_bra / p_eur
+movement_x_limit <- dplyr::bind_rows(mov_bra_study, mov_eur_study) |>
+  dplyr::filter(.data$YEAR == this_year) |>
+  dplyr::summarise(LIMIT = max(.data$TOT_MOV_YEAR, na.rm = TRUE) * 1.18) |>
+  dplyr::pull(LIMIT)
 
-p_bra_var
+variation_abs_limit <- dplyr::bind_rows(
+  BRA = mov_bra_study,
+  EUR = mov_eur_study,
+  .id = "REG"
+) |>
+  dplyr::filter(.data$YEAR %in% c(this_year - 1, this_year)) |>
+  tidyr::pivot_wider(names_from = YEAR, values_from = TOT_MOV_YEAR, names_prefix = "Y") |>
+  dplyr::mutate(
+    VAR_PCT = (.data[[paste0("Y", this_year)]] -
+                 .data[[paste0("Y", this_year - 1)]]) /
+      .data[[paste0("Y", this_year - 1)]] * 100
+  ) |>
+  dplyr::filter(!(.data$REG == "BRA" & .data$ICAO == "SBPA")) |>
+  dplyr::summarise(LIMIT = max(abs(.data$VAR_PCT), na.rm = TRUE) * 1.2) |>
+  dplyr::pull(LIMIT)
 
+variation_limits <- c(-variation_abs_limit, variation_abs_limit)
+
+p_bra_var <- plot_apt_bar_var(
+  mov_bra_study,
+  bra_apts_names,
+  "Brazil - Annual traffic",
+  bra_col,
+  movement_x_limit,
+  variation_limits,
+  variation_notes = sbpa_variation_note
+)
+
+p_eur_var <- plot_apt_bar_var(
+  mov_eur_study,
+  eur_apts_names,
+  "Europe - Annual traffic",
+  eur_col,
+  movement_x_limit,
+  variation_limits
+)
+
+p_bra_var / p_eur_var
 
 ```
 
 It is also important to emphasise that Brazil's movements are distributed across a much larger number of airports compared to Europe. As discussed in Section 3.1, Brazil's extensive network dilutes movement concentration at the top airports, suggesting a modest redistribution across a broader set of airports — potentially due to regional market dynamics, strategic airline adjustments, or temporary infrastructure constraints. Europe's busiest airports have slightly increased their share of total network movements, reflecting the growing reliance on major hubs across the region.
 
 
-
-
-```{}
-#| label: fig-monthly-tfc-sbgr-lppt
-#| fig-cap: Monthly traffic evolution at SBGR, EDDM and SBSP, LPPT
-#| fig-height: 6
-
-p_sbgr_monthly_tfc <- month_tfc_bra |> airport_per_year("SBGR", 2023:2024)
-p_sbsp_monthly_tfc <- month_tfc_bra |> airport_per_year("SBSP", 2023:2024)
-
-p_eddm_monthly_tfc <- monthly_eddm |> airport_per_year(.apt = "EDDM", .years = 2023:2024)
-p_lppt_monthly_tfc <- monthly_lppt |> airport_per_year(.apt = "LPPT", .years = 2023:2024)
-
-combo1 <- p_sbgr_monthly_tfc + p_eddm_monthly_tfc +
-  plot_layout(guides = "collect") &
-  theme(legend.position = "top") &
-  scale_y_continuous(limits = c(0, 31000)) & 
-  scale_x_discrete(guide = guide_axis(n.dodge = 2))
-  
-
-combo2 <- 
-  (p_sbsp_monthly_tfc + theme(legend.position = "none")) +
-  (p_lppt_monthly_tfc + theme(legend.position = "none")) &
-  scale_y_continuous(limits = c(0, 25000)) & 
-  scale_x_discrete(guide = guide_axis(n.dodge = 2))
-
-# combine combos
-combo1 / combo2
-```
 
 
 ### Annual Movements and Year-on-Year Variation
@@ -626,6 +1067,104 @@ In Brazil, the largest movement disruption over the period occurred in 2024 at P
 Figure 3.10 shows the monthly evolution of movements at Guarulhos (SBGR) and Munich (EDDM), as well as at São Paulo Congonhas (SBSP) and Lisbon (LPPT). These airport pairs were selected to illustrate the contrasting movement profiles between the two regions at comparable levels of network importance.
 For SBGR, a steady increase in monthly movements is visible in 2025 compared to 2024, with July standing out as the month with the highest volume. Operations at EDDM show a more pronounced seasonal pattern, with movements building up from late spring to peak levels during the summer months. This contrast reinforces the structural difference between Brazil's more stable year-round demand and Europe's tourism-driven seasonality.
 Comparing SBSP and LPPT shows a similar dynamic at a smaller scale. Movement levels at SBSP are moderate and stable throughout the year, servicing predominantly national and regional traffic. Lisbon, in turn, exhibits a clear summer peak in movements, consistent with its role as a major gateway for leisure and connecting traffic between Europe and the Atlantic region.
+
+```{r}
+#| label: fig-monthly-tfc-sbgr-lppt
+#| fig-cap: Monthly traffic evolution at comparable study airports
+#| fig-height: 6
+#| fig-align: center
+#| warning: false
+#| message: false
+
+month_tfc_bra <- readr::read_csv(
+  here::here("data", "BRA-apt-tfc-2023-2025.csv"),
+  show_col_types = FALSE
+) |>
+  dplyr::mutate(
+    YEAR = lubridate::year(.data$DATE),
+    MONTH = lubridate::month(.data$DATE),
+    TOT_MOV = .data$ARRS + .data$DEPS
+  ) |>
+  dplyr::filter(.data$ICAO %in% c("SBGR", "SBSP")) |>
+  dplyr::summarise(TOT_MOV = sum(.data$TOT_MOV, na.rm = TRUE), .by = c("ICAO", "YEAR", "MONTH"))
+
+month_tfc_eur <- dplyr::bind_rows(
+  readr::read_csv(here::here("data", "EUR-apt-tfc-2019-2024.csv"), show_col_types = FALSE),
+  readr::read_csv(here::here("data", "EUR-apt-tfc-2025.csv"), show_col_types = FALSE)
+) |>
+  dplyr::mutate(
+    YEAR = lubridate::year(.data$DATE),
+    MONTH = lubridate::month(.data$DATE),
+    TOT_MOV = .data$ARRS + .data$DEPS
+  ) |>
+  dplyr::filter(.data$ICAO %in% c("EDDM", "LPPT")) |>
+  dplyr::summarise(TOT_MOV = sum(.data$TOT_MOV, na.rm = TRUE), .by = c("ICAO", "YEAR", "MONTH"))
+
+monthly_pairs <- dplyr::bind_rows(month_tfc_bra, month_tfc_eur) |>
+  dplyr::filter(.data$YEAR %in% c(this_year - 1, this_year)) |>
+  dplyr::left_join(
+    dplyr::bind_rows(bra_apts_names, eur_apts_names),
+    by = "ICAO"
+  ) |>
+  dplyr::mutate(
+    PAIR = dplyr::case_when(
+      .data$ICAO %in% c("SBGR", "EDDM") ~ "SBGR and EDDM",
+      .data$ICAO %in% c("SBSP", "LPPT") ~ "SBSP and LPPT"
+    ),
+    AIRPORT_LABEL = paste0(.data$NAME, " (", .data$ICAO, ")"),
+    YEAR = factor(.data$YEAR),
+    MONTH = factor(
+      .data$MONTH,
+      levels = 1:12,
+      labels = month.abb
+    )
+  )
+
+pair_limits <- monthly_pairs |>
+  dplyr::summarise(Y_MAX = max(.data$TOT_MOV, na.rm = TRUE) * 1.08, .by = "PAIR")
+
+plot_monthly_airport <- function(.airport, .pair) {
+  airport_data <- monthly_pairs |>
+    dplyr::filter(.data$ICAO == .airport)
+  y_limit <- pair_limits |>
+    dplyr::filter(.data$PAIR == .pair) |>
+    dplyr::pull(Y_MAX)
+
+  ggplot2::ggplot(
+    airport_data,
+    ggplot2::aes(x = MONTH, y = TOT_MOV, colour = YEAR, group = YEAR)
+  ) +
+    ggplot2::geom_line(linewidth = 0.7) +
+    ggplot2::geom_point(size = 1.6) +
+    ggplot2::scale_colour_manual(values = YEAR_COLORS) +
+    ggplot2::scale_y_continuous(
+      limits = c(0, y_limit),
+      labels = scales::label_number(scale = 1e-3, suffix = "k")
+    ) +
+    ggplot2::labs(
+      x = NULL,
+      y = NULL,
+      colour = NULL,
+      title = dplyr::first(airport_data$AIRPORT_LABEL)
+    ) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      legend.position = "top",
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)
+    )
+}
+
+combo1 <- plot_monthly_airport("SBGR", "SBGR and EDDM") +
+  plot_monthly_airport("EDDM", "SBGR and EDDM")
+
+combo2 <- plot_monthly_airport("SBSP", "SBSP and LPPT") +
+  plot_monthly_airport("LPPT", "SBSP and LPPT")
+
+(combo1 / combo2) +
+  patchwork::plot_layout(guides = "collect") &
+  ggplot2::theme(legend.position = "top")
+```
 
 
 
@@ -667,27 +1206,41 @@ add_nbr_rwy <- function(.pdfc){
     ))
 }
 
-pk_day_plot <- function(.pk_day_data, .years){
-  .pk_day_data |> 
-    filter(YEAR %in% .years) |> 
-    ggplot() + 
+pk_day_plot <- function(.pk_day_data, .years, .x_limit){
+  plot_data <- .pk_day_data |>
+    dplyr::filter(YEAR %in% .years) |>
+    dplyr::group_by(REGION, ICAO_LABEL) |>
+    dplyr::mutate(ORDER_VALUE = max(PEAK_DAY_PCT[YEAR == this_year], na.rm = TRUE)) |>
+    dplyr::ungroup() |>
+    dplyr::mutate(ICAO_LABEL = forcats::fct_reorder(ICAO_LABEL, ORDER_VALUE))
+
+  ggplot(plot_data) + 
     geom_col(
-      aes(y = ICAO, x = PEAK_DAY_PCT, fill = as.factor(YEAR)),
+      aes(y = ICAO_LABEL, x = PEAK_DAY_PCT, fill = as.factor(YEAR)),
       position = position_dodge2(preserve = "single")
+    ) +
+    ggplot2::scale_x_continuous(
+      limits = c(0, .x_limit),
+      labels = scales::label_number()
     )
 }
 
-plot_peak_day_tfc <- function(.df, .year){
-  .df |> 
-    filter(YEAR == .year) |> 
-    ggplot(aes(x = PEAK_DAY_PCT, y = reorder(NAME, PEAK_DAY_PCT))) + 
+plot_peak_day_tfc <- function(.df, .year, .x_limit){
+  plot_data <- .df |> 
+    filter(YEAR == .year) |>
+    dplyr::mutate(ICAO_LABEL = forcats::fct_reorder(ICAO_LABEL, PEAK_DAY_PCT))
+
+  ggplot(plot_data, aes(x = PEAK_DAY_PCT, y = ICAO_LABEL)) + 
     geom_col(aes(fill = REGION)) +
-    geom_text(aes(x = 20, label = ICAO), hjust = 0, color = "white", size = 3) +
     scale_fill_manual(values = bra_eur_colours) + 
-    facet_grid(RWY ~ ., as.table = FALSE, switch = "y", scales = "free", space = "free") +
-    labs(y = NULL, fill = "Region") +
+    ggplot2::scale_x_continuous(
+      limits = c(0, .x_limit),
+      labels = scales::label_number()
+    ) +
+  facet_grid(RWY ~ ., as.table = FALSE, switch = "y", scales = "free_y", space = "free_y") +
+  labs(x = NULL, y = NULL, fill = "Region") +
     theme(
-      legend.position = c(0.9, 0.15),
+      legend.position = "bottom",
       axis.ticks = element_blank()
     )
 }
@@ -725,14 +1278,29 @@ peak_day_eur <- tfc_apts_eur |>
 
 peak_day_comb <- bind_rows(peak_day_bra, peak_day_eur)
 
-peak_day_comb |> 
-  pk_day_plot(2023:2025) +
+peak_day_comb_named <- peak_day_comb |>
+  dplyr::left_join(
+    bra_apts_names |> dplyr::bind_rows(eur_apts_names),
+    by = dplyr::join_by(ICAO)
+  ) |>
+  dplyr::mutate(
+    NAME_SHORT = stringr::str_trunc(NAME, width = 16, side = "right"),
+    ICAO_LABEL = paste0(NAME_SHORT, "\n", ICAO)
+  )
+
+peak_day_x_limit <- peak_day_comb_named |>
+  dplyr::filter(.data$YEAR %in% 2023:2025) |>
+  dplyr::summarise(LIMIT = max(.data$PEAK_DAY_PCT, na.rm = TRUE) * 1.08) |>
+  dplyr::pull(LIMIT)
+
+peak_day_comb_named |> 
+  pk_day_plot(2023:2025, peak_day_x_limit) +
   facet_wrap(. ~ REGION, scales = "free_y") +
   labs(fill = element_blank(), x = element_blank(),  y = element_blank()) +
   theme(
-    legend.position = "inside",
-    legend.position.inside = c(0.95, 0.95),
-    legend.key.size = unit(3, "mm")
+    legend.position = "bottom",
+    legend.key.size = unit(3, "mm"),
+    axis.text.y = ggplot2::element_text(size = 7, lineheight = 0.9)
   )
 ```
 
@@ -764,17 +1332,94 @@ The comparison between the Brazilian and European contexts reinforces the import
 It also shows how peak day traffic can offer unique insights — especially during periods of recovery or transition — by highlighting the maximum operational load airport services can sustain regardless of their average daily traffic.
 
 ```{r}
+#| label: fig-near-peak-days
+#| fig-cap: Share of days operating near the airport-year peak traffic level
+#| fig-height: 7
+#| fig-align: center
+#| message: false
+#| warning: false
+
+near_peak_days <- dplyr::bind_rows(
+  BRA = tfc_apts_bra,
+  EUR = tfc_apts_eur,
+  .id = "REGION"
+) |>
+  dplyr::mutate(
+    YEAR = lubridate::year(.data$DATE),
+    TOT = .data$ARRS + .data$DEPS
+  ) |>
+  dplyr::filter(.data$YEAR %in% 2023:2025) |>
+  dplyr::summarise(
+    DAYS = dplyr::n_distinct(.data$DATE),
+    PEAK_P99 = stats::quantile(.data$TOT, probs = 0.99, na.rm = TRUE),
+    NEAR_PEAK_DAYS = sum(.data$TOT >= 0.9 * PEAK_P99, na.rm = TRUE),
+    .by = c("REGION", "ICAO", "YEAR")
+  ) |>
+  dplyr::mutate(NEAR_PEAK_SHARE = .data$NEAR_PEAK_DAYS / .data$DAYS) |>
+  dplyr::left_join(
+    dplyr::bind_rows(bra_apts_names, eur_apts_names),
+    by = "ICAO"
+  ) |>
+  dplyr::mutate(
+    NAME_SHORT = stringr::str_trunc(.data$NAME, width = 16, side = "right"),
+    ICAO_LABEL = paste0(.data$NAME_SHORT, "\n", .data$ICAO),
+    YEAR = factor(.data$YEAR)
+  )
+
+near_peak_order <- near_peak_days |>
+  dplyr::filter(.data$YEAR == this_year) |>
+  dplyr::arrange(.data$REGION, dplyr::desc(.data$NEAR_PEAK_SHARE)) |>
+  dplyr::pull(.data$ICAO_LABEL)
+
+near_peak_days |>
+  dplyr::mutate(ICAO_LABEL = factor(.data$ICAO_LABEL, levels = rev(near_peak_order))) |>
+  ggplot2::ggplot(
+    ggplot2::aes(x = YEAR, y = ICAO_LABEL, fill = NEAR_PEAK_SHARE)
+  ) +
+  ggplot2::geom_tile(colour = "white", linewidth = 0.6) +
+  ggplot2::geom_text(
+    ggplot2::aes(label = paste0(NEAR_PEAK_DAYS, "d")),
+    size = 2.7,
+    colour = "grey15"
+  ) +
+  ggplot2::facet_wrap(
+    ~ REGION,
+    scales = "free_y",
+    labeller = ggplot2::as_labeller(c(BRA = "Brazil", EUR = "Europe"))
+  ) +
+  ggplot2::scale_fill_gradient(
+    low = "#f7fbff",
+    high = "#2166ac",
+    labels = scales::percent,
+    limits = c(0, NA)
+  ) +
+  ggplot2::labs(
+    x = NULL,
+    y = NULL,
+    fill = "Share of days",
+    subtitle = "Near-peak days are days with movements at or above 90% of the airport-year 99th percentile daily traffic level."
+  ) +
+  ggplot2::theme_minimal(base_size = 10) +
+  ggplot2::theme(
+    panel.grid = ggplot2::element_blank(),
+    axis.text.y = ggplot2::element_text(size = 7, lineheight = 0.9),
+    legend.position = "bottom",
+    plot.subtitle = ggplot2::element_text(size = 9, colour = "grey35")
+  )
+```
+
+@fig-near-peak-days complements the peak-day comparison by showing whether high-demand days occur repeatedly during the year or only as isolated events.
+For each airport and year, the reference level is calculated from that airport-year's own 99th percentile of daily movements.
+This keeps the measure focused on the shape of demand within each year, rather than on absolute size differences between airports.
+
+```{r}
 #| label: fig-peak-day
 #| fig-cap: Airport peak daily service rate (99th percentile, 2025)
 #| message: false
 
-peak_day_comb |> 
-  #------- add nice airport names
-  left_join( bra_apts_names |> bind_rows(eur_apts_names)
-           , by = join_by(ICAO) ) |> 
-  
-  plot_peak_day_tfc(2025) +
-  labs(x = element_blank())
+peak_day_comb_named |> 
+  plot_peak_day_tfc(2025, peak_day_x_limit) +
+  ggplot2::theme(axis.text.y = ggplot2::element_text(size = 7, lineheight = 0.9))
 ```
 
 Analysing the 2025 peak day data, as presented in @fig-peak-day, with Brazilian and European airports grouped by number of runways, we observe that seven European airports operate with three or more runways and are therefore not directly comparable to Brazilian airports. 
