@@ -396,15 +396,15 @@ tmp <- ndf3 |> left_join(isometa2 , join_by(ADEP_CNTRY == CNTRY_ISO)) |>
 ```
 
 
-# DATA PREPARATION for movement graph since 2019 Chapter 3
+# DATA PREPARATION for traffic graph since 2019 Chapter 3
 
 
 ```{r}
 
 # Brazil data
 
-#totalbr <- arrow::read_parquet(here::here("data-src", "totalbr.parquet")) #local file 1gb
-
+# totalbr <- arrow::read_parquet(here::here("data-src", "totalbr.parquet")) #local file 1gb
+# 
 # ndf <- totalbr |> dplyr::select(
 #     FLTID  = co_indicativo,
 #     ADEP   = co_addep,
@@ -579,4 +579,9 @@ p_brazil_yoy / p_europe_yoy
 
 
 ```
+
+
+
+
+
 
