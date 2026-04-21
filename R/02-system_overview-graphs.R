@@ -13,7 +13,7 @@ source(here::here("_chapter-setup.R"))
 
 
 # ── DATA ──────────────────────────────────────────────────────────────────────
-hlc_raw <- readr::read_csv2(
+hlc_raw <- readr::read_csv(
   here::here("data", "table_BRA_EUR.csv"),
   col_types = readr::cols(.default = readr::col_character())
 )
@@ -127,45 +127,17 @@ plot_atco_panel <- function(data, region_name, bar_color) {
       y     = "ATCOs in operations"
     ) +
     
-    ggplot2::theme_minimal(base_size = 10) +
-    ggplot2::theme(
-      panel.grid.minor   = ggplot2::element_blank(),
-      panel.grid.major.x = ggplot2::element_blank(),
-      plot.title         = ggplot2::element_text(
-        size   = 10,
-        hjust  = 0.5,
-        colour = "#333333"
-      ),
-      axis.title.y       = ggplot2::element_text(size = 8, colour = "#666666"),
-      axis.title.y.right = ggplot2::element_text(size = 8, colour = "#666666"),
-      axis.text          = ggplot2::element_text(size = 8),
-      plot.background    = ggplot2::element_blank()
-    )
+    bra_eur_theme_minimal
 }
 
 # ── BUILD & SAVE ──────────────────────────────────────────────────────────────
 p_bra <- plot_atco_panel(df, "Brazil", bra_col)
 p_eur <- plot_atco_panel(df, "Europe", eur_col)
 
-p_fig22 <- (p_bra / p_eur) +
-  patchwork::plot_annotation(
-    caption = paste0(
-      "Sources: Brazil \u2014 DECEA Performance Report; ",
-      "Europe \u2014 ACE Report.\n",
-      "Traffic index base 2023 = 100. ",
-      "Europe 2024/2025 ATCO value not available."
-    ),
-    theme = ggplot2::theme(
-      plot.caption = ggplot2::element_text(
-        size   = 7,
-        colour = "#888888",
-        hjust  = 0
-      )
-    )
-  )
+p_fig22 <- (p_bra / p_eur) 
 
 ggplot2::ggsave(
-  filename = here::here("figures", "02_system_ATCO_new_ratio.png"),
+  filename = here::here("figures", "02_system_ATCO_new_comparison.png"),
   plot     = p_fig22,
   width    = 15,
   height   = 14,
@@ -245,29 +217,9 @@ plot_flt_atco <- function(data,
     
     ggplot2::labs(
       x       = NULL,
-      y       = "Flights per ATCO in operations",
-      caption = paste0(
-        "Sources: Brazil \u2014 DECEA Performance Report; ",
-        "Europe \u2014 ACE Report.\n",
-        "Europe 2024 value not available."
-      )
-    ) +
-    
-    ggplot2::theme_minimal(base_size = 10) +
-    ggplot2::theme(
-      panel.grid.minor   = ggplot2::element_blank(),
-      panel.grid.major.x = ggplot2::element_blank(),
-      legend.position    = "top",
-      legend.text        = ggplot2::element_text(size = 8),
-      axis.title.y       = ggplot2::element_text(size = 8, colour = "#666666"),
-      axis.text          = ggplot2::element_text(size = 8),
-      plot.caption       = ggplot2::element_text(
-        size   = 7,
-        colour = "#888888",
-        hjust  = 0
-      ),
-      plot.background    = ggplot2::element_blank()
-    )
+      y       = "Flights per ATCO in operations"
+      ) +
+    bra_eur_theme_minimal
 }
 
 # ── BUILD ─────────────────────────────────────────────────────────────────────
@@ -286,4 +238,6 @@ ggplot2::ggsave(
   units    = "cm",
   dpi      = 300
 )
+
+
 

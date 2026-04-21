@@ -73,10 +73,11 @@ options(scipen = 999)
 
 note_text <- "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024"
 
-hlc_raw <- readr::read_csv2(
+hlc_raw <- readr::read_csv(
   here::here("data", "table_BRA_EUR.csv"),
   col_types = readr::cols(.default = "c")
-)
+)  |>
+  dplyr::select(1, dplyr::contains("2023"), dplyr::contains("2024"), dplyr::contains("2025"))
 
 colnames(hlc_raw) <- c(
   "KPA",
@@ -522,9 +523,12 @@ Further research can explore how both regions can maximise installed capacity, b
 ## Regional Approach to Operational Performance Monitoring
 
 The previous report detailed the historic setup of the performance monitoring systems in Brazil and Europe.
+
 The implementation of the performance-based approach is not a fundamental new activity in Europe. The Performance Review Commission (PRC) was established within EUROCONTROL in 1998 aiming to establish and implement an independent European air traffic management (ATM) performance review capability in response to the European Civil Aviation Conference (ECAC) Institutional Strategy. The main goal of the PRC is to offer impartial advice on pan-European ATM performance to EUROCONTROL's governing bodies. Supported by the Performance Review Unit (PRU), the PRC conducts extensive research, data analysis, and consultations to provide objective insights and recommendations. EUROCONTROL's performance review system, a pioneering initiative in the late 1990s, has influenced broader forums like ICAO's global performance approach and the Single European Sky (SES) performance scheme. Collaborating internationally, particularly with ICAO, the PRC aims to harmonise air navigation practices. The PRC produces annual reports (ACE and PRR) and provides operational performance monitoring through various data products and online tools. Continuous efforts are made to expand the online reporting for stakeholders and ensure access to independent performance data for informed decision-making.
+
 It is noteworthy to recall that DECEA, influenced by ICAO publications, embraced a performance-based approach, notably advancing the national state-of-the-art in collaboration with EUROCONTROL. Beginning with the SIRIUS Brazil Program in 2012, DECEA faced challenges defining metrics, but made significant progress after signing a Cooperation Agreement with EUROCONTROL in 2015. DECEA published crucial documents for ICAO's Global Air Navigation Plan, prompting an organisational transformation and adaptation of practices. Establishing the ATM Performance Section in 2019, akin to EUROCONTROL's PRU, DECEA accelerated the build-up of expertise in operational performance monitoring. This culminated in the publication of the first Brazilian ATM Performance Plan for 2022–2023.
 Building on this foundation, DECEA has continued to strengthen and broaden its performance management culture in recent years. This has been achieved through dedicated training courses on ATM performance, the organisation of an annual performance seminar bringing together national and international stakeholders, and successive updates to the national ATM Performance Plan. In parallel, DECEA has made significant technical advances in the calculation of new indicators that had not previously been assessed at the national level, most notably Vertical Flight Efficiency (VFE) and Horizontal Flight Efficiency (HFE). These additions represent a meaningful step forward in aligning Brazil's performance monitoring framework with international best practices and expanding the analytical scope of the national system.
+
 Actively fostering an open culture of knowledge-sharing within South America, DECEA has engaged in workshops and seminars, inviting EUROCONTROL for collaboration. The recurrent use of common indicators and the close technical collaboration during joint analysis periods enrich not only both regions but also carry a broader global impact. Embracing transparency, both agencies have made their indicators and databases publicly accessible, perpetuating a culture of reciprocity for mutual advancement. The lessons learned from this scheme are systematically shared with the multinational Performance Benchmarking Working Group (PBWG) and the Performance Expert Group of the ICAO GANP Study Group, responsible for developing GANP Key Performance Indicators (KPIs) — reinforcing this collaboration as a reference model for ANS performance management globally.
 Updated dashboards, previous work, and supporting historical data are available at https://ansperformance.eu/global/brazil/ or https://performance.decea.mil.br/.
 
