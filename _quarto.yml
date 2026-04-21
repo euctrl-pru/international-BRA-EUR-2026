@@ -26,7 +26,7 @@ book:
   - 03-traffic_characterisation.qmd
   #- 04-predictability.qmd
   #- 05-capacity_and_throughput.qmd
-  #- 06-efficiency.qmd
+  - 06-efficiency.qmd
   # - 07-environment.qmd
   #- 09-studies.qmd
   #- 10-conclusions.qmd
@@ -47,30 +47,30 @@ format:
             max-height: 60px;
           }
         </style>
-  pdf:
-    documentclass: scrreport
-    papersize: a4
-    fig-pos: 'H'
-    geometry:
-    - top=30mm
-    - right=25mm
-    - left=30mm
-    - bottom=30mm
-    - heightrounded
-    include-in-header:
-      text: |
-        \usepackage{pdfpages}
-        \pagenumbering{gobble}
-        \setlength{\columnsep}{1cm}
-        \usepackage{fancyhdr}
-        \pagestyle{fancy}
-        \fancyhead[L]{\leftmark}
-        \fancyhead[R]{}
-        \fancyfoot[L]{}
-
-  docx:
-    toc: true
-    number-sections: true
-    highlight-style: github
+  # pdf:
+  #   documentclass: scrreport
+  #   papersize: a4
+  #   fig-pos: 'H'
+  #   geometry:
+  #   - top=30mm
+  #   - right=25mm
+  #   - left=30mm
+  #   - bottom=30mm
+  #   - heightrounded
+  #   include-in-header:
+  #     text: |
+  #       \usepackage{pdfpages}
+  #       \pagenumbering{gobble}
+  #       \setlength{\columnsep}{1cm}
+  #       \usepackage{fancyhdr}
+  #       \pagestyle{fancy}
+  #       \fancyhead[L]{\leftmark}
+  #       \fancyhead[R]{}
+  #       \fancyfoot[L]{}
+  # 
+  # docx:
+  #   toc: true
+  #   number-sections: true
+  #   highlight-style: github
 # epub:
 #    cover-image: cover.png
