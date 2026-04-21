@@ -275,8 +275,7 @@ p_eur <- plot_apt_share(eur_apt_share, eur_total_share, apt_labels_eur, "Europea
 
 ```
 
-
-## Annual traffic at study airports in current Year and variation 
+## Annual traffic at study airports in current Year and variation
 
 ```{r}
 
@@ -380,4 +379,3 @@ p_bra_var <- plot_apt_bar_var(mov_bra_study, bra_apts_names, "Brazil – Annual 
 p_bra_var
 
 ```
-
