@@ -636,83 +636,155 @@ The latter depends on demand, operational procedures and/or associated constrain
 The peak day traffic is determined as the 99th percentile of the total number of daily movements (arrivals and departures).
 The measure represents thus an upper bound for comparison purposes.
 
-```{}
+```{r}
 #| label: fig-peak-day-3years
-#| fig-cap: Airport peak daily traffic (2022 - 2024)
+#| fig-cap: Airport peak daily traffic (2023 - 2025)
+#| message: false
+#| warning: false
 
-pk_day_bra <- read_csv("./data/BRA-airport-tfc-peakday-fix.csv", show_col_types = FALSE)
-our_years  <- c(2023,2024)
+peak_day_from_counts <- function(.counts, .pct = 0.99){
+  .counts |> 
+    mutate(
+      YEAR = lubridate::year(DATE),
+      TOT  = ARRS + DEPS
+    ) |> 
+    group_by(ICAO, YEAR) |> 
+    summarise(PEAK_DAY_PCT = quantile(TOT, probs = .pct), .groups = "drop")
+}
 
-# pk_day_bra <- read_csv("./data/BRA-airport-tfc-peakday-fix.csv", show_col_types = FALSE)
-# pk_day |> rename(PEAK_DAY_PCT = PK_DAY) |> pk_day_plot(c(2022:2024)) + 
+add_nbr_rwy <- function(.pdfc){
+  .pdfc |> 
+    mutate(RWY = case_when(
+       ICAO %in% c("EHAM") ~ 6
+      ,ICAO %in% c("LTFM") ~ 5
+      ,ICAO %in% c("EDDF","LFPG","LEMD","LIRF") ~ 4
+      ,ICAO %in% c("LEBL","LSZH") ~ 3
+      ,ICAO %in% c("EGLL","EDDM","LGAV"
+                   ,"SBGR","SBSP","SBGL","SBBR","SBRJ","SBSV","SBCT") ~ 2
+      ,ICAO %in% c("EGKK","LPPT"
+                   ,"SBKP","SBCF","SBPA","SBRF","SBEG") ~ 1
+      ,TRUE ~ as.numeric(NA)
+    ))
+}
 
-# TO-DO transfer data loading to here
+pk_day_plot <- function(.pk_day_data, .years){
+  .pk_day_data |> 
+    filter(YEAR %in% .years) |> 
+    ggplot() + 
+    geom_col(
+      aes(y = ICAO, x = PEAK_DAY_PCT, fill = as.factor(YEAR)),
+      position = position_dodge2(preserve = "single")
+    )
+}
+
+plot_peak_day_tfc <- function(.df, .year){
+  .df |> 
+    filter(YEAR == .year) |> 
+    ggplot(aes(x = PEAK_DAY_PCT, y = reorder(NAME, PEAK_DAY_PCT))) + 
+    geom_col(aes(fill = REGION)) +
+    geom_text(aes(x = 20, label = ICAO), hjust = 0, color = "white", size = 3) +
+    scale_fill_manual(values = bra_eur_colours) + 
+    facet_grid(RWY ~ ., as.table = FALSE, switch = "y", scales = "free", space = "free") +
+    labs(y = NULL, fill = "Region") +
+    theme(
+      legend.position = c(0.9, 0.15),
+      axis.ticks = element_blank()
+    )
+}
+
+tfc_apts_bra <- readr::read_delim(
+  here::here("data", "Movements-Brazil-2023-2024-2025-raw.csv"),
+  delim = ";",
+  locale = readr::locale(encoding = "UTF-8"),
+  show_col_types = FALSE
+) |> 
+  transmute(
+    ICAO = SG_ORGAO,
+    DATE = lubridate::dmy(DATA_INICIO_BRT),
+    ARRS = TOTAL,
+    DEPS = 0
+  ) |> 
+  filter(ICAO %in% bra_apts) |> 
+  summarise(ARRS = sum(ARRS), DEPS = sum(DEPS), .by = c(ICAO, DATE))
+
+tfc_apts_eur <- bind_rows(
+  readr::read_csv(here::here("data", "EUR-apt-tfc-2019-2024.csv"), show_col_types = FALSE),
+  readr::read_csv(here::here("data", "EUR-apt-tfc-2025.csv"), show_col_types = FALSE)
+) |> 
+  filter(ICAO %in% eur_apts)
+
+peak_day_bra <- tfc_apts_bra |> 
+  peak_day_from_counts() |> 
+  add_nbr_rwy() |> 
+  mutate(REGION = "BRA")
+
+peak_day_eur <- tfc_apts_eur |> 
+  peak_day_from_counts() |> 
+  add_nbr_rwy() |> 
+  mutate(REGION = "EUR")
+
+peak_day_comb <- bind_rows(peak_day_bra, peak_day_eur)
 
 peak_day_comb |> 
-  dplyr::mutate(
-    REGION = dplyr::case_when(
-          grepl("^SB", ICAO) ~ "BRA"
-        , .default           = "EUR")
-    )|> 
-  
-  pk_day_plot(2022:2024) +
+  pk_day_plot(2023:2025) +
   facet_wrap(. ~ REGION, scales = "free_y") +
   labs(fill = element_blank(), x = element_blank(),  y = element_blank()) +
-  theme(legend.position = "inside", legend.position.inside = c(0.95, 0.95)
-        ,legend.key.size = unit(3, "mm"))
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.95, 0.95),
+    legend.key.size = unit(3, "mm")
+  )
 ```
 
-@fig-peak-day-3years shows the evolution of peak day traffic between 2022 and 2024 across the Brazilian and European airports included in this study.
+@fig-peak-day-3years shows the evolution of peak day traffic between 2023 and 2025 across the Brazilian and European airports included in this study.
 The peak day measurement is as a useful complement to traffic levels and average daily movement metrics.
 It provides a reference to the achievable daily service rate that can highlight nuances of the operational context and constraints at comparable airports and approach areas.
 
-Overall, the data shows a general stability in operational volumes across most major airports in Brazil. 
-On the European side, the year-by-year comparison highlights the on-going recovery and initial consolidation effects post the pandemic. 
-Consistent with the overall traffic increase the majority of them recorded an increase in peak day traffic, with all of them showing significantly higher values compared to 2022.
+Overall, the data shows a more differentiated development of operational volumes across the Brazilian study airports. 
+On the European side, the year-by-year comparison highlights the on-going recovery and first consolidation effects post the pandemic. 
+Consistent with the overall traffic increase, most European airports recorded an increase in peak day traffic between 2024 and 2025, while a number of the largest airports show only marginal changes that point to daily service rates already close to their current upper operating range.
 
 Still, some variations stand out on the Brazilian side:
 
-* Guarulhos (SBGR), Galeão (SBGL), and Confins (SBCF) recorded increases in their peak day movements, reflecting their greater capacity to absorb traffic and some redistribution of demand within the national network.
+* Guarulhos (SBGR), Galeão (SBGL), and Brasília (SBBR) recorded increases in their peak day movements, reflecting their greater capacity to absorb traffic and some redistribution of demand within the national network.
 
-* Santos Dumont (SBRJ), on the other hand, shows a notable drop, directly tied to the operational restrictions implemented during 2024, which limited its capacity and led to the transfer of some flights to SBGL.
+* Congonhas (SBSP), on the other hand, shows a notable drop in 2025, while Santos Dumont (SBRJ) remains well below its 2023 peak day value following the operational restrictions implemented during 2024, which limited its capacity and led to the transfer of some flights to SBGL.
 
-* In the case of Porto Alegre (SBPA), even though it was severely affected by floods starting in May 2024, the data does not show a significant drop in its peak day value. This is likely because the peak occurred either before May or after limited operations resumed in October.
+* In the case of Porto Alegre (SBPA), even though it was severely affected by floods starting in May 2024, the data shows only a limited recovery in its 2025 peak day value and remains below the level observed in 2023.
 
 Regarding the peak day traffic at European airports:
 
-* Paris Charles de Gaulle (LFPG) stood out with the most pronounced growth in both 2023 and 2024.
+* Istanbul (LTFM) shows the highest peak day traffic among the European study airports in 2025 and continues to increase compared to the previous years.
 
-* Significant step increases were observed at London Heathrow (EGLL), Frankfurt (EDDF), and Madrid (LEMD) between 2022 and 2023. As major hubs, this also reflects the increase in international air traffic and the reactivation of network connections by the major carriers operating from/to these airports.
+* Significant increases are observed at Frankfurt (EDDF), Munich (EDDM), Athens (LGAV), Barcelona (LEBL), and Madrid (LEMD) over the 2023 to 2025 period. As major gateways, this also reflects the increase in international air traffic and the continued strengthening of network connections by the major carriers operating from/to these airports.
 
-* Marginal to no changes between 2023 and 2024 evidence that the peak operations at Frankfurt (EDDF), Gatwick (EGKK), Lisbon (LPPT), and Zurich (LSZH) reach their daily maximum service rate. 
+* Marginal to no changes between 2024 and 2025 evidence that the peak operations at Paris Charles de Gaulle (LFPG), London Heathrow (EGLL), Amsterdam (EHAM), and Lisbon (LPPT) reach their daily maximum service rate. 
 
 The comparison between the Brazilian and European contexts reinforces the importance of considering each network's structure, operational model, and geographic distribution when evaluating operational performance at and around airports. 
 It also shows how peak day traffic can offer unique insights — especially during periods of recovery or transition — by highlighting the maximum operational load airport services can sustain regardless of their average daily traffic.
 
-```{}
+```{r}
 #| label: fig-peak-day
-#| fig-cap: Airport peak daily service rate (99th percentile, 2024)
+#| fig-cap: Airport peak daily service rate (99th percentile, 2025)
 #| message: false
 
-# where is the data
-#peak_day_pct_plot(2024)
 peak_day_comb |> 
   #------- add nice airport names
   left_join( bra_apts_names |> bind_rows(eur_apts_names)
            , by = join_by(ICAO) ) |> 
   
-  plot_peak_day_tfc(2024) +
+  plot_peak_day_tfc(2025) +
   labs(x = element_blank())
 ```
 
-Analysing the 2024 peak day data, as presented in @fig-peak-day, with Brazilian and European airports grouped by number of runways, we observe that six European airports operate with three or more runways and are therefore not directly comparable to Brazilian airports. 
+Analysing the 2025 peak day data, as presented in @fig-peak-day, with Brazilian and European airports grouped by number of runways, we observe that seven European airports operate with three or more runways and are therefore not directly comparable to Brazilian airports. 
 However, it is important to note that in many of these cases, the runway system does not support fully independent operations on all available runways.
 Such constraints reduce the available runway system capacity, and thus, the serviced peak traffic is also impacted by the runway system configuration.
 For example, operations at Amsterdam (EHAM) cannot make use of all six runways at the same time.
-Operations at Zurich (LSZH, 3 interdependent runway system) range in the order of single runway operations at Gatwick (EGKK, 1 runway). 
+Operations at Zurich (LSZH, 3 interdependent runway system) range above the order of single runway operations at Lisbon (LPPT, 1 runway). 
 As a result, peak traffic performance is also shaped by the specific runway configuration.
 
-When focusing on airports with up to two runways, European airports still show significantly higher peak day movements compared to the Brazilian ones. 
+When focusing on airports with up to two runways, European airports still generally show higher peak day movements compared to the Brazilian ones. 
 This difference can be attributed to more robust infrastructure and operational systems in Europe.
 Additional benefits are exploited by dedicated operational concepts. 
 For example, London Heathrow implemented time-based separation on final which adds to achieving a high level of runway system throughput even in high wind situations.
@@ -722,18 +794,86 @@ Future research may highlight the impact of the runway system configuration on t
 
 ## Fleet Mix
 
-```{}
+```{r}
 #| label: fig-fleet-mix
-#| fig-cap: Fleet mix observed at the study airports in 2024
+#| fig-cap: Fleet mix observed at the study airports in 2025
 #| fig-height: 5
+#| message: false
+#| warning: false
 
-# data is loaded with supporting script - move / clean and functionalise
-# script returns fleetmix for fm_apts_bra and eur
+fleet_mix_from_counts <- function(.counts, .reg){
+  fm <- .counts |> 
+    mutate(
+      YEAR = lubridate::year(DATE)
+     ,TOT  = H + M + L
+    ) |> 
+    group_by(ICAO, YEAR) |> 
+    summarise(
+       TOT    = sum(TOT, na.rm = TRUE)
+      ,H_PERC = sum(H, na.rm = TRUE) / TOT
+      ,M_PERC = sum(M, na.rm = TRUE) / TOT
+      ,L_PERC = sum(L, na.rm = TRUE) / TOT
+      ,.groups = "drop"
+    ) |> 
+    mutate(REGION = .reg) |>
+    tidyr::pivot_longer(
+       cols      = c(H_PERC, M_PERC, L_PERC)
+      ,names_to  = "WTC"
+      ,values_to = "SHARE"
+    ) |>
+    mutate(
+      WTC = factor(
+         WTC
+        ,levels = c("L_PERC", "M_PERC", "H_PERC")
+        ,labels = c("Light", "Medium", "Heavy")
+      )
+    )
+}
 
-fm_apts <- bind_rows(fm_apts_bra, fm_apts_eur) |> 
+plot_fleet_mix <- function(.fleetmix_airports, .key_year){
+  fleet_mix_plot <- 
+    ggplot2::ggplot( 
+       data    = .fleetmix_airports |> dplyr::filter(YEAR == .key_year)
+      ,mapping = ggplot2::aes(y = paste(ICAO, NAME), x = SHARE, fill = WTC)
+    ) +
+    ggplot2::geom_col(position = "stack", width = 0.9)  +
+    ggplot2::scale_fill_manual(values = c("#56B4E9", "#009E73", "#F0E442")) +
+    ggplot2::scale_y_discrete(labels = scales::label_wrap(10)) +
+    ggplot2::scale_x_continuous(labels = scales::percent) +
+    ggplot2::facet_wrap(. ~ REGION, scales = "free_y") + 
+    ggplot2::theme(
+       legend.position = "top"
+      ,legend.title    = ggplot2::element_text(size = 8) 
+      ,legend.text     = ggplot2::element_text(size = 8)
+      ,legend.key.size = ggplot2::unit(0.3, "cm")
+    ) +
+    ggplot2::labs(x = NULL, y = NULL)
+
+  return(fleet_mix_plot)
+}
+
+tfc_apts_bra <- readr::read_csv(
+  here::here("data", "BRA-apt-tfc-2023-2025.csv"),
+  show_col_types = FALSE
+) |> 
+  dplyr::filter(ICAO %in% bra_apts)
+
+tfc_apts_eur <- dplyr::bind_rows(
+  readr::read_csv(here::here("data", "EUR-apt-tfc-2019-2024.csv"), show_col_types = FALSE),
+  readr::read_csv(here::here("data", "EUR-apt-tfc-2025.csv"), show_col_types = FALSE)
+) |> 
+  dplyr::filter(ICAO %in% eur_apts)
+
+fm_apts_bra <- tfc_apts_bra |> 
+  fleet_mix_from_counts("BRA")
+
+fm_apts_eur <- tfc_apts_eur |>
+  fleet_mix_from_counts("EUR")
+
+fm_apts <- dplyr::bind_rows(fm_apts_bra, fm_apts_eur) |> 
   left_join(bind_rows(bra_apts_names, eur_apts_names), by = join_by(ICAO))
 
-key_year <- 2024
+key_year <- 2025
 
 plot_fleet_mix(fm_apts, key_year)
 ```
@@ -742,16 +882,16 @@ plot_fleet_mix(fm_apts, key_year)
 Fleet mix plays a key role in airport capacity, directly impacting traffic flow and operational efficiency. 
 Generally, a higher share of “heavy” aircraft can reduce runway throughput due to wake turbulence separation requirements and longer landing and take-off times.
 
-In Brazil, the main international hubs, Guarulhos (SBGR), Galeão (SBGL), and Campinas (SBKP), showed a 15% to 20% share of “heavy” aircraft, reinforcing their role as the country’s key international gateways. 
-Campinas, in particular, stands out as the main hub for Azul Linhas Aéreas and also handles a large volume of cargo operations, which contributes to its diverse fleet profile and operational complexity.
+In Brazil, the main international hubs, Guarulhos (SBGR), Galeão (SBGL), and Campinas (SBKP), show the highest share of “heavy” aircraft among the Brazilian study airports, reinforcing their role as the country’s key international gateways. 
+Guarulhos remains the strongest Brazilian heavy-aircraft profile, while Galeão and Campinas continue to combine international, domestic, and cargo-related operations, contributing to a more diverse fleet profile and operational complexity.
 
 Some Brazilian airports such as Brasília (SBBR) and Salvador (SBSV) serviced a significant share of “light” aircraft.
 This category that is nearly absent among the European airports analysed.
 The notable exemption is Zurich (LSZH). 
-In Salvador, light aircraft account for nearly 20% of all movements, and a similar pattern is observed in Campinas, reflecting their regional and logistical roles.
+In Salvador, light aircraft account for about one fifth of all movements, while the share is even higher at Eduardo Gomes (SBEG), reflecting the specific regional and logistical roles of these airports.
 
-On average, the share of "heavy" aircraft is higher at the European study airports.
-The major European hubs like Frankfurt (EDDF), Heathrow (EGLL), and Charles de Gaulle (LFPG) operate with a higher proportion of “heavy” aircraft, in line with their function as global connection points. 
+On average, the share of "heavy" aircraft remains higher at the European study airports.
+The major European hubs like Heathrow (EGLL), Charles de Gaulle (LFPG), Istanbul (LTFM), and Frankfurt (EDDF) operate with a higher proportion of “heavy” aircraft, in line with their function as global connection points. 
 These structural differences reflect how each region organizes its connectivity: Brazil tends to centralize long-haul operations in a few key airports.
 The European network evidences the national focus on air transport development. 
 With a significant higher number across a broader set of hubs traditionally servicing the national capitals.
@@ -759,6 +899,82 @@ With a significant higher number across a broader set of hubs traditionally serv
 Based on continuous monitoring throughout the year, this pattern has proven to be remarkably stable. 
 The distribution of aircraft categories has remained consistent even during periods of disruption, such as extreme weather or localized infrastructure constraints. 
 These observations suggest that the fleet mix at the analysed airports is shaped more by long-term structural factors than by short-term fluctuations, as airspace users operate and renew their fleet servicing these airports within their economic and operational context.
+
+```{r}
+#| label: fig-fleetmix-evolution
+#| fig-cap: Change in heavy and light aircraft share at the study airports (2023 and 2025)
+#| fig-height: 5
+#| message: false
+#| warning: false
+
+plot_fleetmix_shift <- function(.fleetmix){
+  fleetmix_xy <- .fleetmix |>
+    dplyr::filter(YEAR %in% c(2023, 2025), WTC %in% c("Heavy", "Light")) |>
+    dplyr::select(REGION, ICAO, NAME, YEAR, WTC, SHARE) |>
+    tidyr::pivot_wider(names_from = WTC, values_from = SHARE)
+
+  fleetmix_shift <- fleetmix_xy |>
+    tidyr::pivot_wider(
+       names_from  = YEAR
+      ,values_from = c(Heavy, Light)
+      ,names_prefix = "Y"
+    ) |>
+    dplyr::filter(
+      !is.na(Heavy_Y2023), !is.na(Heavy_Y2025),
+      !is.na(Light_Y2023), !is.na(Light_Y2025)
+    )
+
+  fleetmix_labels <- fleetmix_xy |>
+    dplyr::filter(YEAR == 2025)
+
+  ggplot2::ggplot() +
+    ggplot2::geom_segment(
+       data = fleetmix_shift
+      ,mapping = ggplot2::aes(
+         x = Heavy_Y2023, y = Light_Y2023,
+         xend = Heavy_Y2025, yend = Light_Y2025
+       )
+      ,arrow = ggplot2::arrow(length = ggplot2::unit(0.12, "inches"))
+      ,linewidth = 0.35
+      ,colour = "grey45"
+    ) +
+    ggplot2::geom_point(
+       data = fleetmix_xy
+      ,mapping = ggplot2::aes(x = Heavy, y = Light, shape = factor(YEAR))
+      ,size = 2.1
+      ,colour = "black"
+      ,fill = "white"
+    ) +
+    ggrepel::geom_text_repel(
+       data = fleetmix_labels
+      ,mapping = ggplot2::aes(x = Heavy, y = Light, label = ICAO)
+      ,size = 2.7
+      ,min.segment.length = 0
+      ,seed = 11
+      ,show.legend = FALSE
+    ) +
+    ggplot2::facet_wrap(. ~ REGION) +
+    ggplot2::scale_x_continuous(labels = scales::percent, limits = c(0, NA)) +
+    ggplot2::scale_y_continuous(labels = scales::percent, limits = c(0, NA)) +
+    ggplot2::scale_shape_manual(values = c("2023" = 1, "2025" = 16)) +
+    ggplot2::theme(
+       legend.position = "top"
+      ,legend.title = ggplot2::element_blank()
+      ,panel.grid.minor = ggplot2::element_blank()
+    ) +
+    ggplot2::labs(
+       x = "share of heavy aircraft"
+      ,y = "share of light aircraft"
+    )
+}
+
+plot_fleetmix_shift(fm_apts)
+```
+
+@fig-fleetmix-evolution provides a complementary view of this structural difference by focusing on the two categories that create the clearest contrast between the regions. 
+Between 2023 and 2025, the European airports remain clustered along a high-heavy, very-low-light profile, with Heathrow (EGLL), Paris Charles de Gaulle (LFPG), Frankfurt (EDDF), Istanbul (LTFM), and Madrid (LEMD) maintaining the strongest heavy-aircraft component.
+In Brazil, the spread is wider: Guarulhos (SBGR), Galeão (SBGL), and Campinas (SBKP) continue to anchor the heavier end of the Brazilian group, while Eduardo Gomes (SBEG), Salvador (SBSV), Brasília (SBBR), Porto Alegre (SBPA), and Curitiba (SBCT) retain a visibly higher light-aircraft component.
+The 2023 to 2025 movement therefore reinforces the interpretation that the difference is structural rather than a temporary annual fluctuation, even as local changes are visible at airports affected by network adjustments and demand recovery.
 
 <!-- REMOVED FOR 2024 report --- FLEETMIX TIMELINE ~ FAIRLY STABLE -------------
 #| label: fig-fleetmix-timeline
