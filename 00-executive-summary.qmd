@@ -18,7 +18,7 @@ The report focuses on a subset of the eleven Key Performance Areas identified by
 ```{r}
 #| label: fig-scope-KPAs-KPIs
 #| fig-cap: Key Performance Areas addressed in this edition
-#| out-width: "60%"
+#| out-width: "90%"
 
 knitr::include_graphics("./figures/scope-KPA-and-KPI.png")
 ```
