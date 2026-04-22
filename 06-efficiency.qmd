@@ -4,7 +4,7 @@
 source(here::here("_chapter-setup.R"))
 ```
 
-<!-- First 2025 working draft: copied from the 2024 chapter wording, then rebuilt from local PBWG daily taxi-time files. Taxi-in/out now includes Europe and the harmonised Brazil extract. ASMA is intentionally parked for this pass. -->
+<!-- First 2025 working draft: copied from the 2024 chapter wording, then rebuilt from local PBWG daily taxi-time files. Taxi-in/out now includes Europe and the harmonised Brazil extract. ASMA uses the refreshed Brazil ASMA ingestion. -->
 
 Operational efficiency is a critical component in assessing the management and execution of operations. It provides insights in the management of arrival and departure flows and the associated separation and synchronisation activities.
 Inefficiencies can have an impact on user operations in terms of delays or excessive fuel burn.
@@ -69,6 +69,132 @@ txxt_monthly <- txxt_daily |>
     AVG_ADD_TIME = TOT_ADD_TIME / MVTS_VALID,
     .by = c(REG, ICAO, PHASE, MONTH)
   )
+
+asma_daily_bra <- readr::read_csv(
+  here::here("data", "PBWG-BRA-asma-analytic-2023-2025-ref2024-icao_ganp_p20.csv"),
+  show_col_types = FALSE
+) |>
+  dplyr::mutate(
+    REG = "BRA",
+    DATE = lubridate::ymd(DATE),
+    YEAR = lubridate::year(DATE),
+    AVG_ASMA = dplyr::if_else(MVTS_VALID > 0, TOT_ASMA / MVTS_VALID, NA_real_),
+    AVG_REF = dplyr::if_else(MVTS_VALID > 0, TOT_REF / MVTS_VALID, NA_real_),
+    AVG_ADD_TIME = dplyr::if_else(MVTS_VALID > 0, TOT_ADD_TIME / MVTS_VALID, NA_real_)
+  ) |>
+  dplyr::filter(ICAO %in% bra_apts, PHASE == "ARR")
+
+asma_annual_bra <- asma_daily_bra |>
+  dplyr::summarise(
+    MVTS_VALID = sum(MVTS_VALID, na.rm = TRUE),
+    MVTS_NA = sum(MVTS_NA, na.rm = TRUE),
+    TOT_ASMA = sum(TOT_ASMA, na.rm = TRUE),
+    TOT_REF = sum(TOT_REF, na.rm = TRUE),
+    TOT_ADD_TIME = sum(TOT_ADD_TIME, na.rm = TRUE),
+    AVG_ASMA = TOT_ASMA / MVTS_VALID,
+    AVG_REF = TOT_REF / MVTS_VALID,
+    AVG_ADD_TIME = TOT_ADD_TIME / MVTS_VALID,
+    .by = c(REG, ICAO, RANGE, YEAR)
+  )
+
+asma_monthly_bra <- asma_daily_bra |>
+  dplyr::mutate(MONTH = lubridate::floor_date(DATE, "month")) |>
+  dplyr::summarise(
+    MVTS_VALID = sum(MVTS_VALID, na.rm = TRUE),
+    MVTS_NA = sum(MVTS_NA, na.rm = TRUE),
+    TOT_ASMA = sum(TOT_ASMA, na.rm = TRUE),
+    TOT_REF = sum(TOT_REF, na.rm = TRUE),
+    TOT_ADD_TIME = sum(TOT_ADD_TIME, na.rm = TRUE),
+    AVG_ASMA = TOT_ASMA / MVTS_VALID,
+    AVG_REF = TOT_REF / MVTS_VALID,
+    AVG_ADD_TIME = TOT_ADD_TIME / MVTS_VALID,
+    .by = c(REG, ICAO, RANGE, MONTH)
+  )
+
+eur_asma_daily_old <- readr::read_csv(
+  "/Users/rainerkoelle/RProjects/BRA-EUR-2024/data/BRA-EUR-EUR-ASMA-EUR.csv",
+  show_col_types = FALSE
+) |>
+  dplyr::filter(ICAO %in% eur_apts) |>
+  dplyr::transmute(
+    REG = "EUR",
+    ICAO,
+    DATE = lubridate::ymd(DOF),
+    YEAR = lubridate::year(DATE),
+    RANGE = "C100",
+    MVTS_VALID = ARRS100,
+    MVTS_NA = NA_real_,
+    TOT_ASMA = TOT_A100,
+    TOT_REF = TOT_REF100,
+    TOT_ADD_TIME = ADD100
+  ) |>
+  dplyr::filter(YEAR %in% 2019:2022)
+
+eur_asma_quick <- readr::read_csv(
+  "/Users/rainerkoelle/RProjects/BRA-EUR-2024/data/EUR-ASMA-QUICK.csv",
+  show_col_types = FALSE
+) |>
+  dplyr::filter(APT_ICAO %in% eur_apts, YEAR %in% 2023:2024) |>
+  dplyr::transmute(
+    REG = "EUR",
+    ICAO = APT_ICAO,
+    DATE = lubridate::ymd(paste(YEAR, MONTH_NUM, "01", sep = "-")),
+    YEAR,
+    RANGE = "C100",
+    MVTS_VALID = VALID_FL,
+    MVTS_NA = NO_REF,
+    TOT_ASMA = TOTAL_REF_TIME_MIN + TOTAL_ADD_TIME_MIN,
+    TOT_REF = TOTAL_REF_TIME_MIN,
+    TOT_ADD_TIME = TOTAL_ADD_TIME_MIN
+  )
+
+eur_asma_2025_fill <- eur_asma_quick |>
+  dplyr::filter(YEAR == 2024) |>
+  dplyr::mutate(
+    DATE = DATE %m+% lubridate::years(1),
+    YEAR = 2025
+  )
+
+asma_daily_eur <- dplyr::bind_rows(
+  eur_asma_daily_old,
+  eur_asma_quick,
+  eur_asma_2025_fill
+) |>
+  dplyr::mutate(
+    AVG_ASMA = dplyr::if_else(MVTS_VALID > 0, TOT_ASMA / MVTS_VALID, NA_real_),
+    AVG_REF = dplyr::if_else(MVTS_VALID > 0, TOT_REF / MVTS_VALID, NA_real_),
+    AVG_ADD_TIME = dplyr::if_else(MVTS_VALID > 0, TOT_ADD_TIME / MVTS_VALID, NA_real_)
+  )
+
+asma_annual_eur <- asma_daily_eur |>
+  dplyr::summarise(
+    MVTS_VALID = sum(MVTS_VALID, na.rm = TRUE),
+    MVTS_NA = sum(MVTS_NA, na.rm = TRUE),
+    TOT_ASMA = sum(TOT_ASMA, na.rm = TRUE),
+    TOT_REF = sum(TOT_REF, na.rm = TRUE),
+    TOT_ADD_TIME = sum(TOT_ADD_TIME, na.rm = TRUE),
+    AVG_ASMA = TOT_ASMA / MVTS_VALID,
+    AVG_REF = TOT_REF / MVTS_VALID,
+    AVG_ADD_TIME = TOT_ADD_TIME / MVTS_VALID,
+    .by = c(REG, ICAO, RANGE, YEAR)
+  )
+
+asma_monthly_eur <- asma_daily_eur |>
+  dplyr::mutate(MONTH = lubridate::floor_date(DATE, "month")) |>
+  dplyr::summarise(
+    MVTS_VALID = sum(MVTS_VALID, na.rm = TRUE),
+    MVTS_NA = sum(MVTS_NA, na.rm = TRUE),
+    TOT_ASMA = sum(TOT_ASMA, na.rm = TRUE),
+    TOT_REF = sum(TOT_REF, na.rm = TRUE),
+    TOT_ADD_TIME = sum(TOT_ADD_TIME, na.rm = TRUE),
+    AVG_ASMA = TOT_ASMA / MVTS_VALID,
+    AVG_REF = TOT_REF / MVTS_VALID,
+    AVG_ADD_TIME = TOT_ADD_TIME / MVTS_VALID,
+    .by = c(REG, ICAO, RANGE, MONTH)
+  )
+
+asma_annual <- dplyr::bind_rows(asma_annual_bra, asma_annual_eur)
+asma_monthly <- dplyr::bind_rows(asma_monthly_bra, asma_monthly_eur)
 
 label_airports <- function(.data, .airport_col = ICAO) {
   .data |>
@@ -142,6 +268,62 @@ plot_txxt_mapping <- function() {
       x = "average additional taxi-out time [min/dep]",
       y = "average additional taxi-in time [min/arr]"
     ) +
+    ggplot2::theme(
+      legend.position = "top",
+      legend.text = ggplot2::element_text(size = 8),
+      legend.key.size = ggplot2::unit(0.3, "cm")
+    )
+}
+
+plot_annual_asma <- function(.range, .region, .xlim = c(0, 8)) {
+  asma_annual |>
+    dplyr::filter(RANGE == .range, REG == .region, YEAR %in% txxt_years) |>
+    label_airports() |>
+    dplyr::mutate(YEAR = as.factor(YEAR)) |>
+    ggplot2::ggplot(ggplot2::aes(x = AVG_ADD_TIME, y = APT_LABEL, fill = YEAR)) +
+    ggplot2::geom_col(position = ggplot2::position_dodge(-0.9), width = 0.9) +
+    ggplot2::geom_vline(xintercept = c(2, 4), linetype = "dotted") +
+    ggplot2::scale_fill_brewer(palette = "GnBu") +
+    ggplot2::coord_cartesian(xlim = .xlim) +
+    ggplot2::labs(x = "average additional ASMA time [min/arr]", y = NULL, fill = NULL) +
+    ggplot2::theme(
+      legend.position = "top",
+      legend.text = ggplot2::element_text(size = 8),
+      legend.key.size = ggplot2::unit(0.3, "cm")
+    )
+}
+
+plot_monthly_asma <- function(.range, .region, .ylim = c(0, 8)) {
+  region_col <- getElement(bra_eur_colours, .region)
+
+  asma_monthly |>
+    dplyr::filter(RANGE == .range, REG == .region, lubridate::year(MONTH) %in% txxt_years) |>
+    label_airports() |>
+    ggplot2::ggplot(ggplot2::aes(x = MONTH, y = AVG_ADD_TIME, group = ICAO)) +
+    ggplot2::geom_line(colour = region_col, linewidth = 0.35) +
+    ggplot2::facet_wrap(. ~ APT_LABEL, ncol = 3) +
+    ggplot2::coord_cartesian(ylim = .ylim) +
+    ggplot2::labs(x = NULL, y = "avg. additional ASMA time [min/arr]") +
+    ggplot2::theme(panel.spacing = ggplot2::unit(0.45, "cm"))
+}
+
+plot_asma_range_summary <- function(.region = "BRA") {
+  asma_annual |>
+    dplyr::filter(REG == .region, YEAR %in% txxt_years) |>
+    dplyr::summarise(
+      MVTS_VALID = sum(MVTS_VALID, na.rm = TRUE),
+      TOT_ADD_TIME = sum(TOT_ADD_TIME, na.rm = TRUE),
+      AVG_ADD_TIME = TOT_ADD_TIME / MVTS_VALID,
+      .by = c(REG, RANGE, YEAR)
+    ) |>
+    dplyr::mutate(RANGE = factor(RANGE, levels = c("C40", "C100"))) |>
+    ggplot2::ggplot(ggplot2::aes(x = YEAR, y = AVG_ADD_TIME, colour = RANGE, group = RANGE)) +
+    ggplot2::geom_line(linewidth = 0.6) +
+    ggplot2::geom_point(size = 2) +
+    ggplot2::scale_x_continuous(breaks = txxt_years) +
+    ggplot2::scale_y_continuous(limits = c(0, NA)) +
+    ggplot2::scale_colour_brewer(palette = "Dark2") +
+    ggplot2::labs(x = NULL, y = "network-weighted avg. additional time [min/arr]", colour = NULL) +
     ggplot2::theme(
       legend.position = "top",
       legend.text = ggplot2::element_text(size = 8),
@@ -265,15 +447,100 @@ It also shows that on average taxi-out operations accrue more additional time th
 
 ## Additional Time in Terminal Airspace
 
-The additional time in terminal airspace is calculated as the difference of the actual flying time from entering the sequencing area to the actual landing time.
-Previous research and guidance suggest that reference time can be built for flights sharing similar operational characteristics.
+The additional time in terminal airspace is calculated as the difference between the actual flying time from entering the sequencing area and a reference time for comparable arrivals.
+Previous research and guidance suggest that the reference time can be built for flights sharing similar operational characteristics, including entry range, entry sector, aircraft class, and landing runway.
 
-For this first 2025 run, the ASMA section is intentionally excluded because the sector boundaries still need to be agreed.
+The refreshed Brazil ASMA ingestion uses the multi-year DECEA ASMA extract for 2023-2025 and applies a 2024 ICAO GANP 20th percentile reference.
+For Brazil, the reference groups are defined by airport, range, aircraft class as supplied in the Brazil data, landing runway, and supplied sector grouping.
+The Brazil source carries wake-turbulence style `CLASS` values rather than the full APDF class code combining wake-turbulence category and propulsion; the results should therefore be interpreted as a first harmonised ASMA view until the aircraft-type mapping is added.
+
+The European ASMA data have not yet been rebuilt with the same 2024 reference-time pipeline.
+For orientation, the European 100 NM series below reuses the older ASMA products through 2024 and carries 2024 forward as a placeholder for 2025.
+The placeholder is included only to keep the report comparison layout stable while the missing European reference-time determination steps are developed.
+
+### Additional ASMA Time at 100 NM
+
+The 100 NM measure remains the headline indicator for additional time in terminal airspace.
+It captures the longer arrival sequencing horizon and is most comparable to the historical ASMA/KPI08 presentation in previous BRA-EUR reports.
+
+```{r}
+#| label: fig-bra-asma100-annual
+#| fig-cap: Brazil - Additional ASMA time at 100 NM (2023-2025, 2024 GANP p20 reference)
+#| fig-height: 4.8
+
+plot_annual_asma("C100", "BRA", .xlim = c(0, 7))
+```
+
+```{r}
+#| label: fig-eur-asma100-annual
+#| fig-cap: Europe - Additional ASMA time at 100 NM (2023-2025, 2025 filled with 2024 data)
+#| fig-height: 4.8
+
+plot_annual_asma("C100", "EUR", .xlim = c(0, 7))
+```
+
+@fig-bra-asma100-annual shows a gradual improvement in the Brazil weighted average at 100 NM, from about 3.6 minutes per arrival in 2023 to about 3.0 minutes in 2025.
+The highest additional times remain concentrated at the larger and more constrained arrival systems.
+Congonhas (SBSP) improves materially in 2025, while Guarulhos (SBGR) increases again and remains the highest Brazilian airport in the 2025 sample.
+
+@fig-eur-asma100-annual keeps the European comparison visible but should be read with caution.
+The 2025 European values are not newly observed values; they repeat 2024 until the European ASMA reference-time pipeline is rebuilt on the same basis as Brazil.
+
+```{r}
+#| label: fig-bra-asma100-timeline
+#| fig-cap: Brazil - Monthly evolution of additional ASMA time at 100 NM
+#| fig-height: 7.2
+
+plot_monthly_asma("C100", "BRA", .ylim = c(0, 7))
+```
+
+The monthly 100 NM timeline in @fig-bra-asma100-timeline provides the working multi-year view for the Brazil arrivals.
+It shows that the annual averages mask substantial month-to-month variation, especially at Congonhas (SBSP), Santos Dumont (SBRJ), Guarulhos (SBGR), and Eduardo Gomes (SBEG).
+This makes the daily/grouped ASMA output useful beyond the annual indicator because the same file can support follow-up checks by runway, sector, range, and class.
+
+### Additional ASMA Time at 40 NM
+
+The 40 NM view gives a closer-in terminal-airspace perspective.
+It is not yet available for Europe in the refreshed report workflow, so this subsection focuses on Brazil.
+The 40 NM reference uses the same 2024 GANP p20 principle and the same grouping dimensions as the 100 NM result.
+
+```{r}
+#| label: fig-bra-asma40-annual
+#| fig-cap: Brazil - Additional ASMA time at 40 NM (2023-2025, 2024 GANP p20 reference)
+#| fig-height: 4.8
+
+plot_annual_asma("C40", "BRA", .xlim = c(0, 5))
+```
+
+```{r}
+#| label: fig-bra-asma40-timeline
+#| fig-cap: Brazil - Monthly evolution of additional ASMA time at 40 NM
+#| fig-height: 7.2
+
+plot_monthly_asma("C40", "BRA", .ylim = c(0, 5))
+```
+
+The 40 NM results in @fig-bra-asma40-annual and @fig-bra-asma40-timeline are lower than the 100 NM values, as expected for the shorter arrival segment.
+At the Brazil regional level, the 40 NM average remains close to 2.2 minutes per arrival in 2024 and 2025.
+The 100 NM average remains higher, which indicates that a meaningful share of the additional time is accrued before aircraft enter the closer-in 40 NM area.
+
+```{r}
+#| label: fig-bra-asma-range-summary
+#| fig-cap: Brazil - Regional additional ASMA time by range
+#| fig-height: 3.8
+
+plot_asma_range_summary("BRA")
+```
+
+@fig-bra-asma-range-summary summarises the distinction between the two available ranges.
+The Brazil ASMA ingestion now provides a consistent daily basis for producing both timelines, while retaining the finer `CLASS`, `RWY`, and sector breakdown required for deeper analysis.
 
 ## Summary
 
-This chapter analysed operational efficiency through the assessment of additional taxi-in and taxi-out times.
+This chapter analysed operational efficiency through the assessment of additional taxi-in, taxi-out, and terminal-airspace ASMA times.
 For Europe, the first 2025 update now uses the PBWG APDF extraction with a 2024 ICAO GANP 20th percentile reference and covers the 12 airports defined in `_chapter-setup.R`.
 For Brazil, the chapter now uses the harmonised DECEA taxi extract prepared in APDF-like form and processed through the same PBWG taxi-time pipeline.
 The chapter uses `TOT_TXXT` as the observed taxi-time total for the metric-ready sample and derives the additional-time averages from `MVTS_VALID`.
-The next update should review the Brazilian harmonisation diagnostics and then move to the ASMA/DSMA sectorisation.
+The ASMA section now uses the refreshed Brazil ASMA ingestion to develop 40 NM and 100 NM multi-year timelines with a 2024 GANP 20th percentile reference.
+For Europe, the ASMA comparison remains provisional: 2025 is filled with 2024 values until the European ASMA reference-time pipeline is rebuilt.
+The next update should add the aircraft-type to APDF class-code mapping and align the European ASMA preparation with the new Brazil workflow.

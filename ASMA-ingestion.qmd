@@ -1,0 +1,443 @@
+---
+title: "Brazil ASMA Ingestion Check"
+editor: visual
+format:
+  html:
+    toc: true
+    toc-depth: 3
+---
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+source(here::here("_chapter-setup.R"))
+library(data.table)
+library(fs)
+library(knitr)
+
+annual_zip <- "/Users/rainerkoelle/Downloads/OneDrive_1_22-04-2026.zip"
+monthly_zip <- "/Users/rainerkoelle/Downloads/OneDrive_2_22-04-2026.zip"
+
+asma_archives <- tibble::tribble(
+  ~DATASET, ~ZIP_PATH, ~NOTE,
+  "annual_2023_2025", annual_zip, "Three annual files, semicolon-delimited.",
+  "monthly_2025", monthly_zip, "Monthly 2025 files, comma-delimited, with a leading row index."
+)
+
+expected_apdf_fields <- c(
+  "AP_C_FLTID",
+  "ADEP_ICAO", "ADES_ICAO",
+  "AP_C_REG", "ARCTYP", "AC_CLASS",
+  "AP_C_RWY", "AP_C_STND",
+  "MVT_TIME_UTC", "BLOCK_TIME_UTC", "SCHED_TIME_UTC",
+  "C40_CROSS_TIME", "C40_BEARING",
+  "C100_CROSS_TIME", "C100_BEARING",
+  "SRC_PHASE",
+  "IM_SAMAD_ID",
+  "SRC_AIRPORT"
+)
+
+apdf_mapping <- tibble::tribble(
+  ~APDF_FIELD, ~SOURCE_FIELD, ~STATUS, ~NOTE,
+  "AP_C_FLTID", "fltid", "available", "Flight identifier.",
+  "ADEP_ICAO", "adep", "available", "Departure aerodrome.",
+  "ADES_ICAO", "ades", "available", "Arrival aerodrome.",
+  "AP_C_REG", "reg", "available", "Aircraft registration is present but often blank.",
+  "ARCTYP", "type", "available", "Aircraft type.",
+  "AC_CLASS", "CLASS", "available", "Aircraft weight class.",
+  "AP_C_RWY", "drwy_validado / drwy", "available", "Use validated runway when populated, otherwise raw runway.",
+  "AP_C_STND", "stnd", "available", "Stand/gate field.",
+  "MVT_TIME_UTC", "aldt", "available for ARR", "Landing time is the natural arrival movement time.",
+  "BLOCK_TIME_UTC", "aibt", "available for ARR", "In-block time; blank where no match.",
+  "SCHED_TIME_UTC", "sibt", "available for ARR", "Scheduled in-block time; often blank in the sample.",
+  "C40_CROSS_TIME", NA_character_, "not named as APDF", "The new files provide one generic crossing time field, c_time.",
+  "C40_BEARING", NA_character_, "not named as APDF", "The new files provide one generic bearing field, bear.",
+  "C100_CROSS_TIME", NA_character_, "not named as APDF", "No explicit C100 field in the new files.",
+  "C100_BEARING", NA_character_, "not named as APDF", "No explicit C100 bearing field in the new files.",
+  "SRC_PHASE", NA_character_, "implicit ARR", "Files appear to be ASMA/arrival-oriented; no explicit phase column.",
+  "IM_SAMAD_ID", "id", "available", "Source movement identifier.",
+  "SRC_AIRPORT", "ades", "available for ARR", "For arrivals, the source airport is the destination aerodrome."
+)
+
+read_zip_head <- function(zip_path, member, sep, n = 50000) {
+  data.table::fread(
+    cmd = sprintf("unzip -p %s %s", shQuote(zip_path), shQuote(member)),
+    sep = sep,
+    nrows = n,
+    na.strings = c("", "NA", " "),
+    colClasses = "character",
+    showProgress = FALSE,
+    data.table = FALSE
+  ) |>
+    tibble::as_tibble()
+}
+
+normalise_names <- function(x) {
+  x |>
+    rename_with(~ sub("^V1$", "row_index", .x)) |>
+    rename_with(~ gsub('^"|"$', "", .x))
+}
+
+read_asma_sample <- function(dataset, member, n = 50000) {
+  archive <- dplyr::filter(asma_archives, DATASET == dataset)
+  sep <- if (dataset == "annual_2023_2025") ";" else ","
+
+  read_zip_head(archive$ZIP_PATH, member, sep = sep, n = n) |>
+    normalise_names() |>
+    mutate(
+      DATASET = dataset,
+      MEMBER = member,
+      YEAR = stringr::str_extract(member, "20[0-9]{2}"),
+      MONTH_TOKEN = stringr::str_match(member, "kpi08_([a-z]{3})20[0-9]{2}\\.csv$")[, 2],
+      .before = 1
+    )
+}
+
+present <- function(x) {
+  !is.na(x) & trimws(as.character(x)) != ""
+}
+
+summarise_presence <- function(x) {
+  n <- nrow(x)
+  tibble::tibble(
+    N_SAMPLE = n,
+    ARR_LIKE_ADES_SB = sum(grepl("^SB", x$ades), na.rm = TRUE),
+    DEP_LIKE_ADEP_SB = sum(grepl("^SB", x$adep), na.rm = TRUE),
+    KPI08_POPULATED = sum(present(x$kpi08), na.rm = TRUE),
+    TRANSITO_POPULATED = sum(present(x$transito), na.rm = TRUE),
+    DESIMP_POPULATED = sum(present(x$desimp), na.rm = TRUE),
+    C_TIME_POPULATED = sum(present(x$c_time), na.rm = TRUE),
+    BEAR_POPULATED = sum(present(x$bear), na.rm = TRUE),
+    AIBT_POPULATED = sum(present(x$aibt), na.rm = TRUE),
+    ALDT_POPULATED = sum(present(x$aldt), na.rm = TRUE),
+    SIBT_POPULATED = sum(present(x$sibt), na.rm = TRUE)
+  ) |>
+    mutate(across(-N_SAMPLE, ~ round(.x / N_SAMPLE, 3), .names = "{.col}_SHARE"))
+}
+
+parse_duration_minutes <- function(x) {
+  x <- trimws(as.character(x))
+  x[x == "" | x == "NA"] <- NA_character_
+  sign <- ifelse(grepl("^-", x), -1, 1)
+  x <- sub("^-", "", x)
+
+  parts <- stringr::str_match(x, "^([0-9]+):([0-9]{2}):([0-9]{2}(?:\\.[0-9]+)?)$")
+  out <- suppressWarnings(
+    as.numeric(parts[, 2]) * 60 +
+      as.numeric(parts[, 3]) +
+      as.numeric(parts[, 4]) / 60
+  )
+  sign * out
+}
+```
+
+This note is a first-pass ingestion check for the two new Brazil ASMA archives received on 22 April 2026.
+It reads the zip files directly from Downloads and samples each source member, without unpacking the large CSVs into the project tree.
+
+The checks below focus on:
+
+-   coverage and file layout;
+-   whether APDF-like input fields can be mapped;
+-   whether `kpi08` and additional ASMA time fields are already calculated;
+-   whether the payload is arrival-only or contains usable departure/DSMA evidence.
+
+## Archive Inventory
+
+```{r}
+#| label: tbl-archive-inventory
+
+inventory <- purrr::pmap_dfr(
+  asma_archives,
+  function(DATASET, ZIP_PATH, NOTE) {
+    utils::unzip(ZIP_PATH, list = TRUE) |>
+      tibble::as_tibble() |>
+      transmute(
+        DATASET = DATASET,
+        MEMBER = Name,
+        SIZE_MB = round(Length / 1024^2, 1),
+        DATE = Date
+      )
+  }
+)
+
+inventory |>
+  mutate(
+    YEAR = stringr::str_extract(MEMBER, "20[0-9]{2}"),
+    MONTH_TOKEN = stringr::str_match(MEMBER, "kpi08_([a-z]{3})20[0-9]{2}\\.csv$")[, 2]
+  ) |>
+  arrange(DATASET, MEMBER) |>
+  kable()
+```
+
+The annual archive contains one file per year for 2023, 2024, and 2025.
+The monthly archive contains 2025 monthly files.
+It currently includes both `kpi08_feb2025.csv` and `kpi08_fev2025.csv`, which should be checked as a likely duplicate or Portuguese/English month-name export issue before combining all months.
+
+## Field Inventory
+
+```{r}
+#| label: tbl-field-inventory
+
+field_inventory <- inventory |>
+  mutate(
+    SEP = if_else(DATASET == "annual_2023_2025", ";", ","),
+    ZIP_PATH = asma_archives$ZIP_PATH[match(DATASET, asma_archives$DATASET)],
+    FIELDS = purrr::pmap(
+      list(ZIP_PATH, MEMBER, SEP),
+      function(zip_path, member, sep) {
+        names(read_zip_head(
+          zip_path = zip_path,
+          member = member,
+          sep = sep,
+          n = 5
+        ) |> normalise_names())
+      }
+    )
+  ) |>
+  tidyr::unnest_longer(FIELDS, values_to = "FIELD") |>
+  count(DATASET, FIELD, name = "N_FILES") |>
+  arrange(DATASET, FIELD)
+
+field_inventory |>
+  kable()
+```
+
+```{r}
+#| label: tbl-field-differences
+
+field_inventory |>
+  select(DATASET, FIELD) |>
+  mutate(PRESENT = TRUE) |>
+  tidyr::pivot_wider(names_from = DATASET, values_from = PRESENT, values_fill = FALSE) |>
+  arrange(FIELD) |>
+  kable()
+```
+
+Aside from the leading `row_index` in the monthly archive and the delimiter difference, both new data sets expose the same operational fields: `id`, airport pair, flight id, registration, aircraft class/type, runway/stand, `bear`, `c_time`, `aibt`, `aldt`, `sibt`, `setor`, `transito`, `c`, `desimp`, and `kpi08`.
+
+## APDF Readiness
+
+```{r}
+#| label: tbl-apdf-readiness
+
+apdf_mapping |>
+  mutate(APDF_EXPECTED = APDF_FIELD %in% expected_apdf_fields) |>
+  select(APDF_FIELD, SOURCE_FIELD, STATUS, NOTE) |>
+  kable()
+```
+
+The files are close to an APDF arrival extract, but not a drop-in APDF source:
+
+-   the basic APDF identity, airport, aircraft, runway, stand, movement, block, and scheduled fields are available or can be mapped;
+-   `C40_CROSS_TIME`/`C40_BEARING` and `C100_CROSS_TIME`/`C100_BEARING` are not explicitly named;
+-   the supplied `c_time` and `bear` likely represent one ASMA crossing point, but the file itself does not say whether that point is C40, C100, or another ASMA reference;
+-   there is no explicit `SRC_PHASE`; the data appear arrival-oriented because `ades` is the Brazilian airport and `aldt`/`aibt` are arrival timestamps.
+
+## Sample Presence Checks
+
+```{r}
+#| label: sample-members
+
+sample_members <- tibble::tribble(
+  ~DATASET, ~MEMBER,
+  "annual_2023_2025", "kpi08_2023.csv",
+  "annual_2023_2025", "kpi08_2024.csv",
+  "annual_2023_2025", "kpi08_2025.csv",
+  "monthly_2025", "kpi08_jan2025.csv",
+  "monthly_2025", "kpi08_feb2025.csv",
+  "monthly_2025", "kpi08_fev2025.csv",
+  "monthly_2025", "kpi08_dec2025.csv"
+)
+
+samples <- sample_members |>
+  mutate(DATA = purrr::map2(DATASET, MEMBER, read_asma_sample, n = 50000))
+```
+
+```{r}
+#| label: tbl-sample-presence
+
+samples |>
+  mutate(SUMMARY = purrr::map(DATA, summarise_presence)) |>
+  select(DATASET, MEMBER, SUMMARY) |>
+  tidyr::unnest(SUMMARY) |>
+  select(
+    DATASET, MEMBER, N_SAMPLE,
+    ends_with("_SHARE")
+  ) |>
+  arrange(DATASET, MEMBER) |>
+  kable()
+```
+
+Interpretation notes:
+
+-   `KPI08_POPULATED_SHARE` confirms that `kpi08` is already calculated in both new data sets for records with sufficient input;
+-   `TRANSITO_POPULATED_SHARE` and `DESIMP_POPULATED_SHARE` show that additional ASMA time fields are present;
+-   `C_TIME_POPULATED_SHARE` and `BEAR_POPULATED_SHARE` indicate whether crossing-point evidence exists for reconstructing or validating the ASMA calculation;
+-   `ARR_LIKE_ADES_SB_SHARE` versus `DEP_LIKE_ADEP_SB_SHARE` is a quick phase clue: a high `ades` Brazil share is consistent with arrivals into Brazil, while domestic flights naturally have both `adep` and `ades` in Brazil.
+
+## KPI08 and ASMA-Time Distributions
+
+```{r}
+#| label: tbl-time-distributions
+
+samples |>
+  mutate(
+    DIST = purrr::map(DATA, function(x) {
+      x |>
+        transmute(
+          kpi08_min = parse_duration_minutes(kpi08),
+          transito_min = parse_duration_minutes(transito),
+          desimp_min = parse_duration_minutes(desimp)
+        ) |>
+        summarise(
+          KPI08_N = sum(!is.na(kpi08_min)),
+          KPI08_MED = median(kpi08_min, na.rm = TRUE),
+          KPI08_P95 = quantile(kpi08_min, 0.95, na.rm = TRUE),
+          TRANSITO_N = sum(!is.na(transito_min)),
+          TRANSITO_MED = median(transito_min, na.rm = TRUE),
+          TRANSITO_P95 = quantile(transito_min, 0.95, na.rm = TRUE),
+          DESIMP_N = sum(!is.na(desimp_min)),
+          DESIMP_MED = median(desimp_min, na.rm = TRUE),
+          DESIMP_P95 = quantile(desimp_min, 0.95, na.rm = TRUE)
+        )
+    })
+  ) |>
+  select(DATASET, MEMBER, DIST) |>
+  tidyr::unnest(DIST) |>
+  mutate(across(where(is.numeric), ~ round(.x, 2))) |>
+  kable()
+```
+
+`transito`, `desimp`, and `kpi08` parse as durations in the sample rows.
+This is useful because the source appears to provide both the calculated KPI08 and enough intermediate ASMA timing to sanity-check the formula at least for populated rows.
+
+## Arrival and Departure Clues
+
+```{r}
+#| label: tbl-airport-pair-clues
+
+samples |>
+  mutate(
+    AIRPORT_PAIRS = purrr::map(DATA, function(x) {
+      x |>
+        mutate(
+          ADEP_BRA = grepl("^SB", adep),
+          ADES_BRA = grepl("^SB", ades),
+          PAIR_TYPE = case_when(
+            ADEP_BRA & ADES_BRA ~ "domestic_BRA",
+            !ADEP_BRA & ADES_BRA ~ "international_arr_to_BRA",
+            ADEP_BRA & !ADES_BRA ~ "international_dep_from_BRA",
+            TRUE ~ "non_BRA_pair"
+          )
+        ) |>
+        count(PAIR_TYPE, name = "N") |>
+        mutate(SHARE = round(N / sum(N), 3))
+    })
+  ) |>
+  select(DATASET, MEMBER, AIRPORT_PAIRS) |>
+  tidyr::unnest(AIRPORT_PAIRS) |>
+  arrange(DATASET, MEMBER, desc(N)) |>
+  kable()
+```
+
+The new ASMA files do not look like departure DSMA files because they use arrival fields (`aldt`, `aibt`, `sibt`) and have no explicit departure movement or off-block/take-off timestamps.
+The presence of Brazilian `adep` values mostly reflects domestic arrivals where both ends of the pair are in Brazil.
+
+## Preliminary Conclusions
+
+-   Both new archives provide calculated `kpi08`.
+-   Both provide additional ASMA time fields: `transito` and `desimp`, plus `c_time` and `bear` for a crossing-point reference.
+-   The main structural difference is annual versus monthly packaging, delimiter, and the monthly archive's leading row index.
+-   The monthly archive needs a duplicate check for `feb` versus `fev`.
+-   The data are arrival-oriented ASMA data and appear usable for ARR KPI08/APDF-like ingestion.
+-   The files do not appear to provide true DEP/DSMA evidence; a separate DSMA source would still be needed unless DECEA confirms that departure fields are encoded elsewhere.
+
+## Next Ingestion Steps
+
+1.  Confirm with DECEA what `c_time`/`bear` represent: C40, C100, or another ASMA reference.
+2.  Confirm whether `transito`, `desimp`, and `kpi08` definitions match KPI08 calculation expectations.
+3.  Decide whether to use the annual 2025 file or reconstruct 2025 from monthly files after resolving `feb`/`fev`.
+4.  Build a harmonised parquet extract with APDF-like names for ARR only, retaining the original calculated KPI fields for validation.
+
+## Production Ingestion
+
+The first production-style ingestion is implemented in `R/08-ingest-bra-asma.R`.
+It uses the multi-year annual archive and keeps the raw Brazil `CLASS` value as supplied.
+At this stage, `CLASS` should therefore be interpreted as the Brazil/WTC-style category available in the source, not as the APDF class code that combines wake-turbulence category with propulsion.
+
+The script writes:
+
+-   APDF-like ARR ASMA parquet extracts to `/Users/rainerkoelle/RProjects/PBWG-BRA/data/asma`;
+-   2024 GANP p20 reference files to `/Users/rainerkoelle/RProjects/PBWG-BRA/outputs/asma-reference-2024`;
+-   daily analytic ASMA files to `/Users/rainerkoelle/RProjects/PBWG-BRA/outputs/asma-daily-2023`, `asma-daily-2024`, and `asma-daily-2025`;
+-   combined report-layer outputs to `data/`.
+
+The reference is calculated from 2024 valid arrival ASMA samples by:
+
+`ICAO`, `PHASE`, `RANGE`, `CLASS`, `RWY`, and `SECTOR_GROUP`.
+
+The daily analytic output keeps the same breakdown fields and reports movement counts plus total observed ASMA time, total reference time, total additional time, and the Brazil-supplied reference/KPI08 totals for comparison.
+
+```{r}
+#| label: tbl-production-output-check
+
+asma_daily_path <- here::here("data", "PBWG-BRA-asma-analytic-2023-2025-ref2024-icao_ganp_p20.csv")
+asma_coverage_path <- here::here("data", "BRA-asma-coverage-summary-2023-2025.csv")
+asma_reference_coverage_path <- here::here("data", "BRA-asma-reference-coverage-2024.csv")
+
+if (file.exists(asma_daily_path)) {
+  asma_daily <- readr::read_csv(asma_daily_path, show_col_types = FALSE)
+
+  asma_daily |>
+    summarise(
+      DAILY_GROUPS = n(),
+      MVTS_VALID = sum(MVTS_VALID, na.rm = TRUE),
+      MVTS_NA = sum(MVTS_NA, na.rm = TRUE),
+      TOT_ASMA = sum(TOT_ASMA, na.rm = TRUE),
+      TOT_REF = sum(TOT_REF, na.rm = TRUE),
+      TOT_ADD_TIME = sum(TOT_ADD_TIME, na.rm = TRUE),
+      .by = c(PHASE, RANGE)
+    ) |>
+    mutate(across(where(is.numeric), ~ round(.x, 1))) |>
+    kable()
+} else {
+  tibble::tibble(NOTE = "Run R/08-ingest-bra-asma.R to create the production output.") |>
+    kable()
+}
+```
+
+```{r}
+#| label: tbl-production-coverage-check
+
+if (file.exists(asma_coverage_path)) {
+  readr::read_csv(asma_coverage_path, show_col_types = FALSE) |>
+    summarise(
+      N_TOTAL = sum(N_TOTAL, na.rm = TRUE),
+      N_VALID_ASMA = sum(N_VALID_ASMA, na.rm = TRUE),
+      PCT_VALID_ASMA = N_VALID_ASMA / N_TOTAL,
+      N_MISSING_RANGE = sum(N_MISSING_RANGE, na.rm = TRUE),
+      N_MISSING_CLASS = sum(N_MISSING_CLASS, na.rm = TRUE),
+      N_MISSING_RWY = sum(N_MISSING_RWY, na.rm = TRUE),
+      N_MISSING_SECTOR = sum(N_MISSING_SECTOR, na.rm = TRUE),
+      .by = YEAR
+    ) |>
+    mutate(PCT_VALID_ASMA = round(PCT_VALID_ASMA, 3)) |>
+    kable()
+}
+```
+
+```{r}
+#| label: tbl-production-reference-coverage-check
+
+if (file.exists(asma_reference_coverage_path)) {
+  readr::read_csv(asma_reference_coverage_path, show_col_types = FALSE) |>
+    summarise(
+      N_REFERENCE_GROUPS = sum(N_REFERENCE_GROUPS, na.rm = TRUE),
+      N_VALID_REFERENCE_GROUPS = sum(N_VALID_REFERENCE_GROUPS, na.rm = TRUE),
+      .by = RANGE
+    ) |>
+    kable()
+}
+```
