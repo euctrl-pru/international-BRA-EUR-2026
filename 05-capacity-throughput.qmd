@@ -1,0 +1,21 @@
+---
+title: "Untitled"
+---
+
+add study airport max capacity for 2025, ideally bokend down into max ARR and max DEP.
+
+
+HOMEWORK BENE
+todo - update max capacity for 2025
+
+```{r}
+bra_cap <- tribble(   
+  # CHECK AND VERIFY BRA DATA! # Hugo: Manually updated all airport values referring to DECEA 2021 Report
+  ~APT_ICAO, ~YEAR, ~MAX_CAP
+  , "SBCT" , 2025 , 24
+  , "SBCT" , 2025 , 28
+  , "SBCT" , 2025 , 32
+  , "SBCT" , 2025 , 32
+)
+```
+

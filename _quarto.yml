@@ -25,10 +25,10 @@ book:
   - 02-system-overview.qmd
   - 03-traffic_characterisation.qmd
   #- 04-predictability.qmd
-  #- 05-capacity_and_throughput.qmd
+  - 05-capacity-throughput.qmd
   - 06-efficiency.qmd
   # - 07-environment.qmd
-  #- 09-studies.qmd
+  - 09-studies.qmd
   #- 10-conclusions.qmd
   - 99-references.qmd
   #appendices:
