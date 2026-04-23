@@ -1,0 +1,24 @@
+---
+title: "05-Capacity-bene"
+---
+
+
+```{r}
+
+bra_cap <- tibble::tribble(
+  ~APT_ICAO, ~YEAR, ~MAX_CAP
+  ,"SBGR",  2025 , 60
+  ,"SBGL",  2025 , 60
+  ,"SBRJ",  2025 , 29
+  ,"SBCF",  2025 , 37
+  ,"SBBR",  2025 , 80
+  ,"SBSV",  2025 , 36
+  ,"SBKP",  2025 , 40
+  ,"SBSP",  2025 , 44
+  ,"SBCT",  2025 , 32
+  ,"SBPA",  2025 , 36
+  ,"SBRF",  2025 , 38
+  ,"SBEG",  2025 , 38
+)
+
+```
