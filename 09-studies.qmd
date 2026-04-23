@@ -1,0 +1,98 @@
+---
+title: "Topic Studies"
+---
+
+## IAR - runway pressure 
+
+pull stuff from other document here
+
+better visualisation and consideration of peak hours.
+
+## Horizontal Flight Effiency
+
+idea 
+
+* show "network" values for KEP all 2025
+* pick a set of city pairs
+
+```{r}
+# BRA network HFE
+fn <- fs::dir_ls("data", regexp = "kpi04")
+bra_kep <- readr::read_csv(fn, show_col_types = F)
+
+fn <- fs::dir_ls("data", regexp = "kpi05")
+bra_kea <- readr::read_csv(fn, show_col_types = F)
+
+
+bra_KEP <- bra_kep |> 
+    select(
+        DATE = time
+        ,ADEP = orig
+        ,ADES = dest
+        ,FLTID = id_icao
+        ,DIST_FLOWN = dist_flown_v1
+        ,DIST_ACHD  = dist_achieved_v1
+        ,KPI = kpi04_v1) |> 
+    mutate(TYPE = "KEP")
+
+bra_KEA <- bra_kea |> 
+  select(
+        DATE = time
+        ,ADEP = plan_dep
+        ,ADES = real_arr
+        ,FLTID = id_icao
+        ,DIST_FLOWN = dist_flown_v1
+        ,DIST_ACHD  = dist_achieved_v1
+        ,KPI_ORIG = kpi05_v1
+       ) |> 
+    mutate(TYPE = "KEA"
+            ,KPI = KPI_ORIG / 100) |> 
+  filter(DIST_ACHD > 0)
+
+bra_hfe <- bind_rows(bra_KEA, bra_KEP)
+```
+```{r}
+bra_hfe_daily <- bra_hfe |> 
+  mutate(BIN = lubridate::floor_date(DATE, "day")) |> 
+  group_by(BIN, TYPE) |> 
+    reframe(N = n(), KPI = sum(KPI)/n()) 
+
+bra_hfe_daily|> 
+  
+    ggplot() +
+    geom_line(aes(x = BIN, y = KPI, group = TYPE, color = TYPE))
+```
+
+
+airport pairs
+
+200NM SBRJ - SBSP
+400NM SBBR - SBSP
+1000  SBGR - SBRF
+
+```{r}
+pick_pairs <- tibble::tribble(
+  ~ADEP, ~ADES, ~GCD, ~GCD_GRP
+  , "SBRJ", "SBSP",200, "200"
+  ,"SBBR","SBSP", 400, "400"
+  ,"SBGR", "SBRF", 1000, "1000"
+) |> 
+  mutate(ADP = paste0(ADEP,"-",ADES))
+
+tmp <- bra_hfe |> 
+  mutate(ADP = paste0(ADEP,"-", ADES)) |> 
+  filter(ADP %in% pick_pairs$ADP, TYPE == "KEP") |> 
+  mutate(BIN = lubridate::floor_date(DATE, "day")) |> 
+  group_by(BIN, TYPE, ADEP, ADES) |> 
+    reframe(N = n(), KPI = sum(KPI)/n()) |> 
+    mutate(ADP = paste(ADEP, "-", ADES))
+```
+
+```{r}
+tmp |> 
+  ggplot() +
+  geom_line(
+    aes(x = BIN, y = KPI, color = ADP, group = ADP)
+  )
+```
+

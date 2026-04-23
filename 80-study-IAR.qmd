@@ -1,0 +1,460 @@
+---
+title: "Capacity - Inter-arrival Rate"
+---
+
+```{r}
+#| label: setup
+#| echo: false
+#| message: false
+#| warning: false
+
+source(here::here("_chapter-setup.R"))
+
+iar_params <- list(
+  slot_minutes = 15L,
+  rolling_slots = 4L,
+  min_matching_slots = 3L,
+  representative_share = 0.03,
+  analysis_hours_utc = 7:21,
+  include_departure_only_configurations = TRUE
+)
+```
+
+This note develops an exploratory runway-configuration data set for the BRA-EUR capacity and throughput comparison.
+The purpose is to test whether runway-aware 15-minute throughput can support an inter-arrival spacing comparison.
+
+The configuration identification follows the broad logic used in the EUROCONTROL PRC airport capacity imbalance technical note: 
+
+* identify runway-use combinations per 15-minute interval, 
+* validate configurations over rolling hours where at least three of four consecutive intervals match, then 
+* keep representative configurations above a configurable time-share threshold.
+
+The parameters are exposed in `iar_params` so the analysis can be tuned without rewriting the method.
+
+```{r}
+#| label: helpers
+
+normalise_runway_label <- function(x) {
+  x <- stringr::str_trim(as.character(x))
+  x[x == "" | x == "NA"] <- NA_character_
+  stringr::str_to_upper(x)
+}
+
+collapse_runway_set <- function(x) {
+  x <- sort(unique(stats::na.omit(normalise_runway_label(x))))
+  if (length(x) == 0) {
+    return(NA_character_)
+  }
+  stringr::str_c(x, collapse = "+")
+}
+
+make_configuration_label <- function(arr_runways, dep_runways) {
+  dplyr::case_when(
+    !is.na(arr_runways) & !is.na(dep_runways) ~ stringr::str_c("ARR:", arr_runways, " - DEP:", dep_runways),
+    !is.na(arr_runways) & is.na(dep_runways) ~ stringr::str_c("ARR:", arr_runways),
+    is.na(arr_runways) & !is.na(dep_runways) ~ stringr::str_c("DEP:", dep_runways),
+    TRUE ~ "NO_OPS"
+  )
+}
+
+classify_operation_mode <- function(arrs, deps) {
+  dplyr::case_when(
+    arrs > 0 & deps > 0 ~ "mixed",
+    arrs > 0 & deps == 0 ~ "arrival_only",
+    arrs == 0 & deps > 0 ~ "departure_only",
+    TRUE ~ "no_ops"
+  )
+}
+
+make_complete_slot_grid <- function(data, slot_minutes = 15L) {
+  data |>
+    dplyr::summarise(
+      MIN_BIN = min(.data$BIN, na.rm = TRUE),
+      MAX_BIN = max(.data$BIN, na.rm = TRUE),
+      .by = c(.data$REG, .data$ICAO)
+    ) |>
+    dplyr::mutate(
+      BIN = purrr::map2(
+        .data$MIN_BIN,
+        .data$MAX_BIN,
+        \(from, to) seq(from = from, to = to, by = stringr::str_c(slot_minutes, " mins"))
+      )
+    ) |>
+    tidyr::unnest(.data$BIN) |>
+    dplyr::select(.data$REG, .data$ICAO, .data$BIN)
+}
+
+build_slot_configurations <- function(data, slot_minutes = 15L) {
+  runway_slots <- data |>
+    dplyr::mutate(RWY = normalise_runway_label(.data$RWY)) |>
+    dplyr::filter(!is.na(.data$RWY)) |>
+    dplyr::summarise(
+      ARRS = sum(.data$ARRS, na.rm = TRUE),
+      DEPS = sum(.data$DEPS, na.rm = TRUE),
+      FLTS = sum(.data$FLTS, na.rm = TRUE),
+      .by = c(.data$REG, .data$ICAO, .data$BIN, .data$RWY)
+    )
+
+  slot_totals <- data |>
+    dplyr::summarise(
+      ARRS = sum(.data$ARRS, na.rm = TRUE),
+      DEPS = sum(.data$DEPS, na.rm = TRUE),
+      FLTS = sum(.data$FLTS, na.rm = TRUE),
+      RWY_NA_FLTS = sum(.data$FLTS[is.na(.data$RWY)], na.rm = TRUE),
+      .by = c(.data$REG, .data$ICAO, .data$BIN)
+    )
+
+  arr_sets <- runway_slots |>
+    dplyr::filter(.data$ARRS > 0) |>
+    dplyr::summarise(ARR_RWYS = collapse_runway_set(.data$RWY), .by = c(.data$REG, .data$ICAO, .data$BIN))
+
+  dep_sets <- runway_slots |>
+    dplyr::filter(.data$DEPS > 0) |>
+    dplyr::summarise(DEP_RWYS = collapse_runway_set(.data$RWY), .by = c(.data$REG, .data$ICAO, .data$BIN))
+
+  make_complete_slot_grid(data, slot_minutes = slot_minutes) |>
+    dplyr::left_join(slot_totals, by = c("REG", "ICAO", "BIN")) |>
+    dplyr::left_join(arr_sets, by = c("REG", "ICAO", "BIN")) |>
+    dplyr::left_join(dep_sets, by = c("REG", "ICAO", "BIN")) |>
+    dplyr::mutate(
+      dplyr::across(c(.data$ARRS, .data$DEPS, .data$FLTS, .data$RWY_NA_FLTS), \(x) tidyr::replace_na(x, 0L)),
+      CONFIG_RAW = make_configuration_label(.data$ARR_RWYS, .data$DEP_RWYS),
+      OP_MODE = classify_operation_mode(.data$ARRS, .data$DEPS),
+      HOUR_UTC = lubridate::hour(.data$BIN)
+    )
+}
+
+dominant_configuration <- function(configs, min_matching_slots = 3L) {
+  configs <- configs[!is.na(configs) & configs != "NO_OPS"]
+  if (length(configs) == 0) {
+    return(NA_character_)
+  }
+
+  counts <- sort(table(configs), decreasing = TRUE)
+  if (unname(counts[[1]]) < min_matching_slots) {
+    return(NA_character_)
+  }
+
+  names(counts)[[1]]
+}
+
+apply_rolling_configuration <- function(
+    slot_config,
+    rolling_slots = 4L,
+    min_matching_slots = 3L
+) {
+  slot_config |>
+    dplyr::arrange(.data$REG, .data$ICAO, .data$BIN) |>
+    dplyr::group_by(.data$REG, .data$ICAO) |>
+    dplyr::group_modify(
+      \(data, key) {
+        configs <- data$CONFIG_RAW
+        config_rolling <- rep(NA_character_, length(configs))
+
+        if (length(configs) >= rolling_slots) {
+          window_starts <- seq_len(length(configs) - rolling_slots + 1L)
+          config_rolling[window_starts] <- purrr::map_chr(
+            window_starts,
+            \(i) dominant_configuration(
+              configs[i:(i + rolling_slots - 1L)],
+              min_matching_slots = min_matching_slots
+            )
+          )
+        }
+
+        dplyr::mutate(
+          data,
+          CONFIG_ROLLING = config_rolling,
+          CONFIG_VALID = !is.na(.data$CONFIG_ROLLING)
+        )
+      }
+    ) |>
+    dplyr::ungroup()
+}
+
+summarise_representative_configurations <- function(
+    rolling_config,
+    representative_share = 0.03,
+    analysis_hours_utc = NULL,
+    include_departure_only_configurations = TRUE
+) {
+  analysed <- rolling_config |>
+    dplyr::filter(.data$CONFIG_VALID)
+
+  if (!is.null(analysis_hours_utc)) {
+    analysed <- analysed |>
+      dplyr::filter(.data$HOUR_UTC %in% analysis_hours_utc)
+  }
+
+  if (!include_departure_only_configurations) {
+    analysed <- analysed |>
+      dplyr::filter(.data$OP_MODE != "departure_only")
+  }
+
+  airport_denominator <- analysed |>
+    dplyr::summarise(ANALYSED_SLOTS = dplyr::n(), .by = c(.data$REG, .data$ICAO))
+
+  analysed |>
+    dplyr::summarise(
+      SLOTS = dplyr::n(),
+      ARR_HOURLY_P99 = stats::quantile(zoo::rollsum(.data$ARRS, 4, align = "left", fill = NA), 0.99, na.rm = TRUE),
+      DEP_HOURLY_P99 = stats::quantile(zoo::rollsum(.data$DEPS, 4, align = "left", fill = NA), 0.99, na.rm = TRUE),
+      FLT_HOURLY_P99 = stats::quantile(zoo::rollsum(.data$FLTS, 4, align = "left", fill = NA), 0.99, na.rm = TRUE),
+      .by = c(.data$REG, .data$ICAO, .data$CONFIG_ROLLING)
+    ) |>
+    dplyr::left_join(airport_denominator, by = c("REG", "ICAO")) |>
+    dplyr::mutate(
+      SHARE = .data$SLOTS / .data$ANALYSED_SLOTS,
+      REPRESENTATIVE = .data$SHARE >= representative_share
+    ) |>
+    dplyr::arrange(.data$REG, .data$ICAO, dplyr::desc(.data$SHARE))
+}
+
+slot_interarrival_spacing <- function(slot_config, representative_configs) {
+  representative_lookup <- representative_configs |>
+    dplyr::filter(.data$REPRESENTATIVE) |>
+    dplyr::select(.data$REG, .data$ICAO, CONFIG_ROLLING = .data$CONFIG_ROLLING)
+
+  slot_config |>
+    dplyr::filter(.data$CONFIG_VALID, .data$ARRS > 0) |>
+    dplyr::inner_join(representative_lookup, by = c("REG", "ICAO", "CONFIG_ROLLING")) |>
+    dplyr::mutate(
+      ARR_SPACING_MIN = iar_params$slot_minutes / .data$ARRS,
+      DEP_SPACING_MIN = dplyr::if_else(.data$DEPS > 0, iar_params$slot_minutes / .data$DEPS, NA_real_),
+      MIXED_RUNWAY_USE = .data$ARRS > 0 & .data$DEPS > 0
+    )
+}
+```
+
+```{r}
+#| label: load-data
+
+airport_names <- dplyr::bind_rows(
+  bra_apts_names |> dplyr::mutate(REG = "BRA"),
+  eur_apts_names |> dplyr::mutate(REG = "EUR")
+)
+
+throughput_rwy_path <- here::here("data", "PBWG-BRA-EUR-thru-rwy-15min-2025.parquet")
+slot_config_path <- here::here("data", "PBWG-BRA-EUR-rwy-config-15min-2025.parquet")
+representative_config_path <- here::here("data", "PBWG-BRA-EUR-rwy-config-representative-2025.parquet")
+```
+
+## Preparatory Save-out
+
+```{}
+#| label: prepare-save-runway-config
+#| message: true
+
+throughput_rwy <- arrow::read_parquet(throughput_rwy_path) |>
+  dplyr::mutate(
+    BIN = as.POSIXct(.data$BIN, tz = "UTC"),
+    RWY = normalise_runway_label(.data$RWY)
+  ) |>
+  dplyr::filter(
+    (.data$REG == "BRA" & .data$ICAO %in% bra_apts) |
+      (.data$REG == "EUR" & .data$ICAO %in% eur_apts)
+  )
+
+slot_config_raw <- build_slot_configurations(
+  throughput_rwy,
+  slot_minutes = iar_params$slot_minutes
+)
+
+slot_config <- apply_rolling_configuration(
+  slot_config_raw,
+  rolling_slots = iar_params$rolling_slots,
+  min_matching_slots = iar_params$min_matching_slots
+)
+
+representative_configs <- summarise_representative_configurations(
+  slot_config,
+  representative_share = iar_params$representative_share,
+  analysis_hours_utc = iar_params$analysis_hours_utc,
+  include_departure_only_configurations = iar_params$include_departure_only_configurations
+)
+
+arrow::write_parquet(slot_config, slot_config_path)
+arrow::write_parquet(representative_configs, representative_config_path)
+
+message("Saved slot-level runway configuration data to: ", slot_config_path)
+message("Saved representative configuration summary to: ", representative_config_path)
+```
+
+## Analytic Data
+
+```{r}
+#| label: load-saved-analysis-data
+
+slot_config <- arrow::read_parquet(slot_config_path) |>
+  dplyr::mutate(BIN = as.POSIXct(.data$BIN, tz = "UTC"))
+
+representative_configs <- arrow::read_parquet(representative_config_path)
+
+iar_slots <- slot_interarrival_spacing(slot_config, representative_configs) |>
+  dplyr::left_join(airport_names, by = c("REG", "ICAO")) |>
+  dplyr::mutate(
+    AIRPORT = dplyr::coalesce(.data$NAME, .data$ICAO),
+    REGION = dplyr::recode(.data$REG, BRA = "Brazil", EUR = "Europe")
+  )
+```
+
+```{r}
+#| label: data-checks
+
+throughput_rwy |>
+  dplyr::summarise(
+    ROWS = dplyr::n(),
+    AIRPORTS = dplyr::n_distinct(.data$ICAO),
+    RUNWAY_GROUPS = dplyr::n_distinct(paste(.data$ICAO, .data$RWY)),
+    ARRS = sum(.data$ARRS, na.rm = TRUE),
+    DEPS = sum(.data$DEPS, na.rm = TRUE),
+    FLTS = sum(.data$FLTS, na.rm = TRUE),
+    .by = .data$REG
+  )
+```
+
+## Representative Runway Configurations
+
+```{r}
+#| label: representative-configurations
+
+representative_configs |>
+  dplyr::filter(.data$REPRESENTATIVE) |>
+  dplyr::left_join(airport_names, by = c("REG", "ICAO")) |>
+  dplyr::mutate(
+    SHARE = scales::percent(.data$SHARE, accuracy = 0.1),
+    ARR_HOURLY_P99 = round(.data$ARR_HOURLY_P99, 0),
+    DEP_HOURLY_P99 = round(.data$DEP_HOURLY_P99, 0),
+    FLT_HOURLY_P99 = round(.data$FLT_HOURLY_P99, 0)
+  ) |>
+  dplyr::select(
+    .data$REG, .data$ICAO, .data$NAME, .data$CONFIG_ROLLING,
+    .data$SHARE, .data$SLOTS, .data$ARR_HOURLY_P99,
+    .data$DEP_HOURLY_P99, .data$FLT_HOURLY_P99
+  ) |>
+  dplyr::arrange(.data$REG, .data$ICAO, dplyr::desc(.data$SLOTS)) |>
+  dplyr::group_by(.data$REG, .data$ICAO) |>
+  dplyr::slice_head(n = 6) |>
+  dplyr::ungroup()
+```
+
+```{r}
+#| label: fig-configuration-share
+#| fig-cap: "Representative runway configuration shares by airport"
+#| fig-align: "center"
+#| out-width: 100%
+
+representative_configs |>
+  dplyr::filter(.data$REPRESENTATIVE) |>
+  dplyr::left_join(airport_names, by = c("REG", "ICAO")) |>
+  dplyr::mutate(AIRPORT = dplyr::coalesce(.data$NAME, .data$ICAO)) |>
+  ggplot2::ggplot(ggplot2::aes(x = forcats::fct_reorder(.data$AIRPORT, .data$SHARE), y = .data$SHARE, fill = .data$REG)) +
+  ggplot2::geom_col(width = 0.72) +
+  ggplot2::coord_flip() +
+  ggplot2::facet_wrap(~ REG, scales = "free_y") +
+  ggplot2::scale_y_continuous(labels = scales::percent) +
+  ggplot2::scale_fill_manual(values = bra_eur_colours) +
+  ggplot2::labs(x = NULL, y = "Share of analysed 15-minute intervals", fill = NULL) +
+  ggplot2::theme(legend.position = "none")
+```
+
+## Slot-Implied Inter-arrival Spacing
+
+With this aggregated play data, the spacing metric is an interval-implied value: `15 / arrivals in slot`.
+
+NOTE: That is not yet a movement-by-movement inter-arrival time, but it is useful for testing the comparison and visual language before moving to individual arrival timestamps.
+
+```{r}
+#| label: iar-summary
+
+iar_summary <- iar_slots |>
+  dplyr::summarise(
+    SLOTS = dplyr::n(),
+    ARRIVAL_MOVEMENTS = sum(.data$ARRS, na.rm = TRUE),
+    MEDIAN_SPACING = stats::median(.data$ARR_SPACING_MIN, na.rm = TRUE),
+    P25_SPACING = stats::quantile(.data$ARR_SPACING_MIN, 0.25, na.rm = TRUE),
+    P75_SPACING = stats::quantile(.data$ARR_SPACING_MIN, 0.75, na.rm = TRUE),
+    .by = c(.data$REG, .data$ICAO, .data$AIRPORT, .data$OP_MODE)
+  ) |>
+  dplyr::arrange(.data$REG, .data$ICAO, .data$OP_MODE)
+
+iar_summary
+```
+
+```{r}
+#| label: fig-interarrival-boxplot
+#| fig-cap: "Slot-implied inter-arrival spacing by airport and mode of operation"
+#| fig-align: "center"
+#| out-width: 100%
+
+iar_slots |>
+  dplyr::mutate(
+    OP_MODE = dplyr::recode(
+      .data$OP_MODE,
+      arrival_only = "Arrival only",
+      mixed = "Mixed",
+      departure_only = "Departure only"
+    )
+  ) |>
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = forcats::fct_reorder(.data$AIRPORT, .data$ARR_SPACING_MIN, .fun = stats::median, na.rm = TRUE),
+      y = .data$ARR_SPACING_MIN,
+      fill = .data$OP_MODE
+    )
+  ) +
+  ggplot2::geom_boxplot(outlier.alpha = 0.12, width = 0.68) +
+  ggplot2::coord_flip() +
+  ggplot2::facet_wrap(~ REGION, scales = "free_y") +
+  ggplot2::scale_y_continuous(labels = \(x) scales::number(x, accuracy = 0.1)) +
+  ggplot2::labs(x = NULL, y = "Minutes per arrival in 15-minute slot", fill = "Mode") +
+  ggplot2::theme(legend.position = "bottom")
+```
+
+
+Each observation is a 15-minute interval with at least one arrival, converted into an approximate spacing value as 15 minutes / number of arrivals in that slot; lower values therefore indicate more tightly packed arrival flows and higher observed arrival intensity.
+
+each dot is a 15-minute slot whose slot-implied inter-arrival spacing is unusually low or high relative to that airport/mode group. Since the metric is 15 / arrivals in slot, high outliers usually mean slots with very few arrivals, often just one arrival in 15 minutes
+
+
+```{r}
+#| label: fig-config-boxplot-example
+#| fig-cap: "Slot-implied inter-arrival spacing for the most common configurations"
+#| fig-align: "center"
+#| out-width: 100%
+
+top_config_airports <- iar_slots |>
+  dplyr::summarise(ARRS = sum(.data$ARRS, na.rm = TRUE), .by = c(.data$REG, .data$ICAO, .data$AIRPORT)) |>
+  dplyr::group_by(.data$REG) |>
+  dplyr::slice_max(.data$ARRS, n = 4, with_ties = FALSE) |>
+  dplyr::ungroup()
+
+top_apts_plot <- iar_slots |>
+  dplyr::semi_join(top_config_airports, by = c("REG", "ICAO", "AIRPORT")) |>
+  dplyr::group_by(.data$REG, .data$ICAO, .data$AIRPORT, .data$CONFIG_ROLLING) |>
+  dplyr::filter(dplyr::n() >= 40) |>
+  dplyr::ungroup() |>
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = forcats::fct_reorder(.data$CONFIG_ROLLING, .data$ARR_SPACING_MIN, .fun = stats::median, na.rm = TRUE),
+      y = .data$ARR_SPACING_MIN,
+      fill = .data$REG
+    )
+  ) +
+  ggplot2::geom_boxplot(outlier.alpha = 0.12, width = 0.68) +
+  ggplot2::coord_flip() +
+  ggplot2::facet_wrap(~ AIRPORT, scales = "free_y") +
+  ggplot2::scale_fill_manual(values = bra_eur_colours) +
+  ggplot2::labs(x = NULL, y = "Minutes per arrival in 15-minute slot", fill = NULL) +
+  ggplot2::theme(legend.position = "none") + 
+  facet_wrap(vars(REG))
+
+top_apts_plot
+```
+
+## Working Notes
+
+current implementation keeps departures in the data model -> strictly not just inter-arrival rate and allows for mixed-mode use
+-> we can derive departure sequencing from it.
+
+this is a "slot-count" analysis -- potential refinement = true movement-level. ==> requires to keep timestamps in slot-level aggregation
