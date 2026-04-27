@@ -2,20 +2,766 @@
 title: "Untitled"
 ---
 
-add study airport max capacity for 2025, ideally bokend down into max ARR and max DEP.
-
-
-HOMEWORK BENE
-todo - update max capacity for 2025
+<!-- 
+think about which other airport we might use for the BLI/PLI comparison
+-->
 
 ```{r}
-bra_cap <- tribble(   
-  # CHECK AND VERIFY BRA DATA! # Hugo: Manually updated all airport values referring to DECEA 2021 Report
-  ~APT_ICAO, ~YEAR, ~MAX_CAP
-  , "SBCT" , 2025 , 24
-  , "SBCT" , 2025 , 28
-  , "SBCT" , 2025 , 32
-  , "SBCT" , 2025 , 32
-)
+#| label: setup
+#| echo: false
+#| message: false
+source(here::here("_chapter-setup.R"))
 ```
 
+```{r}
+#| label: prep-capacity-throughput
+#| message: false
+
+bra_cap <- tibble::tribble(
+  ~APT_ICAO, ~YEAR, ~MAX_CAP,
+  "SBGR", 2025, 60,
+  "SBGL", 2025, 60,
+  "SBRJ", 2025, 29,
+  "SBCF", 2025, 37,
+  "SBBR", 2025, 80,
+  "SBSV", 2025, 36,
+  "SBKP", 2025, 40,
+  "SBSP", 2025, 44,
+  "SBCT", 2025, 32,
+  "SBPA", 2025, 36,
+  "SBRF", 2025, 38,
+  "SBEG", 2025, 38
+)
+
+eur_cap <- tibble::tribble(
+  ~APT_ICAO, ~YEAR, ~MAX_CAP,
+  "EGLL", 2025, 92,
+  "EGKK", 2025, 55,
+  "EHAM", 2025, 112,
+  "EDDF", 2025, 106,
+  "EDDM", 2025, 90,
+  "LSZH", 2025, 66,
+  "LFPG", 2025, 120,
+  "LEMD", 2025, 100,
+  "LEBL", 2025, 85,
+  "LPPT", 2025, 40,
+  "LGAV", 2025, 44,
+  "LTFM", 2025, 120
+)
+
+bra_rwys <- tibble::tribble(
+  ~APT_ICAO, ~RWY,
+  "SBBR", 2,
+  "SBGR", 2,
+  "SBSP", 2,
+  "SBKP", 1,
+  "SBRJ", 2,
+  "SBGL", 2,
+  "SBCF", 1,
+  "SBSV", 2,
+  "SBPA", 1,
+  "SBCT", 2,
+  "SBRF", 2,
+  "SBEG", 1
+)
+
+eur_rwys <- tibble::tribble(
+  ~APT_ICAO, ~RWY,
+  "EGLL", 2,
+  "EGKK", 1,
+  "EHAM", 6,
+  "EDDF", 4,
+  "EDDM", 2,
+  "LFPG", 4,
+  "LSZH", 3,
+  "LEMD", 4,
+  "LEBL", 3,
+  "LPPT", 1,
+  "LGAV", 2,
+  "LTFM", 5
+)
+
+generate_capacity_plot <- function(.bra_cap, .eur_cap, key_year = this_year) {
+  cap <- bind_rows(
+    .bra_cap |> mutate(REGION = "BRA"),
+    .eur_cap |> mutate(REGION = "EUR")
+  ) |>
+    filter(YEAR == key_year) |>
+    inner_join(
+      bind_rows(bra_rwys, eur_rwys) |> mutate(YEAR = key_year),
+      by = c("APT_ICAO", "YEAR")
+    ) |>
+    inner_join(
+      bind_rows(bra_apts_names, eur_apts_names),
+      by = join_by(APT_ICAO == ICAO)
+    )
+
+  cap |>
+    ggplot(aes(x = MAX_CAP, y = reorder(NAME, MAX_CAP))) +
+    geom_col(aes(fill = REGION)) +
+    scale_fill_manual(values = bra_eur_colours) +
+    geom_text(aes(x = 0, label = APT_ICAO), hjust = 0, color = "white", size = 3) +
+    facet_grid(RWY ~ ., as.table = FALSE, switch = "y", scales = "free", space = "free") +
+    bra_eur_theme_bw +
+    labs(x = NULL, y = NULL, fill = "Region") +
+    theme(
+      legend.position = c(0.9, 0.12),
+      legend.key.size = unit(3, "mm"),
+      legend.title = element_text(size = 9),
+      legend.text = element_text(size = 8),
+      axis.ticks = element_blank()
+    )
+}
+
+plot_timeline <- function(.df, y_legend) {
+  icao_colors <- .df |>
+    distinct(ICAO, REG) |>
+    group_by(REG) |>
+    mutate(COLOR = as.factor(row_number()))
+
+  tmp <- .df |> left_join(icao_colors, by = c("ICAO", "REG"))
+
+  label_data <- bind_rows(
+    tmp |>
+      group_by(ICAO, REG) |>
+      slice_head(n = 1) |>
+      ungroup() |>
+      group_by(REG) |>
+      filter(row_number() %% 2 != 0) |>
+      ungroup(),
+    tmp |>
+      group_by(ICAO, REG) |>
+      slice_tail(n = 1) |>
+      ungroup() |>
+      group_by(REG) |>
+      filter(row_number() %% 2 == 0) |>
+      ungroup()
+  )
+
+  tmp |>
+    ggplot() +
+    geom_line(aes(x = YEAR, y = PK_THRU, group = ICAO, color = COLOR)) +
+    geom_label_repel(
+      data = label_data,
+      aes(x = YEAR, y = PK_THRU, color = COLOR, label = ICAO),
+      box.padding = 0.2,
+      point.padding = 0.1,
+      max.overlaps = Inf,
+      direction = "y"
+    ) +
+    facet_wrap(. ~ REG) +
+    labs(x = NULL, y = y_legend) +
+    guides(color = "none")
+}
+
+# Extend the established historical series with the current 2025 runway-throughput file.
+bra_hist_thru <- readr::read_csv(
+  here::here("..", "BRA-EUR-2024", "data", "BRA-THRU-analytic.csv"),
+  show_col_types = FALSE
+) |>
+  select(ICAO, BIN, ARRS, DEPS) |>
+  filter(ICAO %in% bra_apts, year(BIN) >= 2019)
+
+eur_hist_thru <- list.files(
+  here::here("..", "BRA-EUR-2024", "data"),
+  pattern = "^EUR-THRU-",
+  full.names = TRUE
+) |>
+  purrr::map_dfr(readr::read_csv, show_col_types = FALSE) |>
+  mutate(
+    ARRS = ifelse(is.na(ARRS), ARR_THRU, ARRS),
+    DEPS = ifelse(is.na(DEPS), DEP_THRU, DEPS)
+  ) |>
+  select(ICAO, BIN, ARRS, DEPS) |>
+  filter(ICAO %in% eur_apts, !is.na(BIN)) |>
+  mutate(BIN = floor_date(BIN, unit = "hour")) |>
+  group_by(ICAO, BIN) |>
+  summarise(
+    ARRS = sum(ARRS, na.rm = TRUE),
+    DEPS = sum(DEPS, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+thru_2025 <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-thru-rwy-15min-2025.csv"),
+  show_col_types = FALSE
+) |>
+  group_by(REG, ICAO, BIN) |>
+  summarise(
+    ARRS = sum(ARRS, na.rm = TRUE),
+    DEPS = sum(DEPS, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(BIN = floor_date(BIN, unit = "hour")) |>
+  group_by(REG, ICAO, BIN) |>
+  summarise(
+    ARRS = sum(ARRS, na.rm = TRUE),
+    DEPS = sum(DEPS, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+bra_thru <- bind_rows(
+  bra_hist_thru,
+  thru_2025 |> filter(REG == "BRA") |> select(ICAO, BIN, ARRS, DEPS)
+)
+
+eur_thru <- bind_rows(
+  eur_hist_thru,
+  thru_2025 |> filter(REG == "EUR") |> select(ICAO, BIN, ARRS, DEPS)
+)
+
+arr_thru_bra_eur <- bind_rows(
+  bra_thru |>
+    group_by(ICAO, YEAR = year(BIN)) |>
+    summarise(PK_THRU = quantile(ARRS, p = 0.95, na.rm = TRUE), REG = "BRA", .groups = "drop"),
+  eur_thru |>
+    group_by(ICAO, YEAR = year(BIN)) |>
+    summarise(PK_THRU = quantile(ARRS, p = 0.95, na.rm = TRUE), REG = "EUR", .groups = "drop")
+) |>
+  filter(YEAR >= 2019, YEAR <= this_year)
+
+dep_thru_bra_eur <- bind_rows(
+  bra_thru |>
+    group_by(ICAO, YEAR = year(BIN)) |>
+    summarise(PK_THRU = quantile(DEPS, p = 0.95, na.rm = TRUE), REG = "BRA", .groups = "drop"),
+  eur_thru |>
+    group_by(ICAO, YEAR = year(BIN)) |>
+    summarise(PK_THRU = quantile(DEPS, p = 0.95, na.rm = TRUE), REG = "EUR", .groups = "drop")
+) |>
+  filter(YEAR >= 2019, YEAR <= this_year)
+
+arrival_tp_plot <- function(.thrus, .years) {
+  .thrus |>
+    filter(YEAR %in% .years) |>
+    plot_timeline("peak arrival throughput")
+}
+
+departure_tp_plot <- function(.thrus, .years) {
+  .thrus |>
+    filter(YEAR %in% .years) |>
+    plot_timeline("peak departure throughput")
+}
+
+cap_peak_tp_plot <- function(key_year = this_year) {
+  cap_arr <- bind_rows(
+    bra_cap |> mutate(REGION = "BRA"),
+    eur_cap |> mutate(REGION = "EUR")
+  ) |>
+    select(AIRPORT = APT_ICAO, YEAR, MAX_CAP, REGION) |>
+    mutate(ARR_CAP = ceiling(MAX_CAP / 2)) |>
+    filter(YEAR == key_year)
+
+  thru_arr_peak <- arr_thru_bra_eur |>
+    rename(AIRPORT = ICAO, REGION = REG, PEAK_ARR_THRU = PK_THRU) |>
+    filter(YEAR == key_year)
+
+  comp_colours <- c("#347B98", "#B2D732")
+
+  cap_arr |>
+    inner_join(thru_arr_peak, by = c("AIRPORT", "YEAR", "REGION")) |>
+    mutate(
+      DIFF = case_when(
+        PEAK_ARR_THRU < ARR_CAP ~ "Capacity > Throughput",
+        TRUE ~ "Throughput >= Capacity"
+      )
+    ) |>
+    inner_join(bind_rows(bra_apts_names, eur_apts_names), by = join_by(AIRPORT == ICAO)) |>
+    mutate(AIRPORT = paste(AIRPORT, NAME)) |>
+    ggplot() +
+    geom_segment(
+      aes(
+        x = reorder(AIRPORT, ARR_CAP),
+        xend = reorder(AIRPORT, ARR_CAP),
+        y = ARR_CAP,
+        yend = PEAK_ARR_THRU,
+        colour = DIFF
+      ),
+      linewidth = 1
+    ) +
+    scale_colour_manual(values = comp_colours) +
+    geom_point(aes(x = reorder(AIRPORT, ARR_CAP), y = ARR_CAP), size = 4, colour = comp_colours[1]) +
+    geom_point(
+      aes(x = reorder(AIRPORT, ARR_CAP), y = PEAK_ARR_THRU),
+      size = 3,
+      shape = 24,
+      colour = comp_colours[2],
+      fill = comp_colours[2]
+    ) +
+    bra_eur_theme_minimal +
+    theme(legend.position = c(0.2, 0.9)) +
+    labs(x = NULL, y = "movements per hour", colour = NULL) +
+    coord_flip()
+}
+```
+
+# Capacity and Throughput
+
+Maintaining an optimal network flow necessitates an equilibrium between airport capacity and flight demand.
+This section delves into assessing capacity and throughput using various key performance indicators (KPIs) at the airport level.
+Airspace users expect sufficient capacity provision addressing the levels of demand.
+With higher levels of capacity utilisation, airspace users will experience congestion and constraints (e.g. higher inefficiency, increased delay/lower punctuality and predictability).
+However, planning and staffing for peak situations may come at significant costs to airspace users as well.
+In that respect it is essential to understand the trade-off between capacity provision and capacity consumption (i.e. traffic demand) as it impacts the overall system performance.
+Capacity and throughput analyses therefore show to what extent air navigation services are capable of accommodating the demand.
+The previous sections showed the level of overall traffic recovery in both regions.
+The increasing demand put strain on the systems and local knock-on effects amplified the uncertainty and variability of the expected traffic levels.
+This chapter may therefore also highlight the flexibility of air navigation services to accommodate such distortions of the schedule.
+
+## Peak Declared Capacity
+
+Peak Declared Capacity refers to the highest movement rate (arrivals and landings) at an airport using the most favourable runway configuration under optimal conditions.
+The capacity value might be subject to local or national decision-making processes.
+The indicator represents the highest number of landings an airport can accept in a one-hour period.
+
+In both regions, peak capacity is declared by the respective authority.
+In Brazil, this function is performed by DECEA.
+Within the European region, the airport peak capacity is determined on a local or national level.
+The processes consider local operational constraints (e.g. political caps, noise quota and abatement procedures) and infrastructure related limitations (e.g. apron/stand availability, passenger facilities).
+
+The capacity of airports (and the associated runway system) is predominantly influenced by their infrastructure.
+The existence of independent parallel runways, e.g. Brasilia (SBBR) and Munich (EDDM), can support decisively the resulting capacity.
+Furthermore, operational procedures can lead to an increase in airport capacity.
+London Heathrow (EGLL), in the past, and Guarulhos (SBGR) in recent years show that changes in operational procedures can help the airport absorb significant traffic increases or reduce the additional sequencing time in the terminal airspace.
+Guarulhos, for example, benefited from the implementation of segregated operations under VMC conditions, and Heathrow increased its capacity through the introduction of time-based separation on final.
+
+Previous reports showed the relatively stable nature of the overall peak declared capacity.
+It is anticipated that future changes to the overall capacity level will depend on changes to the declaration process or significant changes of the operational concepts. 
+Accordingly, this edition works with the most recent declared maximum (global) capacities for each study airport.
+
+
+@fig-peak-declared-cpacity shows the declared peak capacity for the study airports.
+As observable in the case of Amsterdam Schiphol (EHAM, 6 runways), the number of runways is not a direct indication of the maximum capacity.
+For example, the two-runway airports Brasilia (SBBR), London Heathrow (EGLL), and Munich (EDDM) share a similar runway system layout and range above the 3-runway systems of Barcelona (LEBL) and Zurich (LSZH).
+London Gatwick (EGKK) is renowned for its maximisation of its single-runway throughput.
+Please note that Lisbon (LPPT) was added to this comparison report and capacity values for earlier years were not available at the time of writing.
+
+As mentioned above, the capacity declaration/determination process takes into account the varying local conditions and constraints.
+It balances the need to accommodate growth vs policy priorities and public interests.
+A potential area for further research could be a closer investigation of the operational concepts deployed and the variations of the declared capacity with the local runway system characteristics.
+
+```{r}
+#| label: fig-peak-declared-cpacity
+#| fig-cap: !expr glue::glue("Peak declared capacity {this_year} [flights/hour]")
+
+generate_capacity_plot(bra_cap, eur_cap, this_year)
+```
+
+## Peak Arrival Throughput
+
+This comparison report uses the GANP KPI to measure the peak arrival throughput as the 95th percentile of the hourly number of landings observed at an airport [@icao-doc-9750-2019].
+The measure gives an indication of the achievable landing rates during "busy-hours".
+It is an indication to what extent arrival traffic can be accommodated at an airport.
+For congested airports, the throughput provides a measure of the effectively realized capacity.
+Throughput is a measure of demand and therefore comprises already air traffic flow or sequencing measures applied by ATM or ATC in the en-route and terminal phase.
+For non-congested airports, throughput serves as a measure of showing the level of (peak) demand at this airport.
+
+@fig-arrival-throughput compares the observed annual peak arrival throughput at the study airports in Brazil and Europe.
+On average, the busiest hour of the Brazilian airports under study did not suffer a significant reduction.
+This signals that peak arrival demand remained fairly constant during the pandemic.
+An increased arrival peak throughput was serviced at Brasilia (SBBR), Guarulhos (SBGR), and Confins (SBCF).
+Services at Galeão (SBGL) observed a significant shift in the traffic pattern.
+The peak arrival throughput fell sharply with the pandemic and has not yet recovered.
+This overall picture is contrasted by the pandemic related drop of overall traffic at European airports.
+The overall reduction resulted in significantly lower peak hours.
+The recovery pattern is also visible in the peak arrival throughput behaviour.
+
+
+```{r}
+#| label: fig-arrival-throughput
+#| fig-cap: Evolution of annual arrival throughput at study airports
+
+arrival_tp_plot(arr_thru_bra_eur, 2019:this_year)
+```
+
+With @fig-arrival-throughput, a further difference between both regions becomes apparent.
+The peak arrival throughput represents the achieved peak service rate utilising the available arrival runway system capacity. 
+On average, the peak arrival throughput is higher in Europe than in Brazil based on the available infrastructure.
+It is interesting to see that arrival operations at SBGR and Brasilia (SBBR) range at the level of Gatwick (EGKK), while Congonhas (SBSP) remains above Lisbon (LPPT).
+At the same time, it offers growth potential when these airports are compared to the achievable arrival throughput at dual independent runway operations at Munich (EDDM) or even Heathrow (EGLL).
+
+While the peak arrival throughput varied in Brazil over the past years, the pattern is more homogeneous.
+Larger variations are explainable with local demand changes.
+However, compared to Europe, Brazil did not show the scale effects of lower air traffic demand during the pandemic phase. 
+In light with the overall traffic recovery also the pressure on the arrival runway system increased at the European airports. 
+Lisbon (LPPT) shows a level of variation. This suggests that even during the pandemic, operational peaks were serviced consistently at the same level.
+
+## Peak Departure Throughput
+
+In analogy to the previous section, @fig-departure-throughput shows the peak departure throughput.
+The latter is determined as the 95th percentile of the hourly number of departures.
+
+A similar picture emerges for the peak departure throughput in both regions.
+In Brazil, Congonhas reduced the peak departure throughput in comparison with 2024.
+Curitiba, Porto Alegre, Santos Dumont, and Confins maintained broadly the same level as in 2024. 
+For the other Brazilian airports, the peak departure throughput increased.
+A continual increase of the peak departure throughput is observed at SBGR, exceeding in 2025 the pre-pandemic 2019 level. This suggests a concerted effort and more efficient use of the runway system for the departure phase.
+
+The pattern in Europe is characterised by the continual air traffic recovery for the majority of the airports. 
+A lesser pronounced variation is observed at Lisbon (LPPT) for which the peak departure rate remained fairly stable over the past years.  
+
+
+```{r}
+#| label: fig-departure-throughput
+#| fig-cap: Evolution of departure throughput at study airports
+
+departure_tp_plot(dep_thru_bra_eur, 2019:this_year)
+```
+
+
+## Declared Capacity and Peak Throughput
+
+```{r}
+#| label: fig-capvsthru 
+#| fig-cap: Comparison of declared capacity and throughput for arrival phase.
+
+key_year <- this_year
+
+cap_peak_tp_plot(key_year)
+```
+
+Comparing the peak declared (arrival) capacity and throughput serviced at the different airports reveals a varying picture.
+On average, @fig-capvsthru evidences that operations at the majority of the airports do not yet observe capacity constraints.
+In many instances, the achieved throughput ranges about 10 flights per hour below the maximum declared capacity.
+In 2025, a particularly low utilisation was observed at Galeão (SBGL), where the spread between proxy arrival capacity and peak throughput exceeds 15 flights per hour.
+Further sizeable margins remain visible at Eduardo Gomes (SBEG), Paris Charles de Gaulle (LFPG), Porto Alegre (SBPA), Brasilia (SBBR), Curitiba (SBCT), Recife (SBRF), and Barcelona (LEBL).
+It is also noteworthy that a subset of airport services operate at or above their proxy maximum arrival capacity (e.g. EHAM, LGAV, SBGR, SBSP, EDDF, LPPT, and LSZH, with EDDM at parity).
+These airports are also characterised by a combination of complexity of the aerodrome layout and operational context.
+It will be interesting to study how these airports facilitate higher levels of demand.
+Higher peak throughput rates than the proxy arrival capacity were observed at Amsterdam (EHAM), Athens (LGAV), Guarulhos (SBGR), Congonhas (SBSP), Frankfurt (EDDF), and marginally at Lisbon (LPPT) and Zurich (LSZH).
+The offsets at EHAM and LGAV, and to a lesser extent at SBGR and SBSP, suggest that the simplified 50% proxy for arrival capacity can understate what is operationally achievable at some airports.
+In the case of Amsterdam (EHAM) there is a political cap on the number of operations per year. This may result in a determined (and declared) hourly rate that does strictly speaking not apply to the operational peak situations. 
+
+The analysis of the spread of the declared capacity versus the achieved throughput is useful.
+However, it provides no indication on how often the demand reaches the declared capacity level.
+For this purpose, this report determines two characteristic points, i.e. the *BLI* base load index, and the peak load index *PLI*.
+
+```{r}
+#| label: prep-bli-pli
+
+bli_pli_first_year    <- 2019
+bli_pli_interim_years <- c(2023, 2024)
+bli_pli_last_year     <- 2025
+bli_pli_years <- c(bli_pli_first_year, bli_pli_interim_years, bli_pli_last_year)
+
+ordered_thru_example <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-ordered-throughput-LPPT-SBGR-2019-2025.csv"),
+  show_col_types = FALSE
+) |>
+  filter(YEAR %in% bli_pli_years) |>
+  mutate(YEAR = factor(YEAR, levels = bli_pli_years))
+
+bli_pli <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-bli-pli-2019-2025.csv"),
+  show_col_types = FALSE
+) |>
+  filter(YEAR %in% bli_pli_years, !is.na(BLI), !is.na(PLI)) |>
+  mutate(
+    YEAR = factor(YEAR, levels = bli_pli_years),
+    YEAR_NUM = as.integer(as.character(YEAR)),
+    YEAR_ROLE = case_when(
+      YEAR_NUM == bli_pli_first_year ~ "first",
+      YEAR_NUM == bli_pli_last_year ~ "last",
+      TRUE ~ "interim"
+    ),
+    LABEL = paste(ICAO, YEAR)
+  )
+
+plot_ordered_thrus <- function(.ordered_thrus) {
+  cap_levels <- .ordered_thrus |>
+    filter(YEAR == as.character(this_year)) |>
+    group_by(REG, ICAO) |>
+    summarise(
+      PLI_THR = first(PLI_THR),
+      BLI_THR = first(BLI_THR),
+      X_PLI = max(RANK) * 0.82,
+      X_BLI = max(RANK) * 0.08,
+      .groups = "drop"
+    )
+
+  .ordered_thrus |>
+    ggplot(aes(x = RANK, y = TOT_THRU, group = YEAR, color = YEAR)) +
+    geom_step() +
+    facet_wrap(. ~ ICAO, scales = "free_x") +
+    geom_hline(data = cap_levels, aes(yintercept = PLI_THR), linetype = "dashed", inherit.aes = FALSE) +
+    geom_hline(data = cap_levels, aes(yintercept = BLI_THR), linetype = "dotted", inherit.aes = FALSE) +
+    geom_text(
+      data = cap_levels,
+      aes(x = X_PLI, y = PLI_THR, label = "peak (80% max cap)"),
+      inherit.aes = FALSE,
+      vjust = -0.6,
+      hjust = 0,
+      size = 8 / .pt
+    ) +
+    geom_text(
+      data = cap_levels,
+      aes(x = X_BLI, y = BLI_THR, label = "base (20% max cap)"),
+      inherit.aes = FALSE,
+      vjust = -0.6,
+      hjust = 0,
+      size = 8 / .pt
+    ) +
+    labs(color = NULL, x = "hourly throughput rank", y = "hourly throughput") +
+    theme(legend.position = c(0.88, 0.88))
+}
+
+bli_pli_trajectory_plot <- function(
+    .bli_pli_df,
+    .label_positions,
+    .first_year    = bli_pli_first_year,
+    .last_year     = bli_pli_last_year,
+    .interim_years = bli_pli_interim_years
+) {
+  interim_palette <- grDevices::colorRampPalette(c("#D7E8F7", "#7FAFDD"))(max(length(.interim_years), 1))
+  year_fill_values <- c(
+    stats::setNames("white", as.character(.first_year)),
+    stats::setNames(interim_palette[seq_along(.interim_years)], as.character(.interim_years)),
+    stats::setNames("#1F78B4", as.character(.last_year))
+  )
+
+  last_year_labels <- .bli_pli_df |>
+    filter(YEAR_NUM == .last_year) |>
+    mutate(
+      LABEL = ICAO,
+      LABEL_X = 1.035
+    ) |>
+    left_join(.label_positions, by = c("REG", "ICAO")) |>
+    mutate(
+      LABEL_X = coalesce(.data$LABEL_X_MANUAL, .data$LABEL_X),
+      LABEL_Y = coalesce(.data$LABEL_Y_MANUAL, .data$PLI)
+    )
+
+  .bli_pli_df |>
+    ggplot(aes(x = BLI, y = PLI, color = YEAR)) +
+    geom_path(
+      aes(group = ICAO),
+      color = "grey65",
+      linewidth = 0.5,
+      alpha = 0.8,
+      show.legend = FALSE
+    ) +
+    geom_point(
+      aes(fill = YEAR, shape = YEAR_ROLE),
+      size = 2.5,
+      stroke = 0.8,
+      color = "grey30",
+      show.legend = FALSE
+    ) +
+    geom_segment(
+      data = last_year_labels,
+      aes(x = BLI, y = PLI, xend = LABEL_X - 0.008, yend = LABEL_Y),
+      inherit.aes = FALSE,
+      color = "grey55",
+      linewidth = 0.4
+    ) +
+    geom_text(
+      data = last_year_labels,
+      aes(x = LABEL_X, y = LABEL_Y, label = LABEL),
+      inherit.aes = FALSE,
+      hjust = 0,
+      size = 3
+    ) +
+    scale_fill_manual(
+      values = year_fill_values[names(year_fill_values) %in% levels(.bli_pli_df$YEAR)]
+      ) +
+    scale_color_brewer(palette = "Dark2", guide = "none") +
+    scale_shape_manual(values = c(first = 21, interim = 21, last = 21)) +
+    facet_wrap(. ~ REG) +
+    theme(legend.position = "top") +
+    stat_smooth(
+      aes(group = REG),
+      method = "lm",
+      formula = y ~ I(x^5),
+      linewidth = 0.5,
+      linetype = "dashed",
+      color = "grey50",
+      se = FALSE,
+      fullrange = TRUE
+    ) +
+    geom_hline(yintercept = 0.3, color = "grey40", linetype = "dotted") +
+    geom_vline(xintercept = 0.75, color = "grey40", linetype = "dotted") +
+    coord_cartesian(xlim = c(0, 1.08), ylim = c(0, 1), clip = "off") +
+    labs(x = "base load index", y = "peak load index") +
+    theme(
+      panel.spacing.x = unit(1, "cm"),
+      plot.margin = margin(5.5, 50, 5.5, 5.5)
+    )
+}
+
+bli_pli_heatmap_plot <- function(.bli_pli_df) {
+  stress_palette <- c(
+    "0.0-0.2" = "#D7ECFA",
+    "0.2-0.4" = "#D8F0D2",
+    "0.4-0.6" = "#79C36A",
+    "0.6-0.8" = "#F0A35E",
+    ">0.8" = "#D95F5F"
+  )
+
+  heatmap_data <- .bli_pli_df |>
+    select(REG, ICAO, YEAR, BLI, PLI) |>
+    pivot_longer(cols = c(BLI, PLI), names_to = "INDEX", values_to = "VALUE") |>
+    mutate(
+      INDEX = factor(INDEX, levels = c("BLI", "PLI")),
+      AIRPORT = factor(ICAO, levels = sort(unique(ICAO))),
+      AIRPORT_INDEX = factor(
+        paste(ICAO, INDEX),
+        levels = unlist(lapply(sort(unique(ICAO)), function(.apt) paste(.apt, c("BLI", "PLI"))))
+      ),
+      YEAR_FCT = factor(YEAR, levels = bli_pli_years),
+      STRESS = cut(
+        VALUE,
+        breaks = c(-Inf, 0.2, 0.4, 0.6, 0.8, Inf),
+        labels = c("0.0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", ">0.8"),
+        right = TRUE
+      )
+    )
+
+  row_annotations <- heatmap_data |>
+    distinct(REG, ICAO, AIRPORT_INDEX, INDEX) |>
+    mutate(
+      YEAR_FCT = factor(bli_pli_first_year, levels = bli_pli_years),
+      ANNO_X = 0.62,
+      ANNO_LABEL = as.character(INDEX)
+    )
+
+  heatmap_data |>
+    ggplot(aes(x = YEAR_FCT, y = AIRPORT_INDEX, fill = STRESS)) +
+    geom_tile(color = "white", linewidth = 0.35) +
+    geom_text(
+      data = row_annotations,
+      aes(x = ANNO_X, y = AIRPORT_INDEX, label = ANNO_LABEL),
+      inherit.aes = FALSE,
+      hjust = 0,
+      size = 2.7,
+      color = "grey15"
+    ) +
+    facet_wrap(. ~ REG, scales = "free_y", ncol = 2) +
+    scale_fill_manual(values = stress_palette, drop = FALSE) +
+    scale_y_discrete(
+      labels = function(x) {
+        parts <- strsplit(x, " ")
+        vapply(
+          parts,
+          function(.parts) {
+            if (.parts[2] == "PLI") .parts[1] else ""
+          },
+          character(1)
+        )
+      }
+    ) +
+    labs(x = NULL, y = NULL, fill = "index range") +
+    coord_cartesian(clip = "off") +
+    theme(
+      axis.text.x = element_text(size = 8),
+      axis.text.y = element_text(size = 7, lineheight = 1.0),
+      panel.grid = element_blank(),
+      legend.position = "top",
+      panel.spacing.y = unit(0.8, "cm"),
+      plot.margin = margin(5.5, 5.5, 5.5, 28)
+    )
+}
+```
+
+```{r}
+#| label: fig-bli-pli-lppt-sbgr
+#| fig-cap: "Ranked hourly throughput at LPPT and SBGR"
+
+ordered_thru_example |> plot_ordered_thrus()
+```
+
+Comparing the achieved hourly throughput at Guarulhos (SBGR) and Lisbon (LPPT), the ranked-hourly-throughput example depicts a higher level of peak throughput traffic numbers at SBGR.
+The overall patterns are similar across the studied years.
+Lisbon (LPPT) observed an increase in its overall traffic throughputs as the hourly throughputs for 2023 and 2025 exceed the pre-pandemic levels of 2019, with 2024 remaining at a comparable level.
+Guarulhos (SBGR) experienced a bounce-back with the continual increase in its hourly throughput from 2023 to 2025, bringing the upper part of the ranked curve back closer to the pre-COVID 2019 pattern.
+
+In terms of demand pressure, Lisbon observed a substantially higher share of hours with throughputs above 80% of its declared capacity than SBGR, and this share increased further in 2025.
+As the overall ordered throughput shows a gradual reduction gradient at Guarulhos (SBGR), combined with a large spread of the peak and base level, there exists available capacity at the airport.
+Lisbon shows a narrower spread.
+On top, the existence of night flying restrictions is clearly visible for LPPT with its distribution tail.
+
+The ranked-hourly-throughput example shows that multiple factors influence the interplay between the declared capacity and observed throughputs. 
+Similar to comparing only the number of runways and not the runway system utilisation, focussing on the difference between declared capacities, demand periods and operating conditions does not readily allow to compare operations at different airports.
+For this report, we define peak operating conditions, if the total hourly throughput reaches or exceeds 80% of the declared capacity levels, and accordingly, base load levels, if 20% of more are observed. 
+The peak load index (PLI) accounts then for the number of operating hours at or above the peak level, and respectively, the base load index (BLI) for hours at or above the 20% base traffic level.    
+
+```{r}
+#| label: fig-bli-pli
+#| fig-cap: Capacity utilisation trajectory (base load index vs peak load index)
+
+bli_pli_label_positions <- tribble(
+  ~REG, ~ICAO, ~LABEL_X_MANUAL, ~LABEL_Y_MANUAL,
+  "BRA", "SBSP", 0.8, 0.75,
+  "BRA", "SBRJ", 1.035, 0.86,
+  "BRA", "SBGR", 1.035, 0.80,
+  "BRA", "SBKP", 1.035, 0.73,
+  "BRA", "SBCF", 1.035, 0.67,
+  "BRA", "SBGL", 1.035, 0.60,
+  "BRA", "SBCT", 1.035, 0.54,
+  "BRA", "SBRF", 1.035, 0.48,
+  "BRA", "SBPA", 1.035, 0.42,
+  "BRA", "SBBR", 1.035, 0.36,
+  "BRA", "SBSV", 0.35, 0.30,
+  "BRA", "SBEG", 0.2, 0.1,
+  "EUR", "EDDF", 1.035, 0.2,
+  "EUR", "LTFM", 1.035, 0.87,
+  "EUR", "LSZH", 1.035, 0.81,
+  "EUR", "LPPT", 1.035, 0.75,
+  "EUR", "EGLL", 1.035, 0.69,
+  "EUR", "EDDM", 1.035, 0.63,
+  "EUR", "LFPG", 1.035, 0.57,
+  "EUR", "LEBL", 1.035, 0.51,
+  "EUR", "EGKK", 0.5, 0.45,
+  "EUR", "LEMD", 1.035, 0.39,
+  "EUR", "EHAM", 0.6, 0.25,
+  "EUR", "LGAV", 0.6, 0.5
+)
+
+bli_pli_trajectory_plot(
+  bli_pli,
+  .label_positions = bli_pli_label_positions
+) +
+  theme(legend.position = c(0.08, 0.82), legend.key.height = unit(4, "mm"))
+```
+
+
+```{r}
+#| label: fig-bli-pli-heatmap
+#| fig-cap: Capacity utilisation heatmap by airport and year
+
+bli_pli_heatmap_plot(bli_pli)
+```
+
+
+
+The BLI/PLI plot summarises the observed utilisation of the available (i.e., declared) capacity at the study airports in the different regions.
+Based on this report, it appears that airports showing a BLI of higher than 0.75 observe a consistent level of demand across the operating hours, congestion due to peak operating conditions kick in with a PLI of 0.3. The lower range suggesting a strong banks, while higher levels of the PLI demonstrating a consistent use of the available capacity.
+In Brazil, we observe a high utilisation of the capacity at Sao Paulo (SBSP) in 2019, 2023, 2024, and 2025 comparable to or above pre-COVID levels.
+For a majority of the airport across the years, no substantial peak loads were measured.
+This suggests that there is substantial capacity to sustain future growth of air traffic.
+Rio de Janeiro Santos Dumont (SBRJ) observed moderate loads confirming the role of the airport within the Brazilian system.
+The major hub in Brazil, SBGR, shows a relatively high base-load-index (BLI), while the peak-load-index (PLI) remains far below the levels observed at LPPT or SBSP.
+Within the European context, a high utilisation of the available system capacity was observed for London Heathrow, Lisbon, Frankfurt, Gatwick, and Zurich, while EDDF and LSZH combine very high base loads with more moderate peak-load conditions.
+This suggests that for many of these airports the daily traffic loads returned to similar or higher levels of capacity utilisation than pre-COVID.
+For the majority of European airports, the peak load index ranges relatively low.
+This suggests that most of the airports operate currently concentrated short peaks or having growth potential available in terms of traffic load.
+
+The complementary heatmap adds back the full airport-year detail without overloading the scatter plot with labels.
+It makes it easier to scan how BLI and PLI evolve side by side for each airport, while preserving the trajectory scatter for showing the overall relationship between both load indices.
+
+Using a regression analysis, we can also see a difference in the trend in Europe in comparison to Brazil.
+Amongst the study airports, there is a higher share of European airports with more peak operating hours than in Brazil. 
+This might be related to the overall role of the airports and underlying connectivity structure and demand levels already described in earlier chapters.
+Future work on understanding the drivers between operational concepts and demand may reveal further characteristics of the service provision in both systems.
+
+## Summary
+
+
+This chapter analysed the relationship between airport capacity, throughput, and demand management across Brazilian and European airports.
+
+On average, declared peak capacities at Brazilian airports tend to be lower than in Europe, suggesting greater flexibility to accommodate future traffic growth at major Brazilian hubs.
+In contrast, many European airports will increasingly depend on novel operational concepts to achieve further gains, as their existing runway infrastructure and separation standards already impose operational limits.
+
+Comparing the utilisation of capacity based on a new indicator revealed interesting patterns. Most airports currently operate with a margin between declared capacity and observed peak throughput, suggesting that, at present, runway system capacities are not a limiting factor in either region.
+
+Notably, in 2025, low utilisation was observed at Galeão (SBGL), Eduardo Gomes (SBEG), and Paris Charles de Gaulle (LFPG), where the spread between capacity and peak throughput remained large. Conversely, São Paulo Congonhas (SBSP), Guarulhos (SBGR), Amsterdam Schiphol (EHAM), and Athens (LGAV) emerged as airports servicing peak arrival rates close to or above the proxy arrival capacity used in this report.
+
+Overall, the findings highlight that while current capacities are sufficient, maintaining system performance amid projected air traffic growth will increasingly depend on operational innovations and efficient management strategies in both regions. 

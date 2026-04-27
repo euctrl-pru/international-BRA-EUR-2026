@@ -2,6 +2,15 @@
 title: "Topic Studies"
 ---
 
+```{r}
+#| label: setup
+#| echo: false
+#| message: false
+#| warning: false
+
+source(here::here("_chapter-setup.R"))
+```
+
 ## IAR - runway pressure 
 
 pull stuff from other document here
