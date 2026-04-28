@@ -112,7 +112,7 @@ asma_monthly_bra <- asma_daily_bra |>
   )
 
 eur_asma_daily_old <- readr::read_csv(
-  "/Users/rainerkoelle/RProjects/BRA-EUR-2024/data/BRA-EUR-EUR-ASMA-EUR.csv",
+  here::here("data", "BRA-EUR-EUR-ASMA-EUR.csv"),
   show_col_types = FALSE
 ) |>
   dplyr::filter(ICAO %in% eur_apts) |>
@@ -131,7 +131,7 @@ eur_asma_daily_old <- readr::read_csv(
   dplyr::filter(YEAR %in% 2019:2022)
 
 eur_asma_quick <- readr::read_csv(
-  "/Users/rainerkoelle/RProjects/BRA-EUR-2024/data/EUR-ASMA-QUICK.csv",
+  here::here("data", "EUR-ASMA-QUICK.csv"),
   show_col_types = FALSE
 ) |>
   dplyr::filter(APT_ICAO %in% eur_apts, YEAR %in% 2023:2024) |>

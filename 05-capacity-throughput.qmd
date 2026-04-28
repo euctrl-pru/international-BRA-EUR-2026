@@ -152,14 +152,14 @@ plot_timeline <- function(.df, y_legend) {
 
 # Extend the established historical series with the current 2025 runway-throughput file.
 bra_hist_thru <- readr::read_csv(
-  here::here("..", "BRA-EUR-2024", "data", "BRA-THRU-analytic.csv"),
+  here::here("data", "BRA-THRU-analytic.csv"),
   show_col_types = FALSE
 ) |>
   select(ICAO, BIN, ARRS, DEPS) |>
   filter(ICAO %in% bra_apts, year(BIN) >= 2019)
 
 eur_hist_thru <- list.files(
-  here::here("..", "BRA-EUR-2024", "data"),
+  here::here("data"),
   pattern = "^EUR-THRU-",
   full.names = TRUE
 ) |>
