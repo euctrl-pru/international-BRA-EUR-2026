@@ -413,8 +413,8 @@ tmp <- ndf3 |> left_join(isometa2 , join_by(ADEP_CNTRY == CNTRY_ISO)) |>
 #     DATE   = dt_dia,
 #     SVC    = li_tipovoo
 # )
-# 
-# ndf |> arrow::write_parquet(here::here("data" , "ndf_bra_totalbr.parquet"))
+
+# ndf |> arrow::write_parquet(here::here("data-src" , "ndf_bra_totalbr.parquet"))
 
 ## -------  BRA standart data stopped here ---------
 
