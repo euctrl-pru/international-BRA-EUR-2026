@@ -16,20 +16,16 @@ source(here::here("_chapter-setup.R"))
 ```
 
 To facilitate operational benchmarking comparisons, it is crucial to have a good understanding of the
-level and composition of air traffic. This chapter presents air traffic characteristics for both regions,
-structured progressively from a network-level overview to an airport-level assessment covering traffic
-volumes, peak day demand, and fleet composition at the 12 study airports in each region.
+level and composition of air traffic as the underlying demand and its evolution. 
+This chapter presents air traffic characteristics for both regions, structured progressively from a network-level overview to an airport-level assessment covering traffic volumes, peak day demand, and fleet composition at the 12 study airports in each region.
 
 
 ## Network Characterisation
-
 
 To address the changes in air traffic and develop a better understanding of the nature of the air
 transportation network, this section characterises the network structure of both regions — progressing
 from overall traffic volumes to the distribution within each region, the flows connecting Brazil and Europe,
 and the broader international context.
-
-
 
 ### Overall Traffic Volume
 
@@ -74,12 +70,11 @@ bra_vs_eur_2025 <- bra_2025_flts / eur_2025_flts
 ```
 
 In 2025, Brazil handled approximately `r scales::number(bra_2025_flts / 1e6, accuracy = 0.1)` million controlled flights, representing approximately `r scales::percent(bra_vs_eur_2025, accuracy = 1)` of the traffic serviced in Europe over the same period.
-Overflights account for a small share of the total in both regions.
+Overflights account for a small share of the total air traffic momvements in both regions.
 As shown in @fig-traffic-volume, both regions recorded growth over the 2023–2025 period, though the underlying dynamics differ significantly.
-Brazil continued to expand its aviation sector, with traffic growing consistently across the three years — a trajectory that reflects sustained organic demand rather than cyclical fluctuation. In Europe, traffic levels also grew over the period, though at a more moderate pace, with the network continuing to consolidate. The different pace of growth across both regions reinforces the importance of understanding each system's structural context when comparing operational performance.
-
-
-
+Brazil continued to expand its aviation sector, with traffic growing consistently across the three years — a trajectory that reflects sustained organic demand rather than cyclical fluctuation. 
+In Europe, traffic levels also grew over this period, though at a more moderate pace, with the network continuing to consolidate and recover from the COVID decline and ripple effects from the Russian war of aggression against Ukraine.
+The different pace of growth across both regions reinforces the importance of understanding each system's structural context when comparing operational performance.
 
 ```{r}
 #| label: fig-traffic-volume
@@ -193,8 +188,12 @@ p_brazil_yoy / p_europe_yoy
 
 ```
 
-@fig-annual-timeline shows the 7-day rolling average of daily movements in Brazil and Europe from 2019 to 2025. In Brazil, traffic levels recovered swiftly from the sharp drop observed in 2020 and have continued to grow steadily since 2022, surpassing 2019 levels and maintaining a stable profile with only modest seasonal variation throughout the year. The Brazilian air transport market does not exhibit strong seasonal peaks, reflecting a demand pattern driven primarily by domestic and regional connectivity rather than leisure-driven flows.
-In the European region, the recovery trajectory is clearly visible — from the sharp collapse in 2020 through a gradual rebuilding of demand across 2021 and 2022, reaching and consolidating at 2019 levels by 2024 and 2025. Europe's traffic pattern, however, remains characterised by strong seasonal variation, with a pronounced surge in demand during the summer months that stands in clear contrast to the more stable Brazilian profile. This seasonal asymmetry is an important structural feature to bear in mind when comparing operational performance indicators across both regions throughout this report.
+@fig-annual-timeline shows the 7-day rolling average of daily movements in Brazil and Europe from 2019 to 2025. 
+In Brazil, traffic levels recovered swiftly from the sharp drop observed in 2020 and have continued to grow steadily since 2022, surpassing 2019 levels and maintaining a stable profile with only modest seasonal variation throughout the year. 
+The Brazilian air transport market does not exhibit strong seasonal peaks, reflecting a demand pattern driven primarily by domestic and regional connectivity rather than leisure-driven flows.
+In the European region, the recovery trajectory is clearly visible — from the sharp collapse in 2020 through a gradual rebuilding of demand across 2021 and 2022, reaching and consolidating at 2019 levels by 2024 and 2025. 
+Europe's traffic pattern, however, remains characterised by strong seasonal variation, with a pronounced surge in demand during the summer months that stands in clear contrast to the more stable Brazilian profile. 
+This seasonal asymmetry is an important structural feature to bear in mind when comparing operational performance indicators across both regions throughout this report.
 
 <!-- New version 2025 -->
 
@@ -419,8 +418,14 @@ main_country_connections <- dplyr::bind_rows(
   dplyr::ungroup()
 ```
 
-While the total volume of traffic provides a first measure of the scale of operations in each region, it does not capture how that traffic is distributed across the network. @fig-traffic-share presents the cumulative share of departures by airport rank for both regions in 2025.
-The distribution of air traffic in Brazil confirms that most flights are concentrated in a small number of airports. In 2025, the 10 busiest airports in Brazil handled `r scales::percent(bra_top10_share, accuracy = 1)` of all departing flights, whereas in Europe the top 10 airports account for `r scales::percent(eur_top10_share, accuracy = 1)` of all departures. The spread remains broadly constant up to the 50th rank, narrowing with the top 100 airports — marking `r scales::percent(bra_top100_share, accuracy = 1)` of all departures in Brazil and `r scales::percent(eur_top100_share, accuracy = 1)` in Europe. This reflects the historical development of the European network, where the traditional focus on national hubs resulted in a higher number of major aerodromes interconnecting across the continent.
+<!-- here we speak about top 10 vs 12 study airports --> 
+
+While the total volume of traffic provides a first measure of the scale of operations in each region, it does not capture how that traffic is distributed across the network. 
+@fig-traffic-share presents the cumulative share of departures by airport rank for both regions in 2025.
+The distribution of air traffic in Brazil confirms that most flights are concentrated in a small number of airports.
+In 2025, the 10 busiest airports in Brazil handled `r scales::percent(bra_top10_share, accuracy = 1)` of all departing flights, whereas in Europe the top 10 airports account for `r scales::percent(eur_top10_share, accuracy = 1)` of all departures. 
+The spread remains broadly constant up to the 50th rank, narrowing with the top 100 airports — marking `r scales::percent(bra_top100_share, accuracy = 1)` of all departures in Brazil and `r scales::percent(eur_top100_share, accuracy = 1)` in Europe. 
+This reflects the historical development of the European network, where the traditional focus on national hubs resulted in a higher number of major national aerodromes interconnecting across the continent.
 
 ```{r}
 #| label: fig-traffic-share
@@ -451,12 +456,13 @@ ggplot2::ggplot(
 
 ```
 
-@fig-traffic-distribution shows the distribution of domestic/regional and international departures in 2025. In both
-regions, the share of flights operating externally accounts for `r scales::percent(bra_external_share, accuracy = 1)` of total traffic in Brazil and `r scales::percent(eur_external_share, accuracy = 1)` in Europe. The majority of
-flights operate within each region. This domestic dominance is particularly pronounced in Brazil, where
-the continental scale of the country sustains a large volume of intra-national movements. In Europe, the
-relatively short distances between states mean that many flights classified as international are
+@fig-traffic-distribution shows the distribution of domestic/regional and international departures in 2025. 
+In both regions, the share of flights operating externally accounts for `r scales::percent(bra_external_share, accuracy = 1)` of total traffic in Brazil and `r scales::percent(eur_external_share, accuracy = 1)` in Europe. 
+The majority of flights operate within each region. 
+This domestic dominance is particularly pronounced in Brazil, where the continental scale of the country sustains a large volume of intra-national movements. 
+In Europe, the relatively short distances between states mean that many flights classified as *international* are
 functionally comparable to domestic short-haul routes in Brazil.
+Accordingly, in this report, intra-European air traffic is considered "regional" traffic, equivalent to domestic traffic in other regions or large national airspace and air navigation systems.
 
 ```{r}
 #| label: fig-traffic-distribution
@@ -485,21 +491,17 @@ ggplot2::ggplot(
 
 ```
 
-
-
-
 ### Flows Between Brazil and Europe
 
-@fig-flow shows the connections between Europe and Brazil in 2025. Individual connections with fewer
-than 90 flights per year are aggregated into an "other" group. Traffic from Brazil to Europe accounts for
-`r scales::percent(bra_eur_dep_share, accuracy = 0.1)` of the total departures from Brazilian airports. Guarulhos (SBGR) and Lisbon (LPPT) are the main
-airports sustaining connectivity between both regions. Due to its prominent role as the primary gateway,
-this edition considers operations at LPPT in a more prominent manner throughout the report
-
+@fig-flow shows the connections between Europe and Brazil in 2025. 
+Individual connections with fewer than 90 flights per year are aggregated into an "other" group. 
+Traffic from Brazil to Europe accounts for `r scales::percent(bra_eur_dep_share, accuracy = 0.1)` of the total departures from Brazilian airports. 
+Guarulhos (SBGR) and Lisbon (LPPT) are the main airports sustaining connectivity between both regions demonstrating the historical close link between both countries.
+Due to its prominent role as the primary gateway to Brazil, this edition considers operations at LPPT in a more prominent manner throughout the report together with SBGR.
 
 ```{r}
 #| label: fig-flow
-#| fig-cap: "flow Brazil and Europe"
+#| fig-cap: "Flow Brazil and Europe"
 #| fig-align: "center"
 #| out-width: 95%
 flow_bra_eur <- network_flow_pairs |>
@@ -535,14 +537,12 @@ ggplot2::ggplot(flow_bra_eur, ggplot2::aes(x = FLTS, y = PAIR, fill = FLOW)) +
 
 ### Connections to Other World Regions
 
-From a broader international perspective, both regions are interconnected with the rest of the world in
-distinct ways. @fig-share-regions shows the spread of international traffic from each region. For Brazil,
-connections to other South American states represent the major international destinations. For Europe,
-the Middle East, North America, and Africa represent the largest international markets. The chart aligns
-Brazil-to-Europe and Europe-to-Brazil traffic on a common counterpart-region row to support comparison. Placeholder
-destinations that cannot be mapped to a world region are retained in the canonical data product but
+From a broader international perspective, both regions are interconnected with the rest of the world in distinct ways.
+@fig-share-regions shows the spread of international traffic from each region. 
+For Brazil, connections to other South American states represent the major international destinations. 
+For Europe, the Middle East, North America, and Africa represent the largest international markets. 
+The chart aligns Brazil-to-Europe and Europe-to-Brazil traffic on a common counterpart-region row to support comparison. Placeholder destinations that cannot be mapped to a world region are retained in the canonical data product but
 excluded from this mapped-region comparison.
-
 
 ```{r}
 #| label: fig-share-regions
@@ -584,13 +584,9 @@ ggplot2::ggplot(
 ```
 
 
-@fig-share-south-america provides a closer look at the main country-level external connections. For Brazil,
-the focus remains on South America, with just under `r scales::number(bra_sa_deps, accuracy = 1000, scale = 1e-3, suffix = ",000")` flights
-operated to adjacent countries in 2025. Argentina and Chile together account for approximately half of
-these movements, confirming the strength of the southern cone corridor. For Europe, the comparison
-shows the main external country destinations across North America, the Middle East, Africa, and
-Asia/Pacific, balancing the number of displayed bars with the Brazilian panel.
-
+@fig-share-south-america provides a closer look at the main country-level external connections. 
+For Brazil, the focus remains on South America, with just under `r scales::number(bra_sa_deps, accuracy = 1000, scale = 1e-3, suffix = ",000")` flights operated to adjacent countries in 2025. 
+Argentina and Chile together account for approximately half of these movements, confirming the strength of the southern cone corridor. For Europe, the comparison shows the main external country destinations across North America, the Middle East, Africa, and Asia/Pacific, balancing the number of displayed bars with the Brazilian panel.
 
 ```{r}
 #| label: fig-share-south-america
@@ -629,9 +625,6 @@ Another important observation related to the data is that Brazil’s number of a
 Despite raising the processed total daily flight number, this difference is mostly transparent for this study as these additional airports handle only a small number of movements on a day-to-day basis.
 
 
-
-
-
 ```{}
 #| label: fig-annual-traffic-timeline1
 #| fig-cap: Regional daily air traffic
@@ -644,16 +637,6 @@ p_eur <- plot_annual_network_tfc(tfc_eur, eur_col) +
 
 p_bra / p_eur
 ```
-
-
-
-
-
-
-
-
-
-
 
 Brazilian air traffic continues to exceed 2019 levels, marking a phase of real growth, not just post-pandemic recovery. Since 2022, traffic has grown steadily, showing a structured recovery in demand. However, commercial aviation is still adjusting its route network in some regions to fully match 2019 levels.
 
@@ -691,12 +674,13 @@ tfc_bra |> mutate(REG = "BRA") |>
 
 -->
 
-
 ## Airport Level Air Traffic Movements
 
-The previous section characterised the air traffic network at a macro level. As airports represent nodes in this overall network, changes to the overall traffic situation ripple down to the airport level. At this level, performance is measured in terms of airport movements — that is, the combined count of arrivals and departures handled at each location. This demand on  airport  form a substantial input to understand how the operational performance measures in this report developed over time. This report looks at the performance levels observed at 12 key airports in each region.
-
-
+The previous section characterised the air traffic network at a macro level. 
+As airports represent nodes in this overall network, changes to the overall traffic situation ripple down to the airport level.
+At this level, performance is measured in terms of airport movements — that is, the combined count of arrivals and departures handled at each location. 
+This demand on  airport  form a substantial input to understand how the operational performance measures in this report developed over time. 
+With this report the analysis is extended to performance levels observed at 12 key airports in each region.
 
 <!-- Old version
 
@@ -732,9 +716,6 @@ p_share + p_col_annual + plot_layout(widths = c(1, 4))
 ```
 
 -->
-
-
-<!-- new one -->
 
 ```{r}
 #| label: fig-eur-apt-level-tfc
@@ -842,8 +823,11 @@ p_bra_share / p_eur_share
 
 ### Movement Evolution at Study Airports
 
-
-Figure 3.8 presents the airport movement evolution for the study airports from 2023 to 2025. In Europe, airports have generally observed increases in movement levels across the period, reflecting a network in a phase of gradual consolidation. The Brazilian scenario is more heterogeneous — while some airports such as Galeão (SBGL) and Guarulhos (SBGR) registered increases, others such as Santos Dumont (SBRJ) and Porto Alegre (SBPA) saw declines in 2024. Meanwhile, Congonhas (SBSP) and Brasília (SBBR) showed very little variation overall. This divergence highlights the uneven pace of growth among Brazil's major airports, reflecting broader structural and operational differences in the national aviation landscape.
+@fig-apt-annual-change presents the airport movement evolution for the study airports from 2023 to 2025. 
+In Europe, airports have generally observed increases in movement levels across the period, reflecting a network in a phase of gradual consolidation. 
+The Brazilian scenario is more heterogeneous — while some airports such as Galeão (SBGL) and Guarulhos (SBGR) registered increases, others such as Santos Dumont (SBRJ) and Porto Alegre (SBPA) saw declines in 2024. 
+Meanwhile, Congonhas (SBSP) and Brasília (SBBR) showed very little variation overall. 
+This divergence highlights the uneven pace of growth among Brazil's major airports, reflecting broader structural and operational differences in the national aviation landscape.
 
 <!-- Old version
 
@@ -1049,24 +1033,28 @@ p_bra_var / p_eur_var
 
 ```
 
-It is also important to emphasise that Brazil's movements are distributed across a much larger number of airports compared to Europe. As discussed in Section 3.1, Brazil's extensive network dilutes movement concentration at the top airports, suggesting a modest redistribution across a broader set of airports — potentially due to regional market dynamics, strategic airline adjustments, or temporary infrastructure constraints. Europe's busiest airports have slightly increased their share of total network movements, reflecting the growing reliance on major hubs across the region.
-
-
-
+It is also important to emphasise that Brazil's movements are distributed across a much larger number of airports compared to Europe. 
+As discussed in Section 3.1, Brazil's extensive network dilutes movement concentration at the top airports, suggesting a modest redistribution across a broader set of airports — potentially due to regional market dynamics, strategic airline adjustments, or temporary infrastructure constraints. 
+Europe's busiest airports have slightly increased their share of total network movements, reflecting the growing reliance on major hubs across the region.
 
 ### Annual Movements and Year-on-Year Variation
 
-Figure 3.9 presents the total movements at each study airport in 2025 alongside the variation compared to 2024. While Guarulhos (SBGR) remains the busiest airport in Brazil, its movement volume is comparable to that of the fifth and sixth busiest airports in Europe — Munich (EDDM) and Gatwick (EGKK). This shows that direct comparisons between the top airports in each region may not fully reflect their operational realities, as factors such as the number of runways, network architecture, and traffic density create unique operational complexities in each case.
-In Brazil, the largest movement disruption over the period occurred in 2024 at Porto Alegre Airport (SBPA), directly impacted by major flooding in May and remaining closed until October. Many flights were redirected to nearby airports in southern Brazil not included in the scope of this comparison. The increase in movements at Galeão (SBGL) was mainly driven by restrictions applied at Santos Dumont (SBRJ), leading to a reallocation of operations between the two airports — an effect that is also visible in subsequent indicators such as peak day operations.
-
-
+Figure 3.9 presents the total movements at each study airport in 2025 alongside the variation compared to 2024. While Guarulhos (SBGR) remains the busiest airport in Brazil, its movement volume is comparable to that of the fifth and sixth busiest airports in Europe — Munich (EDDM) and Gatwick (EGKK). 
+This shows that direct comparisons between the top airports in each region may not fully reflect their operational realities, as factors such as the number of runways, network architecture, and traffic density create unique operational complexities in each case.
+In Brazil, the largest movement disruption over the period occurred in 2024 at Porto Alegre Airport (SBPA), directly impacted by major flooding in May and remaining closed until October. 
+Many flights were redirected to nearby airports in southern Brazil not included in the scope of this comparison. 
+The increase in movements at Galeão (SBGL) was mainly driven by restrictions applied at Santos Dumont (SBRJ), leading to a reallocation of operations between the two airports — an effect that is also visible in subsequent indicators such as peak day operations.
 
 ### Monthly Movement Patterns
 
-
-Figure 3.10 shows the monthly evolution of movements at Guarulhos (SBGR) and Munich (EDDM), as well as at São Paulo Congonhas (SBSP) and Lisbon (LPPT). These airport pairs were selected to illustrate the contrasting movement profiles between the two regions at comparable levels of network importance.
-For SBGR, a steady increase in monthly movements is visible in 2025 compared to 2024, with July standing out as the month with the highest volume. Operations at EDDM show a more pronounced seasonal pattern, with movements building up from late spring to peak levels during the summer months. This contrast reinforces the structural difference between Brazil's more stable year-round demand and Europe's tourism-driven seasonality.
-Comparing SBSP and LPPT shows a similar dynamic at a smaller scale. Movement levels at SBSP are moderate and stable throughout the year, servicing predominantly national and regional traffic. Lisbon, in turn, exhibits a clear summer peak in movements, consistent with its role as a major gateway for leisure and connecting traffic between Europe and the Atlantic region.
+Figure 3.10 shows the monthly evolution of movements at Guarulhos (SBGR) and Munich (EDDM), as well as at São Paulo Congonhas (SBSP) and Lisbon (LPPT). 
+These airport pairs were selected to illustrate the contrasting movement profiles between the two regions at comparable levels of network importance.
+For SBGR, a steady increase in monthly movements is visible in 2025 compared to 2024, with July standing out as the month with the highest volume. 
+Operations at EDDM show a more pronounced seasonal pattern, with movements building up from late spring to peak levels during the summer months. 
+This contrast reinforces the structural difference between Brazil's more stable year-round demand and Europe's tourism-driven seasonality.
+Comparing SBSP and LPPT shows a similar dynamic at a smaller scale. 
+Movement levels at SBSP are moderate and stable throughout the year, servicing predominantly national and regional traffic. 
+Lisbon, in turn, exhibits a clear summer peak in movements, consistent with its role as a major gateway for leisure and connecting traffic between Europe and the Atlantic region.
 
 ```{r}
 #| label: fig-monthly-tfc-sbgr-lppt
@@ -1165,8 +1153,6 @@ combo2 <- plot_monthly_airport("SBSP", "SBSP and LPPT") +
   patchwork::plot_layout(guides = "collect") &
   ggplot2::theme(legend.position = "top")
 ```
-
-
 
 ## Peak Day Traffic
 
@@ -1427,7 +1413,7 @@ However, it is important to note that in many of these cases, the runway system 
 Such constraints reduce the available runway system capacity, and thus, the serviced peak traffic is also impacted by the runway system configuration.
 For example, operations at Amsterdam (EHAM) cannot make use of all six runways at the same time.
 Operations at Zurich (LSZH, 3 interdependent runway system) range above the order of single runway operations at Lisbon (LPPT, 1 runway). 
-As a result, peak traffic performance is also shaped by the specific runway configuration.
+As a result, peak traffic performance is also shaped by the specific runway system configuration.
 
 When focusing on airports with up to two runways, European airports still generally show higher peak day movements compared to the Brazilian ones. 
 This difference can be attributed to more robust infrastructure and operational systems in Europe.
@@ -1654,15 +1640,18 @@ Despite these differences, both regions show signs of stability and resilience, 
 Events like the prolonged closure of Porto Alegre (SBPA) and restrictions at Santos Dumont (SBRJ) highlighted the sensitivity of localized operations and the capacity of the network to adapt.
 
 At the airport level, Brazilian traffic remains highly concentrated in a few major hubs, whereas European operations are more spread across several national gateways. 
-There is a more pronounced seasonal pattern in Europe typically culminating during the summer holiday season.
+This reflects the historical evolution of the European network with a high number of national hubs across its member countries.
+At the same time, the pattern shows a tremendous growth opportunity for Brazil as continual growth can serve as a motor for higher levels of interconnectivity.
+While the Brazilian system shows a steady "all-year" demand pattern, there is a pronounced seasonal pattern in Europe typically culminating during the summer holiday season.
 
 The peak day analysis complemented the annual view by illustrating the operational limits reached under maximum demand. 
 Although volumes remained stable overall, individual airports showed notable variations—either from growth, as in SBGL and SBCF, or contraction, as seen in SBRJ.
 European peak service rates show the overall recovery pattern and first signs of reaching the available capacity for the major hubs.  
 
 Finally, the fleet mix analysis reinforced the structural differences in how each region operates: Brazil shows a higher presence of light aircraft in some regional airports and a centralised model for long-haul traffic.
-Light-type traffic at the study airports in Europe remain the exemption.
+Light-type traffic at the study airports in Europe remain the exemption and are typically routed to nearby smaller regional airports.
 A higher share of heavy aircraft is observed at the top-European airport in this study.
+This roots as well in the historical evolution with many European states operating their own flag carriers and global connections. 
 The wider spread of international connections across all chosen airports shows a less centralised global connectivity model.
 
 Together, these findings establish a base to understanding the operational performance indicators in the next chapters.
