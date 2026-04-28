@@ -8,7 +8,7 @@ source(here::here("_chapter-setup.R"))
 ```
 
 This section presents key characteristics of the air navigation systems of Brazil and Europe.
-In broad strokes, the provision of air navigation services in both regions relies on similar operational concepts, procedures, and supporting technology.
+In broad strokes, the provision of air navigation services in both regions relies on similar operational concepts, procedures, and supporting technologies.
 Nonetheless, there are several distinctions between the two systems, which help to account for the similarities and differences in key performance indicators documented in this report.
 
 ## Organisation of Air Navigation Services
@@ -22,7 +22,7 @@ Its mission encompasses the management and control of all air traffic within the
 To achieve this, DECEA operates a comprehensive and fully integrated civil-military system.
 
 In 2021, a public company, NAV Brasil, was created to take over some facilities that were linked to an older airport infrastructure provider company in Brazil (INFRAERO).
-Today, NAV Brasil has xxxx employees in xx different units, providing aerodrome control services, non-radar approach, meteorology and aeronautical information for the respective locations.
+Today, NAV Brasil <!-- has xxxx employees in xx different units, providing --> provides aerodrome control services, non-radar approach, meteorology and aeronautical information for the respective locations.
 Despite serving a significant number of air transport movements, NAV Brasil does not plan to establish radar facilities or provide en-route services.
 
 The Brazilian airspace, covering an area of approximately 22 million square kilometres (8.5 million square nautical miles of non-oceanic airspace), is divided into five Flight Information Regions.
@@ -30,10 +30,13 @@ These regions are further subdivided and managed by five Area Control Centers (A
 
 The non-oceanic airspace in Europe covers an area of 11.5 million square kilometres.
 When it comes to the provision of air traffic services, the European approach involves a multitude of service providers, with 37 distinct en-route Air Navigation Service Providers (ANSPs), each responsible for different geographical regions.
-These services are primarily organised along state boundaries and associated FIR borders, with a number of limited cross-border agreements in place between adjacent airspaces and air traffic service units.\
+These services are primarily organised along state boundaries and associated FIR borders, with a number of limited cross-border agreements in place between adjacent airspaces and air traffic service units.
 A noteworthy exception to this predominantly national approach is the Maastricht Upper Area Control, which represents a unique multinational collaboration offering air traffic services in the upper airspace of northern Germany, the Netherlands, Belgium, and Luxembourg.
 
 Civil-military integration levels across European countries vary.
+National souvereignty and defense remain a national responsibility, and civil-military coordination for airspace and flight operations follows a variety of models. 
+These range from stand-alone units to fully integrated and jointly operated services.
+With most Member States of EUROCONTROL being member of NATO, there is also strong coordination of the military dimension through joint assets and capabilities. 
 Within the European context, the central coordination of Air Traffic Flow Management (ATFM) and Airspace Management (ASM) is facilitated by the Network Manager.
 The design of airspace and related procedures is no longer developed and implemented in isolation in Europe.
 Inefficiencies in the design and utilisation of the air route network are recognised as contributing factors to flight inefficiencies in the region.
@@ -57,11 +60,8 @@ bra_atcos_pct <- ((bra_actos / bra_atco_2019) - 1) * 100
 
 @tbl-HLC1 summarises the key characteristics of the Brazilian and European air navigation systems for 2023, 2024, and 2025. The data reflects a period of consolidation and growth in both regions, albeit at different paces and driven by distinct structural factors.
 
-
 <!---
-
-New table GT
-
+New table GT  == NEED TO CHECK OUTPUT in html vs pdf
 --->
 
 ```{r}
@@ -207,8 +207,13 @@ if (knitr::is_latex_output()) {
 
 ```
 
+<!-- I think it is cleaner to extract the "facts" below in a separate code-chunk here, introduce a variable, and call it as inline chunk below. 
+There is quite some codeing in the inline chunks that makes it difficult to follow. 
+-->
 
-In Brazil, the number of Air Traffic Controllers (ATCOs) in operations has continued to grow steadily, increasing from `r hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)` in 2023 to `r hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)` in 2025 — a rise of `r round((as.numeric(hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)) / as.numeric(hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)) - 1) * 100, 1)`%. This growth closely followed the sustained increase in air traffic demand over the same period, reflecting a proactive approach to capacity building in line with the country's continued aviation expansion. This behaviour may be partly explained by the fact that DECEA shares part of the structure used in basic training with other Air Force training processes, which, despite leading to a more centralised and rigid hiring process, has allowed for a consistent pipeline of new controllers to meet growing operational needs.
+In Brazil, the number of Air Traffic Controllers (ATCOs) in operations has continued to grow steadily, increasing from `r hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)` in 2023 to `r hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)` in 2025 — a rise of `r round((as.numeric(hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)) / as.numeric(hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)) - 1) * 100, 1)`%. 
+This growth closely followed the sustained increase in air traffic demand over the same period, reflecting a proactive approach to capacity building in line with the country's continued aviation expansion. 
+This behaviour may be partly explained by the fact that DECEA shares part of the structure used in basic training with other Air Force training processes, which, despite leading to a more centralised and rigid hiring process, has allowed for a consistent pipeline of new controllers to meet growing operational needs.
 
 In Europe, ATCO numbers showed only a mild variation over the period, moving from [X] in 2023 to [X] in 2025. This more conservative modulation reflects not only the slower pace of traffic recovery in the region but also a strategic orientation toward investment in technology, automation, and operational efficiency as levers to absorb demand. In Europe, there exists a mix of organisational models and labour contracts ranging from public service to fully commercial organisation, which tends to produce more measured responses to anticipated changes in air traffic demand. @fig-ATCO illustrates this divergence in workforce evolution alongside the traffic index for both regions.
 
@@ -221,10 +226,14 @@ knitr::include_graphics("./figures/02_system_ATCO_new_comparison.png")
 
 ```
 
-The traffic density indicator — expressed as controlled flights per square kilometre of non-oceanic airspace — provides a structural lens through which the operational differences between both regions can be better understood. In 2025, Europe operated at a density of `r hlc_raw |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Europe_2025)` flights/km², significantly higher than Brazil's `r hlc_raw |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Brazil_2025)` flights/km². Despite this gap, Brazil's density has grown consistently over the period, reflecting the continued expansion of domestic aviation. This contrast underpins many of the operational differences discussed throughout this report, particularly regarding coordination complexity, capacity constraints, and network organisation.
+The traffic density indicator — expressed as controlled flights per square kilometre of non-oceanic airspace — provides a structural lens through which the operational differences between both regions can be better understood. 
+In 2025, Europe operated at a density of `r hlc_raw |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Europe_2025)` flights/km², significantly higher than Brazil's `r hlc_raw |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Brazil_2025)` flights/km². 
+Despite this gap, Brazil's density has grown consistently over the period, reflecting the continued expansion of domestic aviation. 
+This contrast underpins many of the operational differences discussed throughout this report, particularly regarding coordination complexity, capacity constraints, and network organisation.
 
-Beyond the absolute number of controllers, the ratio of controlled flights per ATCO in operations offers a complementary perspective on how each system organises its workforce relative to demand. @fig-ATCO-ratio shows that Europe consistently records a higher flights-per-ATCO ratio compared to Brazil. This difference reflects not only the traffic density gap between the two regions but also distinctions in airspace organisation, sector design, and the distribution of responsibilities across control units.
-
+Beyond the absolute number of controllers, the ratio of controlled flights per ATCO in operations offers a complementary perspective on how each system organises its workforce relative to demand. 
+@fig-ATCO-ratio shows that Europe consistently records a higher flights-per-ATCO ratio compared to Brazil. 
+This difference reflects not only the traffic density gap between the two regions but also distinctions in airspace organisation, sector design, and the distribution of responsibilities across control units.
 
 ```{r}
 #| label: fig-ATCO-ratio
@@ -234,8 +243,6 @@ Beyond the absolute number of controllers, the ratio of controlled flights per A
 knitr::include_graphics("./figures/02_system_ATCO_new_ratio.png")
 
 ```
-
-
 
 <!-- Old text
 
@@ -261,38 +268,14 @@ Due to the Russian invasion of Ukraine, a certain share of flights is currently 
 
 -->
 
-
-
-
-<!-- Note: this table is imported from powerpoint - check for figures-handmade.pptx in ./figures or the file / data specifically created for this iteration
--->
-
-
-
-<!--
-
-
-#| label: tbl-HLC
-#| tbl-cap: High Level Comparison 2024
-#| out-width: 95%
-
-knitr::include_graphics("./figures/HLC-table1.png")
-
--->
-
-
-Both regions operate with similar operational concepts, procedures, and supporting technology. Considering the non-oceanic dimension of the airspace, Brazil services an area approximately 22% smaller than Europe. Brazil, with lower traffic density relative to its airspace, faces a more challenging cost-benefit ratio in maintaining communication coverage and surveillance for regions with low traffic volumes. The higher traffic density in Europe influences all aspects of flight management — in particular, the European region faces more considerable challenges in coordinating efforts to address operational constraints and service current demand.
+Both regions operate with similar operational concepts, procedures, and supporting technology. 
+Considering the non-oceanic dimension of the airspace, Brazil services an area approximately 22% smaller than Europe. Brazil, with lower traffic density relative to its airspace, faces a more challenging cost-benefit ratio in maintaining communication coverage and surveillance for regions with low traffic volumes.
+The higher traffic density in Europe influences all aspects of flight management — in particular, the European region faces more considerable challenges in coordinating efforts to address operational constraints and service current demand.
 The contrast between one single en-route ANSP in Brazil and 37 in Europe is one of the most structurally significant differences between the two systems. This fragmentation is precisely the rationale behind the Network Manager's coordinating role in Europe — ensuring that flow management decisions, route network design, and capacity planning are addressed collectively rather than in isolation. Brazil's unified structure under DECEA allows for more centralised decision-making, which may offer advantages in terms of system-wide responsiveness, though it also places considerable institutional responsibility on a single entity
 
 
-:::{.callout-warning}
-
-Section Network Characterisation was moved to chapter 03
-
-:::
-
 <!--
-
+MOVED TO NEXT CHAPTER - DELETE HERE WHEN DONE
 ## Network Characterisation
 
 To address the changes in air traffic and develop a better understanding of the nature of the air transportation network, this report expands the characterisation of the network.
@@ -524,14 +507,35 @@ Further research can explore how both regions can maximise installed capacity, b
 
 The previous report detailed the historic setup of the performance monitoring systems in Brazil and Europe.
 
-The implementation of the performance-based approach is not a fundamental new activity in Europe. The Performance Review Commission (PRC) was established within EUROCONTROL in 1998 aiming to establish and implement an independent European air traffic management (ATM) performance review capability in response to the European Civil Aviation Conference (ECAC) Institutional Strategy. The main goal of the PRC is to offer impartial advice on pan-European ATM performance to EUROCONTROL's governing bodies. Supported by the Performance Review Unit (PRU), the PRC conducts extensive research, data analysis, and consultations to provide objective insights and recommendations. EUROCONTROL's performance review system, a pioneering initiative in the late 1990s, has influenced broader forums like ICAO's global performance approach and the Single European Sky (SES) performance scheme. Collaborating internationally, particularly with ICAO, the PRC aims to harmonise air navigation practices. The PRC produces annual reports (ACE and PRR) and provides operational performance monitoring through various data products and online tools. Continuous efforts are made to expand the online reporting for stakeholders and ensure access to independent performance data for informed decision-making.
+The implementation of the performance-based approach is not a fundamental new activity in Europe. 
+The Performance Review Commission (PRC) was established within EUROCONTROL in 1998 aiming to establish and implement an independent European air traffic management (ATM) performance review capability in response to the European Civil Aviation Conference (ECAC) Institutional Strategy. 
+The main goal of the PRC is to offer impartial advice on pan-European ATM performance to EUROCONTROL's governing bodies. Supported by the Performance Review Unit (PRU), the PRC conducts extensive research, data analysis, and consultations to provide objective insights and recommendations.
+EUROCONTROL's performance review system, a pioneering initiative in the late 1990s, has influenced broader forums like ICAO's global performance approach and the Single European Sky (SES) performance scheme.
+Collaborating internationally, particularly with ICAO, the PRC aims to harmonise air navigation practices. 
+The PRC produces annual reports, e.g. Performance Review Report (PRR) and ATM Cost-Efficiency (ACE), and provides operational performance monitoring through various data products and online tools (https://ansperformance.eu).
+Continuous efforts are made to expand the online reporting for stakeholders and ensure access to independent performance data for informed decision-making.
 
-It is noteworthy to recall that DECEA, influenced by ICAO publications, embraced a performance-based approach, notably advancing the national state-of-the-art in collaboration with EUROCONTROL. Beginning with the SIRIUS Brazil Program in 2012, DECEA faced challenges defining metrics, but made significant progress after signing a Cooperation Agreement with EUROCONTROL in 2015. DECEA published crucial documents for ICAO's Global Air Navigation Plan, prompting an organisational transformation and adaptation of practices. Establishing the ATM Performance Section in 2019, akin to EUROCONTROL's PRU, DECEA accelerated the build-up of expertise in operational performance monitoring. This culminated in the publication of the first Brazilian ATM Performance Plan for 2022–2023.
-Building on this foundation, DECEA has continued to strengthen and broaden its performance management culture in recent years. This has been achieved through dedicated training courses on ATM performance, the organisation of an annual performance seminar bringing together national and international stakeholders, and successive updates to the national ATM Performance Plan. In parallel, DECEA has made significant technical advances in the calculation of new indicators that had not previously been assessed at the national level, most notably Vertical Flight Efficiency (VFE) and Horizontal Flight Efficiency (HFE). These additions represent a meaningful step forward in aligning Brazil's performance monitoring framework with international best practices and expanding the analytical scope of the national system.
+It is noteworthy to recall that DECEA, influenced by ICAO publications, embraced a performance-based approach, notably advancing the national state-of-the-art in collaboration with EUROCONTROL.
+Beginning with the SIRIUS Brazil Program in 2012, DECEA faced challenges defining metrics, but made significant progress after signing a Cooperation Agreement with EUROCONTROL in 2015.
+DECEA published crucial documents for ICAO's Global Air Navigation Plan, prompting an organisational transformation and adaptation of practices. 
+Establishing the ATM Performance Section in 2019, akin to EUROCONTROL's PRU, DECEA accelerated the build-up of expertise in operational performance monitoring. 
+This culminated in the publication of the first Brazilian ATM Performance Plan for 2022–2023.
+Building on this foundation, DECEA has continued to strengthen and broaden its performance management culture in recent years. 
+This has been achieved through dedicated training courses on ATM performance, the organisation of an annual performance seminar bringing together national and international stakeholders, and successive updates to the national ATM Performance Plan. 
+In parallel, DECEA has made significant technical advances in the calculation of new indicators that had not previously been assessed at the national level, most notably Vertical Flight Efficiency (VFE) and Horizontal Flight Efficiency (HFE). 
+These additions represent a meaningful step forward in aligning Brazil's performance monitoring framework with international best practices and expanding the analytical scope of the national system.
 
-Actively fostering an open culture of knowledge-sharing within South America, DECEA has engaged in workshops and seminars, inviting EUROCONTROL for collaboration. The recurrent use of common indicators and the close technical collaboration during joint analysis periods enrich not only both regions but also carry a broader global impact. Embracing transparency, both agencies have made their indicators and databases publicly accessible, perpetuating a culture of reciprocity for mutual advancement. The lessons learned from this scheme are systematically shared with the multinational Performance Benchmarking Working Group (PBWG) and the Performance Expert Group of the ICAO GANP Study Group, responsible for developing GANP Key Performance Indicators (KPIs) — reinforcing this collaboration as a reference model for ANS performance management globally.
+Actively fostering an open culture of knowledge-sharing within South America, DECEA has engaged in workshops and seminars, inviting EUROCONTROL for this collaborative effort. 
+The recurrent use of common indicators and the close technical collaboration during joint analyses enrich not only both regions but also carry a broader global impact. 
+Embracing transparency, both agencies have made their indicators and databases publicly accessible, perpetuating a culture of reciprocity for mutual advancement. 
+The lessons learned from this collaboration are systematically shared with the multinational Performance Benchmarking Working Group (PBWG) and the Performance Expert Group of the ICAO GANP Study Group, responsible for developing GANP Key Performance Indicators (KPIs) — reinforcing this collaboration as a reference model for ANS performance management globally.
 Updated dashboards, previous work, and supporting historical data are available at https://ansperformance.eu/global/brazil/ or https://performance.decea.mil.br/.
 
 ## Summary
 
-The characteristics of the air navigation systems in Brazil and Europe presented in this chapter highlight both the commonalities and the structural differences that shape operational performance in each region. Both systems rely on similar operational concepts, procedures, and supporting technology, yet they differ significantly in their organisational models, workforce dynamics, and traffic density. In 2025, Brazil continued to expand its aviation sector, with a growing controller workforce closely aligned with sustained traffic demand, while Europe consolidated its network with a more measured approach to capacity building. The traffic density gap — with Europe operating at approximately four times the density of Brazil — remains a fundamental structural feature that underpins many of the performance differences documented throughout this report. At the institutional level, both DECEA and EUROCONTROL have continued to deepen their performance monitoring frameworks, with Brazil advancing the calculation of new efficiency indicators such as Vertical Flight Efficiency (VFE) and Horizontal Flight Efficiency (HFE) and strengthening its performance culture through training and annual seminars. Together, these developments reinforce the value of the bilateral collaboration and set the analytical foundation for the traffic and performance analysis presented in the following chapters.
+The characteristics of the air navigation systems in Brazil and Europe presented in this chapter highlight both the commonalities and the structural differences that shape operational performance in each region. 
+Both systems rely on similar operational concepts, procedures, and supporting technology, yet they differ significantly in their organisational models, workforce dynamics, and traffic density. 
+In 2025, Brazil continued to expand its aviation sector, with a growing controller workforce closely aligned with sustained traffic demand, while Europe consolidated its network with a more measured approach to capacity building. 
+The traffic density gap — with Europe operating at approximately four times the density of Brazil — remains a fundamental structural feature that underpins many of the performance differences documented throughout this report. 
+At the institutional level, both DECEA and EUROCONTROL have continued to deepen their performance monitoring frameworks, with Brazil advancing the calculation of new efficiency indicators such as Vertical Flight Efficiency (VFE) and Horizontal Flight Efficiency (HFE) and strengthening its performance culture through training and annual seminars. 
+Together, these developments reinforce the value of the bilateral collaboration and set the analytical foundation for the traffic and performance analysis presented in the following chapters.

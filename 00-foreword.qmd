@@ -1,19 +1,14 @@
 # Foreword {.unnumbered}
 
-![](figures/foreword-combined.png)
-
 <!--
-#| label: shakehands
-#| fig-cap: ""
-#| fig-align: "center"
-#| out-width: 55%
-knitr::include_graphics("./figures/DGCEA-PRC.jpg")
+![](figures/foreword-combined.png)
 -->
 
 
-# New proposal 
 
-## DECEA
+:::{.callout-note} 
+
+**DECEA**
 
 ### Proposal 1
 
@@ -25,7 +20,7 @@ This publication marks the fifth edition of the collaborative performance report
 In this new edition, the cooperation between Brazil and EUROCONTROL reaffirms the value of a partnership driven by a shared commitment to the advancement of air navigation. The expansion of the airport sample, the deeper examination of performance indicators, and the inclusion of flight efficiency studies strengthen this report as a meaningful instrument to support decision-making, promote sector modernization, and drive the continuous improvement of operations.
 
 
-## EUROCONTROL
+**EUROCONTROL**
 
 
 ### Proposal 1
@@ -36,6 +31,13 @@ Five editions in, the Brazil–EUROCONTROL comparative performance report stands
 
 As this joint work continues to evolve, the report offers an increasingly comprehensive and refined view of performance, with greater depth in the analysis of key indicators and an expanded set of airports under observation. The incorporation of flight efficiency studies broadens the technical scope of this edition and reinforces its value as a reference for benchmarking, identification of best practices, and the continuous improvement of Air Navigation System performance across both regions.
 
+:::
 
-
+<!--
+#| label: shakehands
+#| fig-cap: ""
+#| fig-align: "center"
+#| out-width: 55%
+knitr::include_graphics("./figures/DGCEA-PRC.jpg")
+-->
 

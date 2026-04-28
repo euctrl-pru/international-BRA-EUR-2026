@@ -1,7 +1,9 @@
 # Executive Summary {.unnumbered}
 
-The Performance Section of the Brazilian Department of Airspace Control (DECEA) and the Performance Review Unit (PRU) of EUROCONTROL jointly developed this edition of the Brazil–Europe comparison of Air Navigation System performance. 
-This bi-regional report builds on previous comparative analyses and is based on commonly agreed performance metrics and definitions, enabling a consistent assessment of air navigation service performance over time. By extending the observation period to 2019–2025, the report supports a comprehensive analysis of long-term performance trends, encompassing the pre-COVID, the pandemic disruption, and the subsequent recovery phase. [To be reviewed] 
+The Performance Section of the Brazilian Department of Airspace Control (DECEA) and the Performance Review Unit (PRU) of EUROCONTROL jointly developed this edition of the Brazil–Europe Comparison of Air Navigation System Performance report. 
+This bi-regional report builds on previous comparative analyses and is based on commonly agreed performance metrics and definitions, enabling a consistent assessment of air navigation service performance over time. 
+By extending the observation period to 2019–2025, this edition supports a comprehensive analysis of long-term performance trends, encompassing the pre-COVID, the pandemic disruption, and the subsequent recovery phase. <!--To be reviewed -->
+
 This report and previous editions are available via the web-portals of both organisations: 
 
 * <https://ansperformance.eu/global/brazil> or 
@@ -9,8 +11,11 @@ This report and previous editions are available via the web-portals of both orga
 
 This edition expands on the previous comparisons of the Brazilian and European air navigation systems by focussing on the observed performance post COVID, extending the time frame, and incorporating additional analyses.
 For example, a more detailed characterisation of the Brazilian and European network is included.
-With the recent deployment of point-merge, operations at Sao Paulo Guarulhos and Lisbon are studied and an initial characterisation is provided.
-On the center level, this edition also looks into comparing Curitiba and Lisbon ACC.
+<!-- With the recent deployment of point-merge, operations at Sao Paulo Guarulhos and Lisbon are studied and an initial characterisation is provided.
+On the center level, this edition also looks into comparing Curitiba and Lisbon ACC. -->
+An initial assessment of horizontal flight efficiency demonstrates the widening scope of this report.
+This is also complemented by an exploratory assessment of the runway pressure to characterise operational concepts at the study airports. 
+Both aspects promise to enable further analyses and studies for future editions.
 These focussed topics allow to address discussions about performance benefits and may help to highlight the differences between the operations in both regions.
 
 The report focuses on a subset of the eleven Key Performance Areas identified by the ICAO Global Air Navigation Plan, in particular Predictability, Capacity and Efficiency.
@@ -65,7 +70,6 @@ benefit pool.
 ``` 
 
 This report will be updated throughout the coming years under the umbrella of the DECEA-EUROCONTROL memorandum of cooperation. 
-It is also planned to establish a web-based rolling monitoring updated on a regular basis.
-
+It is also planned to establish a web-based rolling monitoring with regular updates.
 Future editions will complement the data time series and support the development of further use-case analyses. 
 The lessons learnt of this joint project will be coordinated with the multi-national Performance Benchmarking Working Group (PBWG) and the ICAO GANP Study sub-group concerned with the further development of the GANP Key Performance Indicators (KPIs).
