@@ -1,7 +1,3 @@
----
-title: "Untitled"
----
-
 <!-- 
 think about which other airport we might use for the BLI/PLI comparison
 -->
@@ -439,8 +435,8 @@ For this purpose, this report determines two characteristic points, i.e. the *BL
 #| label: prep-bli-pli
 
 bli_pli_first_year    <- 2019
-bli_pli_interim_years <- c(2023, 2024)
 bli_pli_last_year     <- 2025
+bli_pli_interim_years <- seq(bli_pli_first_year + 1, bli_pli_last_year - 1)
 bli_pli_years <- c(bli_pli_first_year, bli_pli_interim_years, bli_pli_last_year)
 
 ordered_thru_example <- readr::read_csv(
@@ -506,7 +502,6 @@ plot_ordered_thrus <- function(.ordered_thrus) {
 
 bli_pli_trajectory_plot <- function(
     .bli_pli_df,
-    .label_positions,
     .first_year    = bli_pli_first_year,
     .last_year     = bli_pli_last_year,
     .interim_years = bli_pli_interim_years
@@ -518,46 +513,63 @@ bli_pli_trajectory_plot <- function(
     stats::setNames("#1F78B4", as.character(.last_year))
   )
 
-  last_year_labels <- .bli_pli_df |>
-    filter(YEAR_NUM == .last_year) |>
+  last_year_points <- .bli_pli_df |>
+    filter(YEAR_NUM == .last_year)
+
+  label_airports <- last_year_points |>
+    group_by(REG) |>
     mutate(
-      LABEL = ICAO,
-      LABEL_X = 1.035
+      BLI_RANK = percent_rank(BLI),
+      PLI_RANK = percent_rank(PLI),
+      PEAK_PRESSURE = BLI_RANK + PLI_RANK,
+      STEADY_BASE = BLI_RANK + (1 - PLI_RANK),
+      LOW_UTILISATION = (1 - BLI_RANK) + (1 - PLI_RANK),
+      PEAKY_IMBALANCE = PLI_RANK + (1 - BLI_RANK)
     ) |>
-    left_join(.label_positions, by = c("REG", "ICAO")) |>
-    mutate(
-      LABEL_X = coalesce(.data$LABEL_X_MANUAL, .data$LABEL_X),
-      LABEL_Y = coalesce(.data$LABEL_Y_MANUAL, .data$PLI)
-    )
+    ungroup() |>
+    tidyr::pivot_longer(
+      cols = c(PEAK_PRESSURE, STEADY_BASE, LOW_UTILISATION, PEAKY_IMBALANCE),
+      names_to = "LABEL_REASON",
+      values_to = "LABEL_SCORE"
+    ) |>
+    arrange(REG, LABEL_REASON, desc(LABEL_SCORE), desc(PLI), desc(BLI)) |>
+    slice_head(n = 1, by = c(REG, LABEL_REASON)) |>
+    arrange(REG, desc(LABEL_SCORE), desc(PLI), desc(BLI)) |>
+    distinct(REG, ICAO, .keep_all = TRUE) |>
+    select(REG, ICAO)
+
+  label_points <- last_year_points |>
+    semi_join(label_airports, by = c("REG", "ICAO")) |>
+    mutate(LABEL = ICAO)
 
   .bli_pli_df |>
     ggplot(aes(x = BLI, y = PLI, color = YEAR)) +
-    geom_path(
-      aes(group = ICAO),
-      color = "grey65",
-      linewidth = 0.5,
-      alpha = 0.8,
-      show.legend = FALSE
-    ) +
     geom_point(
       aes(fill = YEAR, shape = YEAR_ROLE),
-      size = 2.5,
+      size = ifelse(.bli_pli_df$YEAR_NUM == .last_year, 3.1, 2.1),
       stroke = 0.8,
       color = "grey30",
       show.legend = FALSE
     ) +
-    geom_segment(
-      data = last_year_labels,
-      aes(x = BLI, y = PLI, xend = LABEL_X - 0.008, yend = LABEL_Y),
+    ggrepel::geom_label_repel(
+      data = label_points,
+      aes(x = BLI, y = PLI, label = LABEL),
       inherit.aes = FALSE,
-      color = "grey55",
-      linewidth = 0.4
-    ) +
-    geom_text(
-      data = last_year_labels,
-      aes(x = LABEL_X, y = LABEL_Y, label = LABEL),
-      inherit.aes = FALSE,
-      hjust = 0,
+      xlim = c(0.02, 1.06),
+      ylim = c(0.02, 0.98),
+      min.segment.length = 0,
+      box.padding = 0.45,
+      point.padding = 0.25,
+      force = 3,
+      force_pull = 0.3,
+      max.overlaps = Inf,
+      segment.color = "grey55",
+      segment.linewidth = 0.35,
+      label.size = 0,
+      label.r = unit(0.08, "lines"),
+      label.padding = unit(0.10, "lines"),
+      fill = scales::alpha("white", 0.85),
+      seed = 2025,
       size = 3
     ) +
     scale_fill_manual(
@@ -571,19 +583,19 @@ bli_pli_trajectory_plot <- function(
       aes(group = REG),
       method = "lm",
       formula = y ~ I(x^5),
-      linewidth = 0.5,
+      linewidth = 1.1,
       linetype = "dashed",
-      color = "grey50",
+      color = "#2B6EA6",
       se = FALSE,
       fullrange = TRUE
     ) +
     geom_hline(yintercept = 0.3, color = "grey40", linetype = "dotted") +
     geom_vline(xintercept = 0.75, color = "grey40", linetype = "dotted") +
-    coord_cartesian(xlim = c(0, 1.08), ylim = c(0, 1), clip = "off") +
+    coord_cartesian(xlim = c(0, 1.04), ylim = c(0, 1), clip = "off") +
     labs(x = "base load index", y = "peak load index") +
     theme(
       panel.spacing.x = unit(1, "cm"),
-      plot.margin = margin(5.5, 50, 5.5, 5.5)
+      plot.margin = margin(5.5, 12, 5.5, 5.5)
     )
 }
 
@@ -687,38 +699,7 @@ The peak load index (PLI) accounts then for the number of operating hours at or 
 #| label: fig-bli-pli
 #| fig-cap: Capacity utilisation trajectory (base load index vs peak load index)
 
-bli_pli_label_positions <- tribble(
-  ~REG, ~ICAO, ~LABEL_X_MANUAL, ~LABEL_Y_MANUAL,
-  "BRA", "SBSP", 0.8, 0.75,
-  "BRA", "SBRJ", 1.035, 0.86,
-  "BRA", "SBGR", 1.035, 0.80,
-  "BRA", "SBKP", 1.035, 0.73,
-  "BRA", "SBCF", 1.035, 0.67,
-  "BRA", "SBGL", 1.035, 0.60,
-  "BRA", "SBCT", 1.035, 0.54,
-  "BRA", "SBRF", 1.035, 0.48,
-  "BRA", "SBPA", 1.035, 0.42,
-  "BRA", "SBBR", 1.035, 0.36,
-  "BRA", "SBSV", 0.35, 0.30,
-  "BRA", "SBEG", 0.2, 0.1,
-  "EUR", "EDDF", 1.035, 0.2,
-  "EUR", "LTFM", 1.035, 0.87,
-  "EUR", "LSZH", 1.035, 0.81,
-  "EUR", "LPPT", 1.035, 0.75,
-  "EUR", "EGLL", 1.035, 0.69,
-  "EUR", "EDDM", 1.035, 0.63,
-  "EUR", "LFPG", 1.035, 0.57,
-  "EUR", "LEBL", 1.035, 0.51,
-  "EUR", "EGKK", 0.5, 0.45,
-  "EUR", "LEMD", 1.035, 0.39,
-  "EUR", "EHAM", 0.6, 0.25,
-  "EUR", "LGAV", 0.6, 0.5
-)
-
-bli_pli_trajectory_plot(
-  bli_pli,
-  .label_positions = bli_pli_label_positions
-) +
+bli_pli_trajectory_plot(bli_pli) +
   theme(legend.position = c(0.08, 0.82), legend.key.height = unit(4, "mm"))
 ```
 
@@ -733,7 +714,9 @@ bli_pli_heatmap_plot(bli_pli)
 
 
 The BLI/PLI plot summarises the observed utilisation of the available (i.e., declared) capacity at the study airports in the different regions.
-Based on this report, it appears that airports showing a BLI of higher than 0.75 observe a consistent level of demand across the operating hours, congestion due to peak operating conditions kick in with a PLI of 0.3. The lower range suggesting a strong banks, while higher levels of the PLI demonstrating a consistent use of the available capacity.
+It shows the full 2019-2025 airport-year trajectory, while labels are limited to automatically selected 2025 airports that mark different parts of the regional load profile: peak pressure, high base load with limited peaks, low utilisation, and peaky imbalance.
+Based on this report, airports showing a BLI higher than 0.75 observe a consistent level of demand across the operating hours, while congestion due to peak operating conditions starts to become visible around a PLI of 0.3.
+Lower PLI values suggest concentrated demand banks, while higher levels of the PLI demonstrate a more consistent use of the available capacity.
 In Brazil, we observe a high utilisation of the capacity at Sao Paulo (SBSP) in 2019, 2023, 2024, and 2025 comparable to or above pre-COVID levels.
 For a majority of the airport across the years, no substantial peak loads were measured.
 This suggests that there is substantial capacity to sustain future growth of air traffic.
