@@ -1,0 +1,759 @@
+---
+editor:
+  markdown:
+    wrap: sentence
+---
+
+# Predictability
+
+```{r}
+#| label: setup
+#| echo: false
+#| message: false
+#| warning: false
+
+source(here::here("_chapter-setup.R"))
+```
+
+The preceding sections have demonstrated that both air navigation systems exhibit unique reactions to the broader developments in air transport.
+Predictability plays a crucial role in these systems, impacting their functioning during both the strategic phase, where airline schedules are formulated, and the operational phase, where Air Navigation Service Providers (ANSPs) and stakeholders manage the delicate balance between demand and capacity.
+Enhanced predictability stands to be advantageous for ANSPs, mainly when serving airspace users, as it contributes to highly efficient operations, even during periods of peak demand.
+This chapter focuses on arrival and departure punctuality observed at the study airports as a driving factor for predictability.
+
+```{r}
+#| label: punctuality-helper-functions
+
+punctuality_groups <- c(
+  "(-INF,-60]", "(-60,-55]", "(-55,-50]", "(-50,-45]", "(-45,-40]",
+  "(-40,-35]", "(-35,-30]", "(-30,-25]", "(-25,-20]", "(-20,-15]",
+  "(-15,-10]", "(-10,-5]", "(-5,0]", "(0,5)", "[5,10)", "[10,15)",
+  "[15,20)", "[20,25)", "[25,30)", "[30,35)", "[35,40)", "[40,45)",
+  "[45,50)", "[50,55)", "[55,60)", "[60,INF)"
+)
+
+normalise_punctuality_table <- function(.punc_table, .region) {
+  punc_table <- .punc_table
+
+  if ("APT" %in% names(punc_table) && !"ICAO" %in% names(punc_table)) {
+    punc_table <- punc_table |>
+      dplyr::rename(ICAO = APT)
+  }
+
+  punc_table <- punc_table |>
+    dplyr::mutate(
+      DATE = lubridate::as_date(DATE),
+      REG = .region
+    )
+
+  if (!"(-20,-15]" %in% names(punc_table) && "(-20,-16]" %in% names(punc_table)) {
+    punc_table <- punc_table |>
+      dplyr::rename(`(-20,-15]` = `(-20,-16]`)
+  }
+
+  if (!"(-15,-10]" %in% names(punc_table) && "(-16,-10]" %in% names(punc_table)) {
+    punc_table <- punc_table |>
+      dplyr::rename(`(-15,-10]` = `(-16,-10]`)
+  }
+
+  missing_groups <- setdiff(punctuality_groups, names(punc_table))
+  punc_table[missing_groups] <- 0
+
+  punc_table |>
+    dplyr::mutate(
+      N_VALID = rowSums(
+        dplyr::across(dplyr::all_of(punctuality_groups)),
+        na.rm = TRUE
+      )
+    ) |>
+    dplyr::select(REG, ICAO, DATE, PHASE, N_VALID, dplyr::all_of(punctuality_groups))
+}
+
+append_punctuality_slots <- function(.punc_table) {
+  .punc_table |>
+    dplyr::mutate(
+      EARLY_N = rowSums(
+        dplyr::across(`(-INF,-60]`:`(-20,-15]`),
+        na.rm = TRUE
+      ),
+      EARLY_M15M05_N = `(-15,-10]` + `(-10,-5]`,
+      EARLY_M05M00_N = `(-5,0]`,
+      LATE_P00P05_N = `(0,5)`,
+      LATE_P05P15_N = `[5,10)` + `[10,15)`,
+      LATE_N = rowSums(
+        dplyr::across(`[15,20)`:`[60,INF)`),
+        na.rm = TRUE
+      ),
+      WITHIN_M05P05_N = EARLY_M05M00_N + LATE_P00P05_N,
+      WITHIN_M15P15_N = EARLY_M15M05_N + WITHIN_M05P05_N + LATE_P05P15_N,
+      EARLY = EARLY_N / N_VALID,
+      EARLY_M15M05 = EARLY_M15M05_N / N_VALID,
+      EARLY_M05M00 = EARLY_M05M00_N / N_VALID,
+      LATE_P00P05 = LATE_P00P05_N / N_VALID,
+      LATE_P05P15 = LATE_P05P15_N / N_VALID,
+      LATE = LATE_N / N_VALID,
+      WITHIN_M05P05 = WITHIN_M05P05_N / N_VALID,
+      WITHIN_M15P15 = WITHIN_M15P15_N / N_VALID
+    )
+}
+
+aggregate_punctuality <- function(.punc_table, .unit = c("year", "month")) {
+  unit <- rlang::arg_match(.unit)
+
+  .punc_table |>
+    dplyr::mutate(
+      DATE_AGG = lubridate::floor_date(DATE, unit = unit),
+      YEAR = lubridate::year(DATE_AGG),
+      MONTH = lubridate::month(DATE_AGG)
+    ) |>
+    dplyr::summarise(
+      dplyr::across(
+        .cols = c(N_VALID, dplyr::all_of(punctuality_groups)),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      ),
+      .by = c(REG, ICAO, PHASE, DATE_AGG, YEAR, MONTH)
+    ) |>
+    append_punctuality_slots()
+}
+
+prepare_punctuality_plot_data <- function(.punc_table, .phase, .year) {
+  airport_names <- dplyr::bind_rows(
+    bra_apts_names |> dplyr::mutate(REG = "BRA"),
+    eur_apts_names |> dplyr::mutate(REG = "EUR")
+  )
+
+  plot_order <- .punc_table |>
+    dplyr::filter(PHASE == .phase, YEAR == .year) |>
+    dplyr::left_join(airport_names, by = c("REG", "ICAO")) |>
+    dplyr::arrange(REG, N_VALID) |>
+    dplyr::mutate(AIRPORT = paste(ICAO, NAME), .by = c(REG, ICAO)) |>
+    dplyr::pull(AIRPORT)
+
+  .punc_table |>
+    dplyr::filter(PHASE == .phase, YEAR == .year) |>
+    dplyr::left_join(airport_names, by = c("REG", "ICAO")) |>
+    dplyr::mutate(AIRPORT = paste(ICAO, NAME)) |>
+    dplyr::select(
+      REG, ICAO, AIRPORT, YEAR, N_VALID,
+      EARLY,
+      EARLY_1505 = EARLY_M15M05,
+      WITHIN_5 = WITHIN_M05P05,
+      LATE_0515 = LATE_P05P15,
+      LATE
+    ) |>
+    tidyr::pivot_longer(
+      cols = EARLY:LATE,
+      names_to = "SLOT",
+      values_to = "SHARE"
+    ) |>
+    dplyr::mutate(
+      REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe"),
+      SLOT = factor(
+        SLOT,
+        levels = c("LATE", "LATE_0515", "WITHIN_5", "EARLY_1505", "EARLY")
+      ),
+      AIRPORT = factor(AIRPORT, levels = unique(plot_order)),
+      LABEL = scales::percent(SHARE, accuracy = 1)
+    )
+}
+
+plot_punctuality_distribution <- function(.plot_data, .debug = FALSE) {
+  punc_plot <- .plot_data |>
+    ggplot2::ggplot(ggplot2::aes(x = SHARE, y = AIRPORT)) +
+    ggplot2::geom_col(ggplot2::aes(fill = SLOT))
+
+  if (.debug) {
+    punc_plot <- punc_plot +
+      ggplot2::geom_text(
+        ggplot2::aes(label = LABEL),
+        position = ggplot2::position_stack(vjust = 0.5),
+        size = 2
+      )
+  }
+
+  punc_plot +
+    ggplot2::scale_x_continuous(labels = scales::percent) +
+    ggplot2::scale_fill_brewer(
+      palette = "RdYlBu",
+      name = "Time horizon",
+      labels = c("Late", "Late 5-15", "Within 5", "Early 15-5", "Early")
+    ) +
+    ggplot2::facet_wrap(~REGION, scales = "free_y") +
+    ggplot2::labs(x = NULL, y = NULL) +
+    ggplot2::theme(
+      legend.position = "top",
+      legend.title = ggplot2::element_text(size = 8),
+      legend.text = ggplot2::element_text(size = 8),
+      legend.key.size = grid::unit(0.3, "cm")
+    )
+}
+
+prepare_early_late_plot_data <- function(.punc_table, .phase, .year) {
+  .punc_table |>
+    dplyr::filter(PHASE == .phase, YEAR == .year) |>
+    dplyr::mutate(REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe")) |>
+    dplyr::select(REGION, ICAO, PHASE, YEAR, EARLY, LATE) |>
+    tidyr::pivot_longer(
+      cols = c(EARLY, LATE),
+      names_to = "SLOT",
+      values_to = "SHARE"
+    ) |>
+    dplyr::mutate(SHARE = dplyr::if_else(SLOT == "EARLY", -SHARE, SHARE))
+}
+
+plot_early_late_bar <- function(.plot_data, .limits) {
+  .plot_data |>
+    ggplot2::ggplot(ggplot2::aes(x = SHARE, y = ICAO, fill = SLOT)) +
+    ggplot2::geom_col() +
+    ggplot2::scale_x_continuous(
+      limits = .limits,
+      labels = scales::percent_format(accuracy = 1)
+    ) +
+    ggplot2::scale_fill_manual(
+      values = c(EARLY = "#4E84C4", LATE = "#C44E52"),
+      labels = c(EARLY = "early", LATE = "late")
+    ) +
+    ggplot2::facet_wrap(~REGION, scales = "free_y") +
+    ggplot2::labs(x = NULL, y = NULL, fill = NULL) +
+    ggplot2::theme(legend.position = "top")
+}
+
+plot_punctuality_vs_traffic <- function(.plot_data, .share_limits = c(0, 0.8)) {
+  p_punc_share <- .plot_data |>
+    ggplot2::ggplot() +
+    ggplot2::geom_col(
+      ggplot2::aes(x = WITHIN_M15P15, y = ICAO, fill = YEAR, color = YEAR),
+      position = ggplot2::position_dodge2(preserve = "single"),
+      key_glyph = "point"
+    ) +
+    ggplot2::scale_x_continuous(
+      labels = scales::percent_format(),
+      limits = .share_limits
+    ) +
+    ggplot2::labs(x = NULL, y = NULL, color = NULL, fill = NULL)
+
+  p_punc_tfc <- .plot_data |>
+    ggplot2::ggplot(ggplot2::aes(x = N_VALID, y = ICAO)) +
+    ggplot2::geom_line(ggplot2::aes(group = ICAO)) +
+    ggplot2::geom_point(
+      ggplot2::aes(fill = YEAR, color = YEAR),
+      key_glyph = "point"
+    ) +
+    ggplot2::scale_x_continuous(
+      labels = scales::label_number(scale = 1e-3, suffix = "k")
+    ) +
+    ggplot2::labs(x = NULL, y = NULL, color = NULL, fill = NULL)
+
+  p_punc_share + p_punc_tfc +
+    patchwork::plot_layout(widths = c(2, 1), guides = "collect") &
+    ggplot2::theme(legend.position = "top")
+}
+
+prepare_monthly_comparison <- function(.punc_monthly, .phase, .airports, .years) {
+  .punc_monthly |>
+    dplyr::filter(PHASE == .phase, ICAO %in% .airports, YEAR %in% .years) |>
+    dplyr::mutate(
+      YEAR = as.character(YEAR),
+      MONTH_LABEL = factor(
+        MONTH,
+        levels = 1:12,
+        labels = month.abb
+      )
+    )
+}
+
+plot_monthly_punctuality <- function(.plot_data) {
+  max_flights <- max(.plot_data$N_VALID, na.rm = TRUE)
+
+  .plot_data |>
+    ggplot2::ggplot() +
+    ggplot2::geom_col(
+      ggplot2::aes(x = MONTH_LABEL, y = N_VALID, fill = YEAR),
+      position = ggplot2::position_dodge()
+    ) +
+    ggplot2::geom_line(
+      ggplot2::aes(
+        x = MONTH_LABEL,
+        y = WITHIN_M15P15 * max_flights,
+        group = YEAR,
+        color = YEAR
+      ),
+      linewidth = 1
+    ) +
+    ggplot2::geom_point(
+      ggplot2::aes(
+        x = MONTH_LABEL,
+        y = WITHIN_M15P15 * max_flights,
+        group = YEAR,
+        color = YEAR
+      )
+    ) +
+    ggplot2::scale_y_continuous(
+      name = "Flights",
+      labels = scales::label_number(scale = 1e-3, suffix = "k"),
+      sec.axis = ggplot2::sec_axis(
+        ~ .x / max_flights,
+        name = "Share within -/+15 min",
+        labels = scales::percent
+      )
+    ) +
+    ggplot2::scale_fill_brewer(palette = "Blues") +
+    ggplot2::scale_color_brewer(palette = "Set1") +
+    ggplot2::facet_wrap(~ICAO) +
+    ggplot2::labs(x = NULL, y = NULL, fill = NULL, color = NULL) +
+    ggplot2::theme(
+      legend.position = "top",
+      legend.key.size = grid::unit(0.5, "line")
+    )
+}
+```
+
+```{r}
+#| label: punctuality-data
+#| message: false
+
+bra_punc <- dplyr::bind_rows(
+  readr::read_csv(
+    here::here("data", "BRA-punc.csv"),
+    show_col_types = FALSE
+  ) |>
+    normalise_punctuality_table("BRA"),
+  readr::read_csv(
+    here::here("data", "PBWG-BRA-punc-2025.csv"),
+    show_col_types = FALSE
+  ) |>
+    normalise_punctuality_table("BRA")
+) |>
+  dplyr::filter(ICAO %in% bra_apts)
+
+eur_punc <- dplyr::bind_rows(
+  readr::read_csv(
+    here::here("data", "PBWG-EUR-PUNC-2019-2022.csv"),
+    show_col_types = FALSE
+  ),
+  readr::read_csv(
+    here::here("data", "PBWG-EUR-PUNC-2023.csv"),
+    show_col_types = FALSE
+  ),
+  readr::read_csv(
+    here::here("data", "PBWG-EUR-PUNC-2024.csv"),
+    show_col_types = FALSE
+  ),
+  readr::read_csv(
+    here::here("data", "PBWG-EUR-PUNC-LPPT-2019-2024.csv"),
+    show_col_types = FALSE
+  ),
+  readr::read_csv(
+    here::here("data", "PBWG-EUR-LGAV-punc-2024.csv"),
+    show_col_types = FALSE
+  ),
+  readr::read_csv(
+    here::here("data", "PBWG-EUR-punc-2025.csv"),
+    show_col_types = FALSE
+  )
+) |>
+  normalise_punctuality_table("EUR") |>
+  dplyr::filter(ICAO %in% eur_apts)
+
+punc_daily <- dplyr::bind_rows(bra_punc, eur_punc)
+punc_annual <- punc_daily |> aggregate_punctuality("year")
+punc_monthly <- punc_daily |> aggregate_punctuality("month")
+
+punc_region_annual <- punc_annual |>
+  dplyr::summarise(
+    N_VALID = sum(N_VALID, na.rm = TRUE),
+    EARLY_N = sum(EARLY_N, na.rm = TRUE),
+    LATE_N = sum(LATE_N, na.rm = TRUE),
+    WITHIN_M15P15_N = sum(WITHIN_M15P15_N, na.rm = TRUE),
+    .by = c(REG, PHASE, YEAR)
+  ) |>
+  dplyr::mutate(
+    REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe"),
+    EARLY = EARLY_N / N_VALID,
+    LATE = LATE_N / N_VALID,
+    WITHIN_M15P15 = WITHIN_M15P15_N / N_VALID
+  )
+
+arr_summary_2025 <- punc_region_annual |>
+  dplyr::filter(PHASE == "ARR", YEAR == this_year)
+
+dep_summary_2025 <- punc_region_annual |>
+  dplyr::filter(PHASE == "DEP", YEAR == this_year)
+
+arr_airport_2025 <- punc_annual |>
+  dplyr::filter(PHASE == "ARR", YEAR == this_year)
+
+dep_airport_2025 <- punc_annual |>
+  dplyr::filter(PHASE == "DEP", YEAR == this_year)
+
+bra_arr_early_2024 <- punc_region_annual |>
+  dplyr::filter(REG == "BRA", PHASE == "ARR", YEAR == 2024) |>
+  dplyr::pull(EARLY)
+
+bra_arr_early_2025 <- arr_summary_2025 |>
+  dplyr::filter(REG == "BRA") |>
+  dplyr::pull(EARLY)
+
+eur_arr_early_2025 <- arr_summary_2025 |>
+  dplyr::filter(REG == "EUR") |>
+  dplyr::pull(EARLY)
+
+eur_arr_within_2024 <- punc_region_annual |>
+  dplyr::filter(REG == "EUR", PHASE == "ARR", YEAR == 2024) |>
+  dplyr::pull(WITHIN_M15P15)
+
+bra_arr_within_2025 <- arr_summary_2025 |>
+  dplyr::filter(REG == "BRA") |>
+  dplyr::pull(WITHIN_M15P15)
+
+eur_arr_within_2025 <- arr_summary_2025 |>
+  dplyr::filter(REG == "EUR") |>
+  dplyr::pull(WITHIN_M15P15)
+
+eur_arr_late_2024 <- punc_region_annual |>
+  dplyr::filter(REG == "EUR", PHASE == "ARR", YEAR == 2024) |>
+  dplyr::pull(LATE)
+
+eur_arr_late_2025 <- arr_summary_2025 |>
+  dplyr::filter(REG == "EUR") |>
+  dplyr::pull(LATE)
+
+eur_dep_within_2024 <- punc_region_annual |>
+  dplyr::filter(REG == "EUR", PHASE == "DEP", YEAR == 2024) |>
+  dplyr::pull(WITHIN_M15P15)
+
+bra_dep_within_2025 <- dep_summary_2025 |>
+  dplyr::filter(REG == "BRA") |>
+  dplyr::pull(WITHIN_M15P15)
+
+eur_dep_within_2025 <- dep_summary_2025 |>
+  dplyr::filter(REG == "EUR") |>
+  dplyr::pull(WITHIN_M15P15)
+
+eur_dep_late_2025 <- dep_summary_2025 |>
+  dplyr::filter(REG == "EUR") |>
+  dplyr::pull(LATE)
+
+highest_bra_arr_early_2025 <- arr_airport_2025 |>
+  dplyr::filter(REG == "BRA") |>
+  dplyr::slice_max(EARLY, n = 1, with_ties = FALSE)
+
+highest_eur_arr_late_2025 <- arr_airport_2025 |>
+  dplyr::filter(REG == "EUR") |>
+  dplyr::slice_max(LATE, n = 1, with_ties = FALSE)
+
+highest_eur_dep_late_2025 <- dep_airport_2025 |>
+  dplyr::filter(REG == "EUR") |>
+  dplyr::slice_max(LATE, n = 1, with_ties = FALSE)
+```
+
+## Arrival Punctuality
+
+The arrival punctuality shows the predictability of landing operations at airports, based on the scheduled in-block time (SIBT).
+It considers a 15-minute window for early or late arrivals and expresses the percentage of flights arriving at the gate within that margin.
+
+@fig-arrival-punc shows the 2025 data and reaffirms key structural differences in punctuality behaviour between Brazilian and European airports.
+Brazilian airports continue to report a high share of early arrivals, with `r scales::percent(bra_arr_early_2025, accuracy = 1)` of flights arriving more than 15 minutes ahead of schedule across the study airports.
+This represents an increase from `r scales::percent(bra_arr_early_2024, accuracy = 1)` in 2024 and reinforces the schedule-buffering point.
+In contrast, early arrivals accounted for `r scales::percent(eur_arr_early_2025, accuracy = 1)` of European arrivals.
+This pattern, observed consistently over recent years, reflects the use of built-in buffer times in Brazil's scheduling practices.
+While these buffers help airlines improve on-time performance records, they can reduce predictability and complicate planning for air traffic management and airport operations.
+
+```{r}
+#| label: data-prep-arrival-punc
+
+debug_arrivals <- FALSE
+
+p_arr_2024 <- punc_annual |>
+  prepare_punctuality_plot_data("ARR", 2024) |>
+  plot_punctuality_distribution(.debug = debug_arrivals) +
+  ggplot2::labs(caption = "arrival punctuality 2024") +
+  ggplot2::theme(legend.position = "none")
+
+p_arr_2025 <- punc_annual |>
+  prepare_punctuality_plot_data("ARR", 2025) |>
+  plot_punctuality_distribution(.debug = debug_arrivals) +
+  ggplot2::labs(caption = "arrival punctuality 2025") +
+  ggplot2::theme(legend.position = "none")
+```
+
+::: {#fig-arrival-punc layout-ncol=1}
+
+```{r}
+#| fig-height: 7
+
+(p_arr_2024 / p_arr_2025) +
+  patchwork::plot_layout(guides = "collect") &
+  ggplot2::theme(legend.position = "top")
+```
+
+Evolution of arrival punctuality at study airports (2024 vs 2025)
+
+:::
+
+Compared to Brazil, Europe observed a high level of delayed arrivals in 2025.
+Across the European study airports, `r scales::percent(eur_arr_late_2025, accuracy = 1)` of arrivals were more than 15 minutes late.
+This nevertheless marks an improvement against 2024, when `r scales::percent(eur_arr_late_2024, accuracy = 1)` of European arrivals were delayed by more than 15 minutes.
+The highest share was observed at `r highest_eur_arr_late_2025$ICAO`, where `r scales::percent(highest_eur_arr_late_2025$LATE, accuracy = 1)` of arrivals were late.
+Capacity constraints on the European network level - amplified by local constraints - rippled throughout the whole network and contributed to the poor overall delay performance.
+
+Across both regions, the share of flights arriving within the -/+ 15 minute window remains the key measure of operational predictability.
+In 2025, `r scales::percent(bra_arr_within_2025, accuracy = 1)` of Brazilian arrivals and `r scales::percent(eur_arr_within_2025, accuracy = 1)` of European arrivals were within this interval.
+For Europe, this share increased from `r scales::percent(eur_arr_within_2024, accuracy = 1)` in 2024.
+
+```{r}
+#| label: fig-arr-punc-comparison-apts
+#| fig-cap: Total flights and arrival punctuality at two comparison study airports
+#| fig-height: 5
+
+punc_monthly |>
+  prepare_monthly_comparison(
+    .phase = "ARR",
+    .airports = c("SBGR", "LPPT"),
+    .years = 2024:2025
+  ) |>
+  plot_monthly_punctuality() +
+  ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(n.dodge = 2))
+```
+
+To contextualise regional contrasts, @fig-arr-punc-comparison-apts presents a side-by-side comparison between Guarulhos (SBGR) and Lisbon (LPPT) between 2024 and 2025.
+Despite LPPT handling less traffic compared to SBGR, it continued to show a lower share of arrivals within the -/+15 minute window.
+Compared to @fig-arrival-punc it is interesting to note - broadly assuming an average annual arrival punctuality of 50% of flights arriving between -/+15 minutes of their scheduled time - that the share of early and late arrivals is more balanced at SBGR, while LPPT observed a high share of late arrivals.
+
+This comparison underscores how operational structure, traffic complexity, and scheduling strategies directly influence punctuality outcomes.
+In Brazil, concentrated demand at a few major hubs - especially SBGR, the country's busiest airport - makes it harder to sustain performance within the target window.
+The higher level of traffic can amplify network disruptions leading to a high share of delay across all airports and ripple effects propagate through the network.
+
+```{r}
+#| label: data-prep-punc-vs-tfc-arr
+
+arr_punc_vs_tfc <- punc_annual |>
+  dplyr::filter(PHASE == "ARR", YEAR %in% 2024:2025) |>
+  dplyr::mutate(
+    YEAR = as.character(YEAR),
+    REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe")
+  )
+```
+
+```{r}
+#| label: fig-puncvstfc-arr
+#| fig-cap: Evolution of arrival punctuality -/+15 min vs arrival traffic
+#| fig-height: 7
+
+p_bra_arr <- arr_punc_vs_tfc |>
+  dplyr::filter(REG == "BRA") |>
+  plot_punctuality_vs_traffic()
+
+p_eur_arr <- arr_punc_vs_tfc |>
+  dplyr::filter(REG == "EUR") |>
+  plot_punctuality_vs_traffic()
+
+p_bra_arr / p_eur_arr +
+  patchwork::plot_layout(guides = "collect") &
+  ggplot2::theme(legend.position = "top")
+```
+
+@fig-puncvstfc-arr presents a side-by-side view of airport-level arrival punctuality and movement evolution between 2024 and 2025.
+While differences exist in the share of early and late arrivals, the number of flights arriving within -/+15 minutes of their scheduled time ranged higher in Brazil than in Europe.
+The majority of European arrival operations at the study airports failed to meet a 60% threshold.
+This is contrasted by the higher success rate observed across the Brazilian study airports, though the high early-arrival shares show that predictability still differs from punctuality as perceived by passengers.
+
+The previous section highlighted the overall arrival punctuality observed at the study airports.
+Lower levels of punctuality can negatively impact predictability of operations and thus put a stronger strain on resources managing the arrival flow.
+Next to the arrival airspace capacity, stronger variations of the scheduled arrival times pose challenges for the surface management, as taxi operations, including stand allocation and availability, might result in changes of the taxi patterns, queuing within the taxiway and apron/stand system.
+
+```{r}
+#| label: fig-early-vs-late-arrivals
+#| fig-cap: Change of share of early and late arrivals (2024 vs 2025)
+#| fig-height: 7
+
+arrival_limits <- c(-0.35, 0.5)
+
+p_arr_early_late_2024 <- punc_annual |>
+  prepare_early_late_plot_data("ARR", 2024) |>
+  plot_early_late_bar(.limits = arrival_limits)
+
+p_arr_early_late_2025 <- punc_annual |>
+  prepare_early_late_plot_data("ARR", 2025) |>
+  plot_early_late_bar(.limits = arrival_limits)
+
+(p_arr_early_late_2024 / p_arr_early_late_2025) +
+  patchwork::plot_layout(guides = "collect") &
+  ggplot2::theme(legend.position = "top", legend.key.size = grid::unit(4, "mm"))
+```
+
+@fig-early-vs-late-arrivals compares the share of early and late arrivals at each study airport, considering arrivals more than 15 minutes ahead of or behind schedule in 2024 and 2025.
+From a broader perspective, air traffic in Brazil continues to show a tendency toward early arrivals, while in Europe, delayed arrivals are more prevalent.
+Thus, it appears that Brazilian operators tend to apply conservative buffering of their arrival schedules.
+The network level implications on the arrival punctuality in Europe throughout 2024 and 2025 can be clearly seen.
+
+`r highest_bra_arr_early_2025$ICAO` remained the Brazilian airport with the highest share of early arrivals in 2025, with `r scales::percent(highest_bra_arr_early_2025$EARLY, accuracy = 1)` of flights landing ahead of schedule.
+As a key hub in Brazil's network, this may reflect a deliberate strategy by airlines to better manage connections and mitigate delays within their own schedules.
+However, from a flow management perspective, this lack of precision poses operational challenges, as it complicates the allocation of resources and the sequencing of arrivals within controlled airspace and on the ground.
+
+In Europe, delayed arrivals remain the dominant off-schedule pattern.
+There is a varied explanation of the overall poor arrival punctuality performance across the airports.
+It is important to understand that disruptions stemming from the transition from pandemic to post-pandemic, and the overall network capacity constraints amplified each other.
+Airport operators were identified as the major contributors to primary delays, followed by ATFM delays.
+However, the aforementioned reactionary effect was the main driver of knock-on delays [@CODA-2023] [^04-predictability-1].
+
+[^04-predictability-1]: See CODA report at https://www.eurocontrol.int/publication/all-causes-delays-air-transport-europe-annual-2022.
+
+## Departure Punctuality
+
+The departure punctuality reflects the predictability of take-off operations at monitored airports.
+It is based on the comparison between the scheduled off-block time (SOBT) and the actual off-block time (AOBT), using a 15-minute tolerance window for early or late departures.
+The indicator expresses the percentage of flights that leave the gate within this time margin.
+
+```{r}
+#| label: data-prep-departure-punc
+
+debug_departures <- FALSE
+
+p_dep_2024 <- punc_annual |>
+  prepare_punctuality_plot_data("DEP", 2024) |>
+  plot_punctuality_distribution(.debug = debug_departures) +
+  ggplot2::labs(caption = "departure punctuality 2024") +
+  ggplot2::theme(legend.position = "none")
+
+p_dep_2025 <- punc_annual |>
+  prepare_punctuality_plot_data("DEP", 2025) |>
+  plot_punctuality_distribution(.debug = debug_departures) +
+  ggplot2::labs(caption = "departure punctuality 2025") +
+  ggplot2::theme(legend.position = "none")
+```
+
+::: {#fig-departure-punc layout-ncol=1}
+
+```{r}
+#| fig-height: 7
+
+(p_dep_2024 / p_dep_2025) +
+  patchwork::plot_layout(guides = "collect") &
+  ggplot2::theme(legend.position = "top")
+```
+
+Evolution of departure punctuality at study airports (2024 vs 2025)
+
+:::
+
+@fig-departure-punc presents the departure punctuality results for the study airports.
+The 2025 data show that, overall, airports perform better in managing outbound traffic, although challenges remain.
+Different from arrival punctuality, where Brazilian airports showed a high share of early arrivals and wide variability across the network, departure punctuality metrics appear comparatively stronger, especially in terms of flights departing within the punctuality (-/+ 15 min) time window.
+
+Departure punctuality appeared higher in Brazil in 2025 than in Europe.
+The share of departures within the -/+15 minute window reached `r scales::percent(bra_dep_within_2025, accuracy = 1)` across the Brazilian study airports compared with `r scales::percent(eur_dep_within_2025, accuracy = 1)` across the European study airports.
+The European value improved materially from `r scales::percent(eur_dep_within_2024, accuracy = 1)` in 2024, but still indicates that about one third of departures remained outside the punctuality window.
+Further research may help to clarify the factors driving this phenomenon.
+
+```{r}
+#| label: fig-dep-punc-comparison-apts
+#| fig-cap: Departure punctuality at two comparison study airports
+#| fig-height: 5
+
+punc_monthly |>
+  prepare_monthly_comparison(
+    .phase = "DEP",
+    .airports = c("SBGR", "LPPT"),
+    .years = 2024:2025
+  ) |>
+  plot_monthly_punctuality() +
+  ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(n.dodge = 2))
+```
+
+Comparing the observed punctuality performance for departures at Lisbon (LPPT) and Guarulhos (SBGR), c.f. @fig-dep-punc-comparison-apts, depicts the lower level of departure punctuality at LPPT.
+It appears that the punctuality performance followed broadly the seasonal development.
+This is in line with the earlier commentary on the network level effects impacting the overall delay situation through increased reactionary delays driven by significant ATFM delay constraints.
+The departure performance observed at Guarulhos is in line with the arrival punctuality pattern showing the same behaviour across 2024 and 2025.
+
+The preceding section highlighted how the general traffic conditions in the previous years influenced the dependability of arrival schedules.
+In this section, we assess the degree of departure punctuality measured as the difference between the scheduled departure versus the observed actual off-block time.
+@fig-departure-punc shows the overall departure punctuality at Brazilian and European airports in 2024 and 2025.
+
+```{r}
+#| label: data-prep-punc-vs-tfc-dep
+
+dep_punc_vs_tfc <- punc_annual |>
+  dplyr::filter(PHASE == "DEP", YEAR %in% 2024:2025) |>
+  dplyr::mutate(
+    YEAR = as.character(YEAR),
+    REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe")
+  )
+```
+
+```{r}
+#| label: fig-puncvstfc-dep
+#| fig-cap: Evolution of departure punctuality -/+15 min vs departure traffic
+#| fig-height: 7
+
+p_bra_dep <- dep_punc_vs_tfc |>
+  dplyr::filter(REG == "BRA") |>
+  plot_punctuality_vs_traffic(.share_limits = c(0, 0.85))
+
+p_eur_dep <- dep_punc_vs_tfc |>
+  dplyr::filter(REG == "EUR") |>
+  plot_punctuality_vs_traffic(.share_limits = c(0, 0.85))
+
+p_bra_dep / p_eur_dep +
+  patchwork::plot_layout(guides = "collect") &
+  ggplot2::theme(legend.position = "top")
+```
+
+In analogy to the previous section, @fig-puncvstfc-dep shows a side-by-side view of departure punctuality and movement evolution between 2024 and 2025 for each of the study airports.
+
+```{r}
+#| label: fig-early-vs-late-departures
+#| fig-cap: Change of share of early and late departures (2024 vs 2025)
+#| fig-height: 7
+
+departure_limits <- c(-0.08, 0.6)
+
+p_dep_early_late_2024 <- punc_annual |>
+  prepare_early_late_plot_data("DEP", 2024) |>
+  plot_early_late_bar(.limits = departure_limits)
+
+p_dep_early_late_2025 <- punc_annual |>
+  prepare_early_late_plot_data("DEP", 2025) |>
+  plot_early_late_bar(.limits = departure_limits)
+
+(p_dep_early_late_2024 / p_dep_early_late_2025) +
+  patchwork::plot_layout(guides = "collect") &
+  ggplot2::theme(legend.position = "top", legend.key.size = grid::unit(4, "mm"))
+```
+
+The change of the share of early and late departures in 2024 and 2025 is shown in @fig-early-vs-late-departures.
+The observed departure punctuality at Brazilian and European airports demonstrates a positive operational behaviour: early departures before scheduled time are relatively small in both regions, which is favourable for maintaining schedule stability.
+
+In Brazil, the patterns observed in 2024 and 2025 are notably similar across the study airports, indicating consistent operational practices.
+Despite this, most Brazilian airports maintained a balanced distribution, with a large proportion of flights departing within the -/+ 15-minute window.
+
+There is stark contrast in terms of overall departure punctuality between Brazil and Europe.
+In Europe, `r scales::percent(eur_dep_late_2025, accuracy = 1)` of departures were more than 15 minutes late in 2025.
+The highest share was observed at `r highest_eur_dep_late_2025$ICAO`, where `r scales::percent(highest_eur_dep_late_2025$LATE, accuracy = 1)` of departures were late.
+Lisbon (LPPT) is therefore the strongest departure outlier in 2025 and provides a concrete anchor for the comparison with Guarulhos (SBGR).
+The amplification effect is evident.
+Delayed departures for regional flights will ultimately cause downstream delays.
+Disrupted schedules pose challenges to the local capacity management and surface operations.
+However, they also contribute to challenges of flow control on the network level.
+The associated imbalances influenced negatively the overall network sequencing and flow management.
+
+While surface movement operations appear stable at most airports, the growing share of late departures at specific locations signals the need for continuous monitoring and management interventions to assure the predictability of operations.
+
+## Summary
+
+Arrival and departure punctuality play an important role in terms of balancing demand and capacity.
+
+Arrival punctuality revealed distinct regional patterns.
+Brazilian airports continued to show a high share of early arrivals, largely due to the use of built-in buffer times in flight schedules.
+While this improves on-time performance metrics, it complicates air traffic management by reducing predictability.
+In contrast, European airports generally maintained lower shares of early arrivals and a higher share of delayed arrivals.
+A closer operational comparison of the behaviour at Guarulhos (SBGR) and Lisbon (LPPT) highlighted the challenges faced by large, high-density hubs in sustaining punctuality under growing demand.
+
+Departure punctuality showed a distinct difference between both regions and when compared to the wider spread of the arrival punctuality.
+Early departures remained relatively rare, supporting schedule stability.
+However, challenges persisted at European airports where late departures remained high.
+Overall, the departure punctuality in Europe was poor compared to Brazil.
+These patterns emphasize how local operational and network constraints, weather disruptions, and surface management practices directly influence performance.
+
+In both regions, maintaining high predictability levels remains critical to support efficient surface operations, arrival sequencing, and passenger experience.
+Continuous adaptation, proactive operational planning, and effective resource management are essential to sustain and improve predictability, especially as traffic demand continues to grow.
+As both regions are committed to move toward trajectory-based operations, the management of highly predictable air traffic flows will require attention.
