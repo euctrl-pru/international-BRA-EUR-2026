@@ -6,5 +6,5 @@ library(pdftools)
 
 pdf_combine(c(
     "./figures/Brazil-Europe-2025-Cover.pdf"
-  , "./docs/Operational-Comparison-of-ANS-Performance-no-cover.pdf"), 
-            output = "./docs/Operational-Comparison-of-ANS-Performance.pdf")
+  , "./_book-local/Operational-Comparison-of-ANS-Performance.pdf"), 
+            output = "./_book-local/Operational-Comparison-of-ANS-Performance-cover.pdf")
