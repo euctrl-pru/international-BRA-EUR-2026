@@ -1,0 +1,312 @@
+---
+title: "HFE - report proposal"
+---
+
+```{r}
+#| label: setup
+#| message: false
+library(tidyverse)
+
+ggplot2::theme_set(ggplot2::theme_minimal())
+```
+
+
+
+## Data preparation
+
+### Brazil
+
+DECEA -> data lake, HFE data for 2025
+data ingestion via download from data lake
+
+```{}
+# setup ingestion
+source("./R/rqutils-zip.R")
+
+path_to_download <- "/Users/rainerkoelle/Downloads"
+hfe_download <- fs::dir_ls(path_to_download, regexp = "OneDrive_1_29-04") |> basename()
+hfe_fns      <- check_zip_content(path_to_download, hfe_download) |> pull(Name)
+
+bra_kea <- read_zip_content(path_to_download, hfe_download, hfe_fns[1], "csv_auto")
+bra_kep <- read_zip_content(path_to_download, hfe_download, hfe_fns[2], "csv_auto")
+
+bra_kea <- bra_kea |> select(ADEP = plan_dep, ADES = real_arr, DATE_TIME = time, TYPE = equip
+                  ,FLTID = id_icao, REG = reg
+                  , HFE_BRA = kpi05_v1
+                  ,DIST_ACHD = dist_achieved_v1
+                  ,DIST_FLOWN = dist_flown_v1) |> 
+  mutate(KPI = "KEA")
+
+bra_kep <- bra_kep |> 
+  select(ADEP = orig, ADES = dest, DATE_TIME = time   #, TYPE = equip
+                  ,FLTID = id_icao
+         #, REG = reg
+         , HFE_BRA = kpi04_v1
+                  ,DIST_ACHD = dist_achieved_v1
+                  ,DIST_FLOWN = dist_flown_v1) |> 
+  mutate(KPI = "KEP")
+```
+
+```{}
+hfe_bra_network <- bind_rows(bra_kea, bra_kep) 
+hfe_bra_network |> write_csv("./data/BRA-HFE-network-2025.csv")
+```
+
+
+
+### Europe
+
+```{r}
+hfe_eur_12 <- fs::dir_ls("./data", regexp = "EUR-hfe-Q") |> 
+  purrr::map(.f = ~ arrow::read_parquet(.x)) |> bind_rows()
+
+```
+
+```{}
+hfe_eur_network <- readr::read_csv("https://www.eurocontrol.int/performance/data/download/csv/horizontal_flight_efficiency_2025.csv", show_col_types = FALSE) |> 
+  filter(ENTITY_NAME == "EUROCONTROL Area (PRR)")
+
+hfe_eur_network |> write_csv("EUR-HFE-network-2025.csv")
+```
+
+
+### Airport Meta Data 
+
+study scope and meta data
+
+```{r}
+bra_apts_names <- tibble::tribble(
+  ~ICAO  , ~NAME
+  ,"SBGR", "Guarulhos"
+  ,"SBGL", "Galeão"
+  ,"SBRJ", "Rio Dumont"
+  ,"SBCF", "Belo Horizonte"
+  ,"SBBR", "Brasília"
+  ,"SBSV", "Salvador"
+  ,"SBKP", "Campinas"
+  ,"SBSP", "Congonhas"
+  ,"SBCT", "Curitiba"
+  ,"SBPA", "Porto Alegre"
+  ,"SBRF", "Recife"
+  ,"SBEG", "Eduardo Gomes"
+)
+bra_apts <- bra_apts_names$ICAO
+
+eur_apts_names <- tibble::tribble(
+  ~ICAO  , ~NAME
+  ,"EGLL", "Heathrow"
+  ,"EGKK", "Gatwick"
+  ,"EHAM", "Amsterdam"
+  ,"EDDF", "Frankfurt"
+  ,"EDDM", "Munich"
+  ,"LSZH", "Zurich"
+  ,"LIRF", "Rome"
+  ,"LFPG", "Paris"
+  ,"LEMD", "Madrid"
+  ,"LEBL", "Barcelona"
+  ,"LPPT", "Lisbon"
+  ,"LGAV", "Athens"
+  ,"LTFM", "Istanbul"
+)
+eur_apts <- eur_apts_names$ICAO
+```
+
+get GCD
+
+```{}
+oa <- read_csv("https://davidmegginson.github.io/ourairports-data/airports.csv", show_col_types = FALSE)
+
+bra_apts_latlon <- oa |> 
+  filter(grepl("[A-Z]{4}", icao_code)) |> 
+  select(ICAO = icao_code, LAT = latitude_deg, LON = longitude_deg) |> 
+  filter(ICAO %in% bra_apts)
+
+eur_apts_latlon <- oa |> 
+  filter(grepl("[A-Z]{4}", icao_code)) |> 
+  select(ICAO = icao_code, LAT = latitude_deg, LON = longitude_deg) |> 
+  filter(ICAO %in% eur_apts)
+
+bra_gcds <- expand_grid(ADEP = bra_apts, ADES = bra_apts) |> 
+  left_join(bra_apts_latlon, by = join_by("ADEP" == "ICAO")) |> 
+  rename(LAT1 = LAT, LON1 = LON) |> 
+  left_join(bra_apts_latlon, by = join_by("ADES" == "ICAO")) |> 
+  mutate( GCD = geosphere::distHaversine(cbind(LON1, LAT1), cbind(LON, LAT))
+         ,GCD = GCD / 1852    # GCD in NM
+         )
+
+eur_gcds <- expand_grid(ADEP = eur_apts, ADES = eur_apts) |> 
+    left_join(eur_apts_latlon, by = join_by("ADEP" == "ICAO")) |> rename(LAT1 = LAT, LON1 = LON) |> 
+    left_join(eur_apts_latlon, by = join_by("ADES" == "ICAO")) |> 
+    mutate( GCD = geosphere::distHaversine(cbind(LON1, LAT1), cbind(LON, LAT))
+           ,GCD = GCD / 1852)
+
+gcds <- bind_rows(bra_gcds |> mutate(REGION = "BRA"), eur_gcds |> mutate(REGION = "EUR")) |> 
+  write_csv("./data/meta-apts-study-gcds.csv")
+```
+
+```{r}
+gcds <- read_csv("./data/meta-apts-study-gcds.csv", show_col_types = F)
+
+gcds |> 
+ggplot() +
+  geom_point(aes(x = GCD, y = REGION, color = REGION))
+```
+
+
+### Store Airport Pair Data for Study
+
+filter to airport pairs
+
+```{}
+bra_kea <- bra_kea |> filter(ADEP %in% bra_apts & ADES %in% bra_apts)
+bra_kep <- bra_kep |> filter(ADEP %in% bra_apts & ADES %in% bra_apts)
+
+bind_rows(bra_kea, bra_kep) |> arrow::write_parquet("./data/BRA-HFE-12apts-2025.parquet")
+```
+
+
+## Analysis
+
+```{r}
+gcds <- read_csv("./data/meta-apts-study-gcds.csv", show_col_types = F)
+```
+
+
+```{r}
+hfe_bra_12 <- arrow::read_parquet("./data/BRA-HFE-12apts-2025.parquet") |> 
+  mutate(HFE = (DIST_FLOWN / DIST_ACHD) - 1, .after = HFE_BRA )
+
+hfe_eur_12 <- fs::dir_ls("./data", regexp = "EUR-hfe-Q") |> 
+  purrr::map(.f = ~ arrow::read_parquet(.x)) |> bind_rows()
+```
+
+
+
+
+top connections
+
+```{r}
+hfe_bra_stats <- hfe_bra_12 |> 
+  group_by(ADEP, ADES) |> reframe(N = n()) |> 
+  left_join(tmp |> select(ADEP, ADES, GCD), by = join_by(ADEP, ADES))
+  
+hfe_bra_stats |> arrange(desc(N))
+```
+
+```{r}
+hfe_eur_stats <- hfe_eur_12 |> 
+  group_by(ADEP, ADES) |> reframe(N = n()) |> 
+  left_join(tmp |> select(ADEP, ADES, GCD), by = join_by(ADEP, ADES))
+  
+hfe_eur_stats |> arrange(desc(N))
+```
+
+
+library(plotly)
+
+```{r}
+tmp <- bind_rows(
+  hfe_bra_stats |> mutate(REGION = "BRA", LABEL = paste0(ADEP,"-",ADES))
+, hfe_eur_stats |> mutate(REGION = "EUR", LABEL = paste0(ADEP,"-",ADES))
+) 
+
+tmp |>  
+  ggplot(aes(x = N, y = GCD, color = REGION, label = LABEL)) + 
+  geom_point() 
+
+ggplotly(p)
+```
+
+big-range
+LPPT-LGAV
+LTFM-LPPT
+SBEG-SBGL
+SBEG-SBGR
+
+EHAM  LEMD  789.    LFPG  LPPT   3844  795
+SBSV  SBGR  780
+SBPA  SBGL  606
+
+EGKK  LEBL   6587  600. EUR    EGKK-LEBL
+ 9 EGLL  LEBL   5786  620
+LEBL  EDDM   4554  592.
+
+SBCF  SBSP  12203  283. BRA    SBCF-SBSP
+ 2 LPPT  LEMD  11279  277. EUR    LPPT-LEMD
+ 3 LEMD  LPPT  11265  277. EUR    LEMD-LPPT
+ 4 SBSP  SBCF  10483  283. BRA    SBSP-SBCF
+  LTFM  LGAV   5804  299. EUR    LTFM-LGAV
+17 SBCF  SBKP   4987  269.
+
+
+```{r}
+be <- hfe_bra_12 |> mutate(DATE = date(DATE_TIME)) |> 
+  group_by(DATE, ADEP, ADES, KPI) |> 
+  reframe(N = n(), across(DIST_ACHD:DIST_FLOWN, ~ sum(.x))) |> 
+  mutate(
+    HFE = (DIST_FLOWN / DIST_ACHD) - 1, REGION = "BRA") |> 
+  filter(HFE > 0, HFE < 0.25) |> 
+  
+  filter(ADEP == "SBEG", ADES == "SBGL")
+  
+  
+  
+ 
+
+rq <- hfe_eur_12 |> 
+  mutate(DATE = date(ENTRY_TIME)) |> 
+  group_by(DATE, ADEP, ADES, KPI) |> 
+  reframe(N = n(), across(c("TOTAL_FLOWN_KM","TOTAL_ACHIEVED_KM"), ~ sum(.x))) |> 
+  mutate(
+    HFE = (TOTAL_FLOWN_KM / TOTAL_ACHIEVED_KM) - 1, REGION = "EUR") |> 
+  
+  filter(ADEP == "LPPT", ADES == "LGAV") 
+
+```
+
+```{r}
+bind_rows(be, rq) |> 
+  ggplot() +
+  geom_path(aes(x = DATE, y = HFE, color = KPI, group = KPI)) +
+  facet_wrap(vars(REGION))
+```
+
+
+## Network Level
+
+```{r}
+hfe_bra_network <- read_csv("./data/BRA-HFE-network-2025.csv", show_col_types = F) |> 
+  mutate(
+     DATE = lubridate::date(DATE_TIME)
+    ,HFE = (DIST_FLOWN / DIST_ACHD) - 1, .after = HFE_BRA ) |> 
+  filter(HFE > 0) |> 
+  group_by(DATE, KPI) |> 
+  reframe(N = n(), across(HFE:DIST_FLOWN, ~ sum(.x))) |> 
+  mutate(HFE2 = (DIST_FLOWN / DIST_ACHD) - 1, REGION = "BRA") |> 
+  select(REGION, DATE, HFE = HFE2, TYPE = KPI) |> 
+  mutate(HFE = 0.5 * HFE)
+
+hfe_eur_network <- read_csv("./data/EUR-HFE-network-2025.csv", show_col_types = FALSE) |> 
+  filter(TYPE_MODEL %in% c("CPF","FTFM")) |> 
+  mutate(HFE = (DIST_FLOWN_KM / DIST_ACHIEVED_KM) - 1, REGION = "EUR"
+         ,TYPE_MODEL = case_when(TYPE_MODEL == "CPF" ~ "KEA", TYPE_MODEL == "FTFM" ~ "KEP", .default = NA)) |> 
+  select(REGION, DATE = ENTRY_DATE, TYPE = TYPE_MODEL, HFE)
+  
+
+hfe_network <- bind_rows(
+   hfe_bra_network
+  ,hfe_eur_network
+)
+```
+
+```{r}
+hfe_network |> 
+  ggplot() + geom_path(aes(x = DATE, y = HFE, color = TYPE, group = TYPE)) +
+  scale_y_continuous(limits = c(0, NA)) +
+  facet_wrap(vars(REGION))
+```
+
+
+
+
+
