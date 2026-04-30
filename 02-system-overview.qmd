@@ -26,7 +26,7 @@ Today, NAV Brasil <!-- has xxxx employees in xx different units, providing --> p
 Despite serving a significant number of air transport movements, NAV Brasil does not plan to establish radar facilities or provide en-route services.
 
 The Brazilian airspace, covering an area of approximately 22 million square kilometres (8.5 million square nautical miles of non-oceanic airspace), is divided into five Flight Information Regions.
-These regions are further subdivided and managed by five Area Control Centers (ACC), xx Tower facilities (TWR), one digital tower (D-TWR), xx Approach Units (APP) and xx AFIS/Remote-AFIS.
+These regions are further subdivided and managed by five Area Control Centers (ACC), `r table_bra_eur |> dplyr::filter(KPA == "number of TWR") |> dplyr::pull(Brazil_2025) |> stringr::str_extract("^\\d+")` Tower facilities (TWR), one digital tower (D-TWR), `r table_bra_eur |> dplyr::filter(KPA == "number of APP") |> dplyr::pull(Brazil_2025)` Approach Units (APP) and 70 AFIS/Remote-AFIS.
 
 The non-oceanic airspace in Europe covers an area of 11.5 million square kilometres.
 When it comes to the provision of air traffic services, the European approach involves a multitude of service providers, with 37 distinct en-route Air Navigation Service Providers (ANSPs), each responsible for different geographical regions.

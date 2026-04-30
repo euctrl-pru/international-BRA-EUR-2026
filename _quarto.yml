@@ -47,26 +47,26 @@ format:
             max-height: 60px;
           }
         </style>
-  # pdf:
-  #   documentclass: scrreport
-  #   papersize: a4
-  #   fig-pos: 'H'
-  #   geometry:
-  #   - top=30mm
-  #   - right=25mm
-  #   - left=30mm
-  #   - bottom=30mm
-  #   - heightrounded
-  #   include-in-header:
-  #     text: |
-  #       \usepackage{pdfpages}
-  #       \pagenumbering{gobble}
-  #       \setlength{\columnsep}{1cm}
-  #       \usepackage{fancyhdr}
-  #       \pagestyle{fancy}
-  #       \fancyhead[L]{\leftmark}
-  #       \fancyhead[R]{}
-  #       \fancyfoot[L]{}
+  pdf:
+    documentclass: scrreport
+    papersize: a4
+    fig-pos: 'H'
+    geometry:
+    - top=30mm
+    - right=25mm
+    - left=30mm
+    - bottom=30mm
+    - heightrounded
+    include-in-header:
+      text: |
+        \usepackage{pdfpages}
+        \pagenumbering{gobble}
+        \setlength{\columnsep}{1cm}
+        \usepackage{fancyhdr}
+        \pagestyle{fancy}
+        \fancyhead[L]{\leftmark}
+        \fancyhead[R]{}
+        \fancyfoot[L]{}
   # 
   # docx:
   #   toc: true

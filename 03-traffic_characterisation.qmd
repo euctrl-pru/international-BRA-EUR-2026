@@ -112,7 +112,11 @@ ggplot2::ggplot(
 
 ```
 
-```{r}
+<!-- 
+
+I don't know if we want to use this fig
+
+```{}
 #| label: fig-annual-network
 #| fig-cap: Evolution of annual network traffic
 #| echo: false
@@ -187,6 +191,8 @@ p_brazil_yoy / p_europe_yoy
 
 
 ```
+
+-->
 
 @fig-annual-timeline shows the 7-day rolling average of daily movements in Brazil and Europe from 2019 to 2025. 
 In Brazil, traffic levels recovered swiftly from the sharp drop observed in 2020 and have continued to grow steadily since 2022, surpassing 2019 levels and maintaining a stable profile with only modest seasonal variation throughout the year. 
@@ -719,8 +725,9 @@ p_share + p_col_annual + plot_layout(widths = c(1, 4))
 
 ```{r}
 #| label: fig-eur-apt-level-tfc
-#| fig-cap: Airport level traffic
+#| fig-cap: "Airport level traffic"
 #| warning: false
+#| fig-height: 9
 
 bra_apt_share <- readr::read_csv(here::here("data", "bra_apt_lvl_traffic_share.csv")) |>
   dplyr::mutate(YEAR = factor(YEAR))
@@ -811,7 +818,7 @@ plot_apt_share <- function(apt_share, total_share, apts_names, title_label) {
     )
 
   (p_share | p_bars) +
-    patchwork::plot_layout(widths = ggplot2::unit(c(3, 12), "cm"))
+    patchwork::plot_layout(widths = ggplot2::unit(c(3, 8), "cm"))
 }
 
 p_bra_share <- plot_apt_share(bra_apt_share, bra_total_share, bra_apts_names, "Brazil airport level traffic")
@@ -823,37 +830,15 @@ p_bra_share / p_eur_share
 
 ### Movement Evolution at Study Airports
 
-@fig-apt-annual-change presents the airport movement evolution for the study airports from 2023 to 2025. 
-In Europe, airports have generally observed increases in movement levels across the period, reflecting a network in a phase of gradual consolidation. 
-The Brazilian scenario is more heterogeneous — while some airports such as Galeão (SBGL) and Guarulhos (SBGR) registered increases, others such as Santos Dumont (SBRJ) and Porto Alegre (SBPA) saw declines in 2024. 
-Meanwhile, Congonhas (SBSP) and Brasília (SBBR) showed very little variation overall. 
-This divergence highlights the uneven pace of growth among Brazil's major airports, reflecting broader structural and operational differences in the national aviation landscape.
-
-<!-- Old version
-
-```{}
-#| label: fig-apt-annual-change
-#| fig-cap: Annual traffic at study airports in 2024 and variation 2024/2023
-#| fig-pos: H
-
-# Parâmetros: (ANO_REFERENCIA, ANO_COMPARACAO)
-# TODO -- clean code - generalise and simplify
-scale_limits <- c(-0.7, 0.8)
-
-annual_change_bra(study_apt_lvl, 2024,2023,scale_limits) / annual_change_eur(annual_tfc_apt, 2024,2023,scale_limits)
-```
-
--->
-
 
 <!-- New version -->
 
 ```{r}
 
-#| label: fig-apt-annual-change
-#| fig-cap: Annual traffic at study airports in 2025 and variation 2025/2023
-#| out-width: "70%"
-#| fig-align: center
+#| label: prep-apt-annual-change
+#| fig-cap: "Annual traffic at study airports in 2025 and variation 2025/2023"
+#| warning: false
+#| include: false
 
 
 mov_bra_study <- readr::read_csv(here::here("data" , "bra_mov_lvl_traffic.csv"))
@@ -880,7 +865,7 @@ mov_eur_study <- dplyr::bind_rows(
 plot_apt_bar_var <- function(data, apts_names, title_label, bar_fill, x_limit, variation_limits,
                              variation_notes = NULL) {
   
-  # dados para barras — ano de referência
+  
   d_bars <- data |>
     dplyr::filter(YEAR == this_year) |>
     dplyr::left_join(apts_names, by = "ICAO") |>
@@ -928,7 +913,7 @@ plot_apt_bar_var <- function(data, apts_names, title_label, bar_fill, x_limit, v
     ) +
     ggplot2::geom_text(
       ggplot2::aes(label = MOV_LABEL),
-      hjust = -0.12, size = 2.5, colour = "grey35"
+      hjust = -0.12, size = 4 , colour = "grey35"
     ) +
     ggplot2::scale_x_continuous(
       limits = c(0, x_limit),
@@ -937,7 +922,7 @@ plot_apt_bar_var <- function(data, apts_names, title_label, bar_fill, x_limit, v
     ) +
     ggplot2::labs(x = NULL, y = NULL, title = title_label) +
     ggplot2::coord_cartesian(clip = "off") +
-    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme_minimal(base_size = 13) +
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
       plot.margin      = ggplot2::margin(t = 5, r = 24, b = 5, l = 50)
@@ -1029,13 +1014,53 @@ p_eur_var <- plot_apt_bar_var(
   variation_limits
 )
 
-p_bra_var / p_eur_var
 
 ```
+
+```{r}
+#| label: fig-annual-change
+#| fig-cap: "Annual traffic at study airports in 2025 and variation 2025/2024"
+#| fig-height: 8
+#| fig-width: 9
+#| fig-align: "left"
+#| out-width: 95%
+
+p_bra_var / p_eur_var
+```
+
+
+@fig-annual-change presents the airport movement evolution for the study airports from 2023 to 2025. 
+In Europe, airports have generally observed increases in movement levels across the period, reflecting a network in a phase of gradual consolidation. 
+The Brazilian scenario is more heterogeneous — while some airports such as Galeão (SBGL) and Guarulhos (SBGR) registered increases, others such as Santos Dumont (SBRJ) and Porto Alegre (SBPA) saw declines in 2024. 
+Meanwhile, Congonhas (SBSP) and Brasília (SBBR) showed very little variation overall. 
+This divergence highlights the uneven pace of growth among Brazil's major airports, reflecting broader structural and operational differences in the national aviation landscape.
+
+<!-- Old version
+
+```{}
+#| label: f1
+#| fig-cap: Annual t
+#| fig-pos: H
+
+# Parâmetros: (ANO_REFERENCIA, ANO_COMPARACAO)
+# TODO -- clean code - generalise and simplify
+scale_limits <- c(-0.7, 0.8)
+
+annual_change_bra(study_apt_lvl, 2024,2023,scale_limits) / annual_change_eur(annual_tfc_apt, 2024,2023,scale_limits)
+```
+
+-->
+
+
+
 
 It is also important to emphasise that Brazil's movements are distributed across a much larger number of airports compared to Europe. 
 As discussed in Section 3.1, Brazil's extensive network dilutes movement concentration at the top airports, suggesting a modest redistribution across a broader set of airports — potentially due to regional market dynamics, strategic airline adjustments, or temporary infrastructure constraints. 
 Europe's busiest airports have slightly increased their share of total network movements, reflecting the growing reliance on major hubs across the region.
+
+<!--
+
+Remove this part
 
 ### Annual Movements and Year-on-Year Variation
 
@@ -1045,16 +1070,10 @@ In Brazil, the largest movement disruption over the period occurred in 2024 at P
 Many flights were redirected to nearby airports in southern Brazil not included in the scope of this comparison. 
 The increase in movements at Galeão (SBGL) was mainly driven by restrictions applied at Santos Dumont (SBRJ), leading to a reallocation of operations between the two airports — an effect that is also visible in subsequent indicators such as peak day operations.
 
+--> 
+
 ### Monthly Movement Patterns
 
-Figure 3.10 shows the monthly evolution of movements at Guarulhos (SBGR) and Munich (EDDM), as well as at São Paulo Congonhas (SBSP) and Lisbon (LPPT). 
-These airport pairs were selected to illustrate the contrasting movement profiles between the two regions at comparable levels of network importance.
-For SBGR, a steady increase in monthly movements is visible in 2025 compared to 2024, with July standing out as the month with the highest volume. 
-Operations at EDDM show a more pronounced seasonal pattern, with movements building up from late spring to peak levels during the summer months. 
-This contrast reinforces the structural difference between Brazil's more stable year-round demand and Europe's tourism-driven seasonality.
-Comparing SBSP and LPPT shows a similar dynamic at a smaller scale. 
-Movement levels at SBSP are moderate and stable throughout the year, servicing predominantly national and regional traffic. 
-Lisbon, in turn, exhibits a clear summer peak in movements, consistent with its role as a major gateway for leisure and connecting traffic between Europe and the Atlantic region.
 
 ```{r}
 #| label: fig-monthly-tfc-sbgr-lppt
@@ -1153,6 +1172,16 @@ combo2 <- plot_monthly_airport("SBSP", "SBSP and LPPT") +
   patchwork::plot_layout(guides = "collect") &
   ggplot2::theme(legend.position = "top")
 ```
+
+@fig-monthly-tfc-sbgr-lppt shows the monthly evolution of movements at Guarulhos (SBGR) and Munich (EDDM), as well as at São Paulo Congonhas (SBSP) and Lisbon (LPPT). 
+These airport pairs were selected to illustrate the contrasting movement profiles between the two regions at comparable levels of network importance.
+For SBGR, a steady increase in monthly movements is visible in 2025 compared to 2024, with July standing out as the month with the highest volume. 
+Operations at EDDM show a more pronounced seasonal pattern, with movements building up from late spring to peak levels during the summer months. 
+This contrast reinforces the structural difference between Brazil's more stable year-round demand and Europe's tourism-driven seasonality.
+Comparing SBSP and LPPT shows a similar dynamic at a smaller scale. 
+Movement levels at SBSP are moderate and stable throughout the year, servicing predominantly national and regional traffic. 
+Lisbon, in turn, exhibits a clear summer peak in movements, consistent with its role as a major gateway for leisure and connecting traffic between Europe and the Atlantic region.
+
 
 ## Peak Day Traffic
 
@@ -1402,6 +1431,7 @@ This keeps the measure focused on the shape of demand within each year, rather t
 #| label: fig-peak-day
 #| fig-cap: Airport peak daily service rate (99th percentile, 2025)
 #| message: false
+#| fig-height: 6
 
 peak_day_comb_named |> 
   plot_peak_day_tfc(2025, peak_day_x_limit) +
@@ -1601,6 +1631,65 @@ plot_fleetmix_shift <- function(.fleetmix){
 
 plot_fleetmix_shift(fm_apts)
 ```
+
+<!-- Test using lollipop 
+
+```{r}
+#| label: fig-fleetmix-evolution1
+#| fig-cap: Change in heavy and light aircraft share at the study airports (2023 and 2025)
+#| fig-height: 5
+#| message: false
+#| warning: false
+
+plot_fleetmix_lollipop <- function(.fleetmix) {
+  
+  apts_names <- dplyr::bind_rows(bra_apts_names, eur_apts_names)
+  
+  df <- .fleetmix |>
+    dplyr::filter(YEAR %in% c(2023, 2025), WTC %in% c("Heavy", "Light")) |>
+    dplyr::select(REGION, ICAO, NAME, YEAR, WTC, SHARE) |>
+    tidyr::pivot_wider(names_from = YEAR, values_from = SHARE) |>
+    dplyr::rename(Y2023 = `2023`, Y2025 = `2025`) |>
+    dplyr::mutate(
+      DIFF  = Y2025 - Y2023,
+      COLOR = ifelse(DIFF >= 0, "pos", "neg")
+    ) |>
+    dplyr::left_join(apts_names, by = "ICAO") |>
+    dplyr::arrange(REGION, WTC, DIFF) |>
+    dplyr::mutate(NAME = factor(NAME.y, levels = unique(NAME.y)))
+  
+  ggplot2::ggplot(df, ggplot2::aes(y = NAME, x = DIFF, color = COLOR)) +
+    ggplot2::geom_segment(
+      ggplot2::aes(x = 0, xend = DIFF, y = NAME, yend = NAME),
+      linewidth = 0.7
+    ) +
+    ggplot2::geom_point(size = 3) +
+    ggplot2::geom_vline(xintercept = 0, linewidth = 0.4, colour = "grey30") +
+    ggplot2::scale_color_manual(
+      values = c("pos" = "#2ECC71", "neg" = "#E74C3C"),
+      guide  = "none"
+    ) +
+    ggplot2::scale_x_continuous(labels = scales::percent) +
+    ggplot2::facet_grid(
+      REGION ~ WTC,
+      scales = "free_y",
+      space  = "free_y"
+    ) +
+    ggplot2::labs(
+      x = "change in share (2023 → 2025)",
+      y = NULL
+    ) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      panel.grid.minor   = ggplot2::element_blank(),
+      panel.grid.major.y = ggplot2::element_blank(),
+      strip.text         = ggplot2::element_text(face = "bold")
+    )
+}
+
+plot_fleetmix_lollipop(fm_apts)
+```
+
 
 @fig-fleetmix-evolution provides a complementary view of this structural difference by focusing on the two categories that create the clearest contrast between the regions. 
 Between 2023 and 2025, the European airports remain clustered along a high-heavy, very-low-light profile, with Heathrow (EGLL), Paris Charles de Gaulle (LFPG), Frankfurt (EDDF), Istanbul (LTFM), and Madrid (LEMD) maintaining the strongest heavy-aircraft component.
