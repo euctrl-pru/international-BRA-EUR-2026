@@ -73,13 +73,12 @@ options(scipen = 999)
 
 note_text <- "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024"
 
-hlc_raw <- readr::read_csv(
-  here::here("data", "table_BRA_EUR.csv"),
-  col_types = readr::cols(.default = "c")
-)  |>
-  dplyr::select(1, dplyr::contains("2023"), dplyr::contains("2024"), dplyr::contains("2025"))
+table_bra_eur_display <- table_bra_eur |>
+  dplyr::select(KPA,
+                Brazil_2023, Brazil_2024, Brazil_2025,
+                Europe_2023, Europe_2024, Europe_2025)
 
-colnames(hlc_raw) <- c(
+colnames(table_bra_eur_display) <- c(
   "KPA",
   "Brazil_2023", "Brazil_2024", "Brazil_2025",
   "Europe_2023", "Europe_2024", "Europe_2025"
@@ -87,7 +86,7 @@ colnames(hlc_raw) <- c(
 
 if (knitr::is_latex_output()) {
 
-  tbl_latex <- hlc_raw |>
+  tbl_latex <- table_bra_eur_display |>
     gt::gt() |>
     gt::tab_spanner(label = "Brazil", columns = c(Brazil_2023, Brazil_2024, Brazil_2025)) |>
     gt::tab_spanner(label = "Europe", columns = c(Europe_2023, Europe_2024, Europe_2025)) |>
@@ -143,7 +142,7 @@ if (knitr::is_latex_output()) {
 
 } else {
 
-  hlc_raw |>
+  table_bra_eur_display |>
     gt::gt() |>
     gt::tab_spanner(label = "Brazil", columns = c(Brazil_2023, Brazil_2024, Brazil_2025)) |>
     gt::tab_spanner(label = "Europe", columns = c(Europe_2023, Europe_2024, Europe_2025)) |>
@@ -184,34 +183,13 @@ if (knitr::is_latex_output()) {
     )
 }
 
-# ============================================================
-# Table 2.1: High Level Comparison
-# ============================================================
-# HOW TO UPDATE THIS TABLE FOR FUTURE YEARS:
-#
-# 1. Open the file: data/table_BRA_EUR.csv
-# 2. Add a new column for the new year (e.g. Brazil_2026, Europe_2026)
-# 3. Update the values in each row with the new year's data
-# 4. In the code below, add the new column to:
-#    - tab_spanner: add Brazil_2026 / Europe_2026 to the columns vector
-#    - cols_label: add Brazil_2026 = "2026" / Europe_2026 = "2026"
-# 5. To replace a specific value by row name and column name:
-#    df[dfKPA == "row name here", "column_name"] <- "new value"
-# 6. To find the row and column position of a specific value:
-#    which(df == "value_to_find", arr.ind = TRUE)
-# 7. To replace a specific value by row and column position:
-#    df[row_number, column_number] <- "new value"
-# 8. After fixing values, overwrite the original CSV file:
-#    readr::write_csv(df, here::here("data-src", "table_BRA_EUR.csv"))
-# ============================================================
-
 ```
 
 <!-- I think it is cleaner to extract the "facts" below in a separate code-chunk here, introduce a variable, and call it as inline chunk below. 
 There is quite some codeing in the inline chunks that makes it difficult to follow. 
 -->
 
-In Brazil, the number of Air Traffic Controllers (ATCOs) in operations has continued to grow steadily, increasing from `r hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)` in 2023 to `r hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)` in 2025 — a rise of `r round((as.numeric(hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)) / as.numeric(hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)) - 1) * 100, 1)`%. 
+In Brazil, the number of Air Traffic Controllers (ATCOs) in operations has continued to grow steadily, increasing from `r table_bra_eur |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)` in 2023 to `r table_bra_eur |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)` in 2025 — a rise of `r round((as.numeric(table_bra_eur |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)) / as.numeric(table_bra_eur |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)) - 1) * 100, 1)`%. 
 This growth closely followed the sustained increase in air traffic demand over the same period, reflecting a proactive approach to capacity building in line with the country's continued aviation expansion. 
 This behaviour may be partly explained by the fact that DECEA shares part of the structure used in basic training with other Air Force training processes, which, despite leading to a more centralised and rigid hiring process, has allowed for a consistent pipeline of new controllers to meet growing operational needs.
 
@@ -227,7 +205,7 @@ knitr::include_graphics("./figures/02_system_ATCO_new_comparison.png")
 ```
 
 The traffic density indicator — expressed as controlled flights per square kilometre of non-oceanic airspace — provides a structural lens through which the operational differences between both regions can be better understood. 
-In 2025, Europe operated at a density of `r hlc_raw |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Europe_2025)` flights/km², significantly higher than Brazil's `r hlc_raw |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Brazil_2025)` flights/km². 
+In 2025, Europe operated at a density of `r table_bra_eur |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Europe_2025)` flights/km², significantly higher than Brazil's `r table_bra_eur |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Brazil_2025)` flights/km². 
 Despite this gap, Brazil's density has grown consistently over the period, reflecting the continued expansion of domestic aviation. 
 This contrast underpins many of the operational differences discussed throughout this report, particularly regarding coordination complexity, capacity constraints, and network organisation.
 
