@@ -497,6 +497,48 @@ ggplot2::ggplot(
 
 ```
 
+```{r}
+#| label: fig-traffic-distribution1
+#| fig-cap: "traffic distribution"
+#| fig-align: "center"
+#| out-width: 95%
+
+
+
+pal <- c(
+  regional    = "#C0597A",
+  departures  = "#8DA0CB",
+  arrivals    = "#FC8D62",
+  overflights = "#66C2A5"
+)
+
+daio_share |>
+  ggplot2::ggplot(ggplot2::aes(
+    area  = SHARE,
+    fill  = DAIO_LABEL,
+    label = paste0(DAIO_LABEL, "\n", scales::percent(SHARE, accuracy = 0.1))
+  )) +
+  treemapify::geom_treemap() +
+  treemapify::geom_treemap_text(
+    colour   = "white",
+    place    = "centre",
+    size     = 10,
+    fontface = "bold",
+    reflow   = TRUE
+  ) +
+  ggplot2::facet_wrap(~ REGION) +
+  ggplot2::scale_fill_manual(values = pal) +
+  ggplot2::labs(fill = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    legend.position  = "bottom",
+    strip.text       = ggplot2::element_text(size = 12, face = "bold"),
+    panel.grid       = ggplot2::element_blank()
+  )
+```
+
+
+
 ### Flows Between Brazil and Europe
 
 @fig-flow shows the connections between Europe and Brazil in 2025. 
@@ -1632,7 +1674,7 @@ plot_fleetmix_shift <- function(.fleetmix){
 plot_fleetmix_shift(fm_apts)
 ```
 
-<!-- Test using lollipop 
+<!-- Test using lollipop -->
 
 ```{r}
 #| label: fig-fleetmix-evolution1

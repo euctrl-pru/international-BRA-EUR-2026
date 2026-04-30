@@ -25,3 +25,4 @@ data-src
 # remove tracking of local rendering
 *_files/
 R/03-traffic_characterization-graphs.R
+.positai
