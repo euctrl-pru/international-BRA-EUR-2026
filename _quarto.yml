@@ -57,6 +57,9 @@ format:
     - left=30mm
     - bottom=30mm
     - heightrounded
+    include-before-body:
+      text: |
+        \includepdf[pages=1]{figures/Brazil-Europe-2025-Cover.pdf} # use this to add a cover from pdf
     include-in-header:
       text: |
         \usepackage{pdfpages}
@@ -67,6 +70,7 @@ format:
         \fancyhead[L]{\leftmark}
         \fancyhead[R]{}
         \fancyfoot[L]{}
+        \AtBeginDocument{\let\maketitle\relax} # use this to don't show de title
   # 
   # docx:
   #   toc: true
