@@ -32,7 +32,7 @@ book:
   #- 10-conclusions.qmd
   - 99-references.qmd
   #appendices:
-  #- A1-appendix.qmd
+  - A1-appendix.qmd
 
 bibliography: references.bib
 
