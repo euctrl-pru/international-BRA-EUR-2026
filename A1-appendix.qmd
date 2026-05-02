@@ -91,7 +91,7 @@ acronyms <- tibble::tribble(
 ) |>
   dplyr::mutate(
     Category = factor(Category, levels = c(
-      "General", "ATC Units", "Performance",
+      "General", "Performance",
       "Organisations", "Systems",
       "Brazil Airports", "Europe Airports"
     ))
