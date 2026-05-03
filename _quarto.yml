@@ -29,7 +29,7 @@ book:
   - 06-efficiency.qmd
   # - 07-environment.qmd
   - 09-studies.qmd
-  #- 10-conclusions.qmd
+  - 10-conclusions.qmd
   - 99-references.qmd
   #appendices:
   - A1-appendix.qmd
@@ -59,7 +59,7 @@ format:
     - heightrounded
     include-before-body:
       text: |
-        \includepdf[pages=1]{figures/Brazil-Europe-2025-Cover.pdf} # use this to add a cover from pdf
+        \includepdf[pages=1]{figures/Brazil-Europe-2025-Cover.pdf} % use this to add a cover from pdf
     include-in-header:
       text: |
         \usepackage{pdfpages}
@@ -70,7 +70,7 @@ format:
         \fancyhead[L]{\leftmark}
         \fancyhead[R]{}
         \fancyfoot[L]{}
-        \AtBeginDocument{\let\maketitle\relax} # use this to don't show de title
+        \AtBeginDocument{\let\maketitle\relax} % use this to don't show de title
   # 
   # docx:
   #   toc: true
