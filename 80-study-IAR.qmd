@@ -15,6 +15,7 @@ iar_params <- list(
   rolling_slots = 4L,
   min_matching_slots = 3L,
   representative_share = 0.03,
+  busy_local_hours = 17L,
   analysis_hours_utc = 7:21,
   include_departure_only_configurations = TRUE
 )
@@ -224,6 +225,56 @@ slot_interarrival_spacing <- function(slot_config, representative_configs) {
       MIXED_RUNWAY_USE = .data$ARRS > 0 & .data$DEPS > 0
     )
 }
+
+add_airport_local_time <- function(data, airport_timezones) {
+  data |>
+    dplyr::left_join(airport_timezones, by = c("REG", "ICAO")) |>
+    dplyr::group_by(.data$TZ) |>
+    dplyr::group_modify(
+      \(data, key) {
+        local_bin <- lubridate::with_tz(data$BIN, key$TZ[[1]])
+        dplyr::mutate(
+          data,
+          LOCAL_BIN = local_bin,
+          LOCAL_DATE = as.Date(local_bin),
+          LOCAL_HOUR = lubridate::hour(local_bin)
+        )
+      }
+    ) |>
+    dplyr::ungroup()
+}
+
+identify_busy_local_hours <- function(slot_config, busy_local_hours = 17L) {
+  slot_config |>
+    dplyr::summarise(FLTS = sum(.data$FLTS, na.rm = TRUE), .by = c(.data$REG, .data$ICAO, .data$LOCAL_HOUR)) |>
+    dplyr::group_by(.data$REG, .data$ICAO) |>
+    dplyr::slice_max(.data$FLTS, n = busy_local_hours, with_ties = FALSE) |>
+    dplyr::ungroup() |>
+    dplyr::mutate(BUSY_LOCAL_HOUR = TRUE)
+}
+
+summarise_representative_configurations_from_slots <- function(
+    analysed,
+    representative_share = 0.03
+) {
+  airport_denominator <- analysed |>
+    dplyr::summarise(ANALYSED_SLOTS = dplyr::n(), .by = c(.data$REG, .data$ICAO))
+
+  analysed |>
+    dplyr::summarise(
+      SLOTS = dplyr::n(),
+      ARR_HOURLY_P99 = stats::quantile(zoo::rollsum(.data$ARRS, 4, align = "left", fill = NA), 0.99, na.rm = TRUE),
+      DEP_HOURLY_P99 = stats::quantile(zoo::rollsum(.data$DEPS, 4, align = "left", fill = NA), 0.99, na.rm = TRUE),
+      FLT_HOURLY_P99 = stats::quantile(zoo::rollsum(.data$FLTS, 4, align = "left", fill = NA), 0.99, na.rm = TRUE),
+      .by = c(.data$REG, .data$ICAO, .data$CONFIG_ROLLING)
+    ) |>
+    dplyr::left_join(airport_denominator, by = c("REG", "ICAO")) |>
+    dplyr::mutate(
+      SHARE = .data$SLOTS / .data$ANALYSED_SLOTS,
+      REPRESENTATIVE = .data$SHARE >= representative_share
+    ) |>
+    dplyr::arrange(.data$REG, .data$ICAO, dplyr::desc(.data$SHARE))
+}
 ```
 
 ```{r}
@@ -234,9 +285,39 @@ airport_names <- dplyr::bind_rows(
   eur_apts_names |> dplyr::mutate(REG = "EUR")
 )
 
+airport_timezones <- tibble::tribble(
+  ~REG, ~ICAO, ~TZ,
+  "BRA", "SBBR", "America/Sao_Paulo",
+  "BRA", "SBCF", "America/Sao_Paulo",
+  "BRA", "SBCT", "America/Sao_Paulo",
+  "BRA", "SBEG", "America/Manaus",
+  "BRA", "SBGL", "America/Sao_Paulo",
+  "BRA", "SBGR", "America/Sao_Paulo",
+  "BRA", "SBKP", "America/Sao_Paulo",
+  "BRA", "SBPA", "America/Sao_Paulo",
+  "BRA", "SBRF", "America/Recife",
+  "BRA", "SBRJ", "America/Sao_Paulo",
+  "BRA", "SBSP", "America/Sao_Paulo",
+  "BRA", "SBSV", "America/Bahia",
+  "EUR", "EDDF", "Europe/Berlin",
+  "EUR", "EDDM", "Europe/Berlin",
+  "EUR", "EGKK", "Europe/London",
+  "EUR", "EGLL", "Europe/London",
+  "EUR", "EHAM", "Europe/Amsterdam",
+  "EUR", "LEBL", "Europe/Madrid",
+  "EUR", "LEMD", "Europe/Madrid",
+  "EUR", "LFPG", "Europe/Paris",
+  "EUR", "LGAV", "Europe/Athens",
+  "EUR", "LPPT", "Europe/Lisbon",
+  "EUR", "LSZH", "Europe/Zurich",
+  "EUR", "LTFM", "Europe/Istanbul"
+)
+
 throughput_rwy_path <- here::here("data", "PBWG-BRA-EUR-thru-rwy-15min-2025.parquet")
 slot_config_path <- here::here("data", "PBWG-BRA-EUR-rwy-config-15min-2025.parquet")
 representative_config_path <- here::here("data", "PBWG-BRA-EUR-rwy-config-representative-2025.parquet")
+report_config_share_path <- here::here("data", "rwy-slot-pressure-config-share-2025.csv")
+report_slot_pressure_path <- here::here("data", "rwy-slot-pressure-summary-2025.csv")
 ```
 
 ## Preparatory Save-out
@@ -288,14 +369,73 @@ message("Saved representative configuration summary to: ", representative_config
 slot_config <- arrow::read_parquet(slot_config_path) |>
   dplyr::mutate(BIN = as.POSIXct(.data$BIN, tz = "UTC"))
 
+throughput_rwy <- arrow::read_parquet(throughput_rwy_path) |>
+  dplyr::mutate(
+    BIN = as.POSIXct(.data$BIN, tz = "UTC"),
+    RWY = normalise_runway_label(.data$RWY)
+  )
+
 representative_configs <- arrow::read_parquet(representative_config_path)
 
-iar_slots <- slot_interarrival_spacing(slot_config, representative_configs) |>
+slot_config_local <- slot_config |>
+  add_airport_local_time(airport_timezones)
+
+busy_local_hours <- slot_config_local |>
+  identify_busy_local_hours(iar_params$busy_local_hours)
+
+slot_config_busy <- slot_config_local |>
+  dplyr::inner_join(
+    busy_local_hours |> dplyr::select(.data$REG, .data$ICAO, .data$LOCAL_HOUR, .data$BUSY_LOCAL_HOUR),
+    by = c("REG", "ICAO", "LOCAL_HOUR")
+  ) |>
+  dplyr::filter(.data$CONFIG_VALID)
+
+representative_configs_busy <- slot_config_busy |>
+  summarise_representative_configurations_from_slots(
+    representative_share = iar_params$representative_share
+  )
+
+iar_slots <- slot_interarrival_spacing(slot_config_busy, representative_configs_busy) |>
   dplyr::left_join(airport_names, by = c("REG", "ICAO")) |>
   dplyr::mutate(
     AIRPORT = dplyr::coalesce(.data$NAME, .data$ICAO),
     REGION = dplyr::recode(.data$REG, BRA = "Brazil", EUR = "Europe")
   )
+
+runway_config_share <- representative_configs_busy |>
+  dplyr::filter(.data$REPRESENTATIVE) |>
+  dplyr::left_join(airport_names, by = c("REG", "ICAO")) |>
+  dplyr::mutate(
+    AIRPORT = dplyr::coalesce(.data$NAME, .data$ICAO),
+    REGION = dplyr::recode(.data$REG, BRA = "Brazil", EUR = "Europe")
+  ) |>
+  dplyr::group_by(.data$REG, .data$ICAO) |>
+  dplyr::arrange(dplyr::desc(.data$SHARE), .by_group = TRUE) |>
+  dplyr::mutate(CONFIG_RANK = dplyr::row_number()) |>
+  dplyr::ungroup() |>
+  dplyr::select(
+    .data$REG, .data$REGION, .data$ICAO, .data$AIRPORT,
+    .data$CONFIG_RANK, .data$CONFIG_ROLLING, .data$SLOTS,
+    .data$ANALYSED_SLOTS, .data$SHARE,
+    .data$ARR_HOURLY_P99, .data$DEP_HOURLY_P99, .data$FLT_HOURLY_P99
+  )
+
+slot_pressure_summary <- iar_slots |>
+  dplyr::summarise(
+    SLOTS = dplyr::n(),
+    ARRIVAL_MOVEMENTS = sum(.data$ARRS, na.rm = TRUE),
+    MIXED_SLOTS = sum(.data$MIXED_RUNWAY_USE, na.rm = TRUE),
+    MIXED_SHARE = .data$MIXED_SLOTS / .data$SLOTS,
+    P10_SPACING = stats::quantile(.data$ARR_SPACING_MIN, 0.10, na.rm = TRUE),
+    P25_SPACING = stats::quantile(.data$ARR_SPACING_MIN, 0.25, na.rm = TRUE),
+    MEDIAN_SPACING = stats::median(.data$ARR_SPACING_MIN, na.rm = TRUE),
+    P75_SPACING = stats::quantile(.data$ARR_SPACING_MIN, 0.75, na.rm = TRUE),
+    P90_SPACING = stats::quantile(.data$ARR_SPACING_MIN, 0.90, na.rm = TRUE),
+    .by = c(.data$REG, .data$REGION, .data$ICAO, .data$AIRPORT)
+  )
+
+readr::write_csv(runway_config_share, report_config_share_path)
+readr::write_csv(slot_pressure_summary, report_slot_pressure_path)
 ```
 
 ```{r}
