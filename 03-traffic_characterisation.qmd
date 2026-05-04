@@ -15,17 +15,13 @@ source(here::here("_chapter-setup.R"))
 #source(here::here("R","03-traffic_characterization-graphs.R"))
 ```
 
-To facilitate operational benchmarking comparisons, it is crucial to have a good understanding of the
-level and composition of air traffic as the underlying demand and its evolution. 
+To facilitate operational benchmarking comparisons, it is crucial to have a good understanding of the level and composition of air traffic as the underlying demand and its evolution. 
 This chapter presents air traffic characteristics for both regions, structured progressively from a network-level overview to an airport-level assessment covering traffic volumes, peak day demand, and fleet composition at the 12 study airports in each region.
 
 
 ## Network Characterisation
 
-To address the changes in air traffic and develop a better understanding of the nature of the air
-transportation network, this section characterises the network structure of both regions — progressing
-from overall traffic volumes to the distribution within each region, the flows connecting Brazil and Europe,
-and the broader international context.
+To address the changes in air traffic and develop a better understanding of the nature of the air transportation network, this section characterises the network structure of both regions — progressing from overall traffic volumes to the distribution within each region, the flows connecting Brazil and Europe, and the broader international context.
 
 ### Overall Traffic Volume
 
@@ -469,9 +465,9 @@ This domestic dominance is particularly pronounced in Brazil, where the continen
 In Europe, the relatively short distances between states mean that many flights classified as *international* are
 functionally comparable to domestic short-haul routes in Brazil.
 Accordingly, in this report, intra-European air traffic is considered "regional" traffic, equivalent to domestic traffic in other regions or large national airspace and air navigation systems.
-
-```{r}
-#| label: fig-traffic-distribution
+<!--
+```{}
+#| label: fig-traffic-distribution-1
 #| fig-cap: "traffic distribution"
 #| fig-align: "center"
 #| out-width: 95%
@@ -496,9 +492,10 @@ ggplot2::ggplot(
   )
 
 ```
+-->
 
 ```{r}
-#| label: fig-traffic-distribution1
+#| label: fig-traffic-distribution
 #| fig-cap: "traffic distribution"
 #| fig-align: "center"
 #| out-width: 95%
@@ -544,8 +541,8 @@ daio_share |>
 @fig-flow shows the connections between Europe and Brazil in 2025. 
 Individual connections with fewer than 90 flights per year are aggregated into an "other" group. 
 Traffic from Brazil to Europe accounts for `r scales::percent(bra_eur_dep_share, accuracy = 0.1)` of the total departures from Brazilian airports. 
-Guarulhos (SBGR) and Lisbon (LPPT) are the main airports sustaining connectivity between both regions demonstrating the historical close link between both countries.
-Due to its prominent role as the primary gateway to Brazil, this edition considers operations at LPPT in a more prominent manner throughout the report together with SBGR.
+Guarulhos (SBGR) and Madrid (LEMD) are the main airports sustaining connectivity between both regions, reflecting the historically close ties between Brazil and Europe. 
+In this edition, Madrid emerges as the leading European hub in terms of flight operations to Brazil, while Lisbon (LPPT) continues to play a significant role as a gateway between the two regions.
 
 ```{r}
 #| label: fig-flow
@@ -633,7 +630,7 @@ ggplot2::ggplot(
 
 
 @fig-share-south-america provides a closer look at the main country-level external connections. 
-For Brazil, the focus remains on South America, with just under `r scales::number(bra_sa_deps, accuracy = 1000, scale = 1e-3, suffix = ",000")` flights operated to adjacent countries in 2025. 
+For Brazil, the focus remains on South America, with just under `r scales::number(bra_sa_deps, big.mark = ".", decimal.mark = ",", accuracy = 1000)` flights operated to adjacent countries in 2025. 
 Argentina and Chile together account for approximately half of these movements, confirming the strength of the southern cone corridor. For Europe, the comparison shows the main external country destinations across North America, the Middle East, Africa, and Asia/Pacific, balancing the number of displayed bars with the Brazilian panel.
 
 ```{r}
@@ -1071,10 +1068,10 @@ p_bra_var / p_eur_var
 ```
 
 
-@fig-annual-change presents the airport movement evolution for the study airports from 2023 to 2025. 
+@fig-annual-change presents the airport movement evolution for the study airports from 2024 to 2025. 
 In Europe, airports have generally observed increases in movement levels across the period, reflecting a network in a phase of gradual consolidation. 
-The Brazilian scenario is more heterogeneous — while some airports such as Galeão (SBGL) and Guarulhos (SBGR) registered increases, others such as Santos Dumont (SBRJ) and Porto Alegre (SBPA) saw declines in 2024. 
-Meanwhile, Congonhas (SBSP) and Brasília (SBBR) showed very little variation overall. 
+The Brazilian scenario is more heterogeneous — while some airports such as Galeão (SBGL) and Guarulhos (SBGR) registered increases, others such as Congonhas (SBSP) and Recife (SBRF) saw declines in 2025. 
+Meanwhile, Santos Dumont (SBRJ) showed very little variation overall. 
 This divergence highlights the uneven pace of growth among Brazil's major airports, reflecting broader structural and operational differences in the national aviation landscape.
 
 <!-- Old version
@@ -1603,8 +1600,10 @@ Based on continuous monitoring throughout the year, this pattern has proven to b
 The distribution of aircraft categories has remained consistent even during periods of disruption, such as extreme weather or localized infrastructure constraints. 
 These observations suggest that the fleet mix at the analysed airports is shaped more by long-term structural factors than by short-term fluctuations, as airspace users operate and renew their fleet servicing these airports within their economic and operational context.
 
-```{r}
-#| label: fig-fleetmix-evolution
+<!--
+
+```{}
+#| label: fig-fleetmix-evolution1
 #| fig-cap: Change in heavy and light aircraft share at the study airports (2023 and 2025)
 #| fig-height: 5
 #| message: false
@@ -1674,10 +1673,11 @@ plot_fleetmix_shift <- function(.fleetmix){
 plot_fleetmix_shift(fm_apts)
 ```
 
+-->
 <!-- Test using lollipop -->
 
 ```{r}
-#| label: fig-fleetmix-evolution1
+#| label: fig-fleetmix-evolution
 #| fig-cap: Change in heavy and light aircraft share at the study airports (2023 and 2025)
 #| fig-height: 5
 #| message: false
@@ -1718,7 +1718,7 @@ plot_fleetmix_lollipop <- function(.fleetmix) {
       space  = "free_y"
     ) +
     ggplot2::labs(
-      x = "change in share (2023 → 2025)",
+      x = NULL,
       y = NULL
     ) +
     ggplot2::theme_minimal(base_size = 10) +
