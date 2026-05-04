@@ -875,7 +875,7 @@ p_bra_share / p_eur_share
 ```{r}
 
 #| label: prep-apt-annual-change
-#| fig-cap: "Annual traffic at study airports in 2025 and variation 2025/2023"
+#| fig-cap: "Annual traffic at study airports in 2025 and variation 2025/2024"
 #| warning: false
 #| include: false
 
