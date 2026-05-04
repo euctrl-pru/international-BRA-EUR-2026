@@ -245,7 +245,7 @@ knitr::include_graphics(here::here("figures", "scope-airports-2025.png"))
 
 ### Temporal Scope
 
-This report focuses on the period from January 2019 to December 2024 with a focus on the post-pandemic years.
+This report focuses on the period from January 2019 to December 2025 with a focus on the post-pandemic years.
 This report continues to build a timeline with comparable data to be augmented in future editions.
 
 Throughout the report, summary statistics will be given with reference to calendar years of this comparison study unless highlighted specifically.
@@ -255,10 +255,9 @@ Throughout the report, summary statistics will be given with reference to calend
 The nature of the performance indicator requires the collection of data from different sources.
 DECEA Performance Section and PRU investigated the comparability of the data available in both regions, including the data pre-processes, data cleaning and aggregation, to ensure a harmonised set of data for performance comparison purposes.
 
-DECEA mainly uses data from the tower systems of the main airports as a data source for performance studies.
-The control tower system collects and provides data for each landing and take-off operation automatically.
-This edition blended ANAC (Brazilian CAA) official and public data with DECEA's data to increase precision for specific indicators, adding a pre-processing phase to the data analytical work.
-The provided data include such items as the times of operations, gate entry and exit, and flight origin and destination.
+DECEA's data sources for this edition were expanded to include SETA Millennium, a system that extracts flight data directly from ATC systems. 
+This addition complemented the tower-collected operational records already in use and was further combined with official ANAC (Brazilian CAA) data on scheduled commercial flights in Brazil. 
+Together, these sources cover key parameters such as operation timestamps, gate entry and exit times, and flight origin and destination, increasing the precision of the analysis.
 
 Within the European context, PRU has established a variety of performance-related data collection processes.
 For this report the main sources are the European Air Traffic Flow Management System (ETFMS [^01-intro-2]) complemented with airport operator reported data.
