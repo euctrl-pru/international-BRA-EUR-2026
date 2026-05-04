@@ -930,16 +930,19 @@ plot_apt_bar_var <- function(data, apts_names, title_label, bar_fill, x_limit, v
     )
 
   if (!is.null(variation_notes)) {
-    d_var <- d_var |>
-      dplyr::left_join(variation_notes, by = "ICAO") |>
-      dplyr::mutate(EXCLUDE_VARIATION = !is.na(.data$NOTE))
-  } else {
-    d_var <- d_var |>
-      dplyr::mutate(
-        NOTE = NA_character_,
-        EXCLUDE_VARIATION = FALSE
-      )
-  }
+  d_var <- d_var |>
+    dplyr::left_join(variation_notes, by = "ICAO") |>
+    dplyr::mutate(
+      EXCLUDE_VARIATION = !is.na(.data$NOTE),
+      VAR_PCT = ifelse(EXCLUDE_VARIATION, 0, VAR_PCT)  # zera a barra
+    )
+} else {
+  d_var <- d_var |>
+    dplyr::mutate(
+      NOTE = NA_character_,
+      EXCLUDE_VARIATION = FALSE
+    )
+}
 
     p_bars <- ggplot2::ggplot(
       d_bars,
@@ -969,38 +972,38 @@ plot_apt_bar_var <- function(data, apts_names, title_label, bar_fill, x_limit, v
 
  
   p_var <- ggplot2::ggplot(
-      dplyr::filter(d_var, !.data$EXCLUDE_VARIATION),
-      ggplot2::aes(y = NAME, x = VAR_PCT, fill = COLOR)
-    ) +
-    ggplot2::geom_col() +
-    ggplot2::geom_vline(xintercept = 0, linewidth = 0.4, colour = "grey30") +
-    ggplot2::geom_text(
-      data = dplyr::filter(d_var, .data$EXCLUDE_VARIATION),
-      ggplot2::aes(y = NAME, x = 0, label = NOTE),
-      inherit.aes = FALSE,
-      hjust = 0,
-      size = 2.5,
-      colour = "grey35"
-    ) +
-    ggplot2::scale_fill_manual(
-      values = c("pos" = "#2ECC71", "neg" = "#E74C3C"),
-      guide  = "none"
-    ) +
-    ggplot2::scale_x_continuous(
-      limits = variation_limits,
-      labels = scales::label_percent(scale = 1, suffix = "%")
-    ) +
-    ggplot2::labs(
-      x     = NULL,
-      y     = NULL,
-      title = glue::glue("var. {this_year}/{this_year - 1}")
-    ) +
-    ggplot2::theme_minimal(base_size = 10) +
-    ggplot2::theme(
-      panel.grid.minor = ggplot2::element_blank(),
-      plot.margin      = ggplot2::margin(l = 20) ,
-      axis.text.y      = ggplot2::element_blank()
-    )
+    d_var,  # todos os 12 aeroportos, sem filter
+    ggplot2::aes(y = NAME, x = VAR_PCT, fill = COLOR)
+  ) +
+  ggplot2::geom_col() +
+  ggplot2::geom_vline(xintercept = 0, linewidth = 0.4, colour = "grey30") +
+  ggplot2::geom_text(
+    data = dplyr::filter(d_var, .data$EXCLUDE_VARIATION),
+    ggplot2::aes(y = NAME, x = 0, label = NOTE),
+    inherit.aes = FALSE,
+    hjust = 0,
+    size = 2.5,
+    colour = "grey35"
+  ) +
+  ggplot2::scale_fill_manual(
+    values = c("pos" = "#2ECC71", "neg" = "#E74C3C"),
+    guide  = "none"
+  ) +
+  ggplot2::scale_x_continuous(
+    limits = variation_limits,
+    labels = scales::label_percent(scale = 1, suffix = "%")
+  ) +
+  ggplot2::labs(
+    x     = NULL,
+    y     = NULL,
+    title = glue::glue("var. {this_year}/{this_year - 1}")
+  ) +
+  ggplot2::theme_minimal(base_size = 10) +
+  ggplot2::theme(
+    panel.grid.minor = ggplot2::element_blank(),
+    plot.margin      = ggplot2::margin(l = 20),
+    axis.text.y      = ggplot2::element_blank()
+  )
 
   (p_bars | p_var) +
     patchwork::plot_layout(widths = c(3, 1.5))
