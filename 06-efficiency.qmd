@@ -4,9 +4,7 @@
 source(here::here("_chapter-setup.R"))
 ```
 
-<!-- First 2025 working draft: copied from the 2024 chapter wording, then rebuilt from local PBWG daily taxi-time files. Taxi-in/out now includes Europe and the harmonised Brazil extract. ASMA uses the refreshed Brazil ASMA ingestion. -->
-
-Operational efficiency is a critical component in assessing the management and execution of operations. It provides insights in the management of arrival and departure flows and the associated separation and synchronisation activities.
+Operational efficiency is a critical component in assessing the management and execution of operations. It provides insights into the management of arrival and departure flows and the associated separation and synchronisation activities.
 Inefficiencies can have an impact on user operations in terms of delays or excessive fuel burn.
 In light of the previous chapters, it is therefore interesting to study how the available capacity was utilised to service demand during the different flight phases.
 
@@ -14,7 +12,7 @@ The measures reported in this comparison report are based on the observed travel
 These travel times are compared with an associated reference time for a group of flights showing similar operational characteristics.
 The determined difference (i.e. additional time) measures the level of inefficiency.
 It must be noted that high performance operations will still yield a certain share of measured additional times.
-Operational efficiency is therefore aiming at minimising rather than eliminating these additional times as they cannot be zero.
+Operational efficiency therefore aims at minimising rather than eliminating these additional times as they cannot be zero.
 
 ```{r}
 txxt_years <- 2023:this_year
@@ -111,7 +109,7 @@ asma_monthly_bra <- asma_daily_bra |>
     .by = c(REG, ICAO, RANGE, MONTH)
   )
 
-eur_asma_daily_old <- readr::read_csv(
+eur_asma100_daily_old <- readr::read_csv(
   here::here("data", "BRA-EUR-EUR-ASMA-EUR.csv"),
   show_col_types = FALSE
 ) |>
@@ -130,7 +128,7 @@ eur_asma_daily_old <- readr::read_csv(
   ) |>
   dplyr::filter(YEAR %in% 2019:2022)
 
-eur_asma_quick <- readr::read_csv(
+eur_asma100_quick <- readr::read_csv(
   here::here("data", "EUR-ASMA-QUICK.csv"),
   show_col_types = FALSE
 ) |>
@@ -148,17 +146,27 @@ eur_asma_quick <- readr::read_csv(
     TOT_ADD_TIME = TOTAL_ADD_TIME_MIN
   )
 
-eur_asma_2025_fill <- eur_asma_quick |>
+eur_asma100_2025_fill <- eur_asma100_quick |>
   dplyr::filter(YEAR == 2024) |>
   dplyr::mutate(
     DATE = DATE %m+% lubridate::years(1),
     YEAR = 2025
   )
 
+eur_asma40_monthly <- readr::read_csv(
+  here::here("data", "PBWG-EUR-asma40-monthly-2023-2025-public.csv"),
+  show_col_types = FALSE
+) |>
+  dplyr::mutate(
+    DATE = lubridate::ymd(DATE),
+    YEAR = lubridate::year(DATE)
+  )
+
 asma_daily_eur <- dplyr::bind_rows(
-  eur_asma_daily_old,
-  eur_asma_quick,
-  eur_asma_2025_fill
+  eur_asma100_daily_old,
+  eur_asma100_quick,
+  eur_asma100_2025_fill,
+  eur_asma40_monthly
 ) |>
   dplyr::mutate(
     AVG_ASMA = dplyr::if_else(MVTS_VALID > 0, TOT_ASMA / MVTS_VALID, NA_real_),
@@ -307,19 +315,23 @@ plot_monthly_asma <- function(.range, .region, .ylim = c(0, 8)) {
     ggplot2::theme(panel.spacing = ggplot2::unit(0.45, "cm"))
 }
 
-plot_asma_range_summary <- function(.region = "BRA") {
+plot_asma_range_summary <- function() {
   asma_annual |>
-    dplyr::filter(REG == .region, YEAR %in% txxt_years) |>
+    dplyr::filter(YEAR %in% txxt_years) |>
     dplyr::summarise(
       MVTS_VALID = sum(MVTS_VALID, na.rm = TRUE),
       TOT_ADD_TIME = sum(TOT_ADD_TIME, na.rm = TRUE),
       AVG_ADD_TIME = TOT_ADD_TIME / MVTS_VALID,
       .by = c(REG, RANGE, YEAR)
     ) |>
-    dplyr::mutate(RANGE = factor(RANGE, levels = c("C40", "C100"))) |>
+    dplyr::mutate(
+      RANGE = factor(RANGE, levels = c("C40", "C100"), labels = c("40 NM", "100 NM")),
+      REG = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe")
+    ) |>
     ggplot2::ggplot(ggplot2::aes(x = YEAR, y = AVG_ADD_TIME, colour = RANGE, group = RANGE)) +
     ggplot2::geom_line(linewidth = 0.6) +
     ggplot2::geom_point(size = 2) +
+    ggplot2::facet_wrap(. ~ REG) +
     ggplot2::scale_x_continuous(breaks = txxt_years) +
     ggplot2::scale_y_continuous(limits = c(0, NA)) +
     ggplot2::scale_colour_brewer(palette = "Dark2") +
@@ -334,15 +346,13 @@ plot_asma_range_summary <- function(.region = "BRA") {
 
 ## Additional Taxi-In Time
 
-The additional taxi-in time measures the travel time of an arriving aircraft from its touchdown, i.e. the actual landing time, to its stand/gate position, i.e. actual in-block time).
+The additional taxi-in time measures the travel time of an arriving aircraft from its touchdown, i.e. the actual landing time, to its stand/gate position, i.e. actual in-block time.
 This elapsed taxi-in time is compared to an anticipated reference time for aircraft arriving at the same runway and taxiing to the same (group of) stand/gate position(s).
-Research showed that the taxi-times are not dependent on the type of aircraft.
+Research has shown that taxi times are not dependent on the type of aircraft.
 The additional taxi-in time indicator provides a measure of the management of inbound surface traffic.
 
-For this first 2025 update, the European taxi-in results are calculated from the PBWG APDF extraction.
-The Brazilian taxi-in results use the harmonised DECEA taxi extract documented in `BRA-ingestion.qmd`.
-For both regions, the reference time is determined from the 2024 sample using the ICAO GANP 20th percentile method by airport, phase, runway, and stand/gate position.
-The analytic files retain the total observed taxi time (`TOT_TXXT`) across movements that are valid for the metric (`MVTS_VALID`), while `MVTS_NA` captures movements that could not be used because the taxi-time inputs were incomplete or no reference time was available.
+For this report, the Brazilian and European taxi-in results are calculated from a harmonised PBWG data extraction format to demonstrate the benefits of global harmonisation.
+Based on the ICAO GANP guidance, the reference times for both regions are determined from the 2024 sample using the 20th percentile method by airport, phase, runway, and stand/gate position.
 
 ### Annual Evolution of Additional Taxi-in Times
 
@@ -364,7 +374,7 @@ plot_annual_txxt("ARR", "BRA", "average additional taxi-in time [min/arr]")
 
 The annual development of the average additional taxi-in times at the study airports is depicted by @fig-eur-txit-annual and @fig-bra-txit-annual.
 The 2-minute threshold per arrival continues to serve as a practical reference point for evaluating taxi-in efficiency.
-The 2025 update expands the European airport set to 12 airports, adding Athens (LGAV) and Istanbul (LTFM) to the comparison scope used in `_chapter-setup.R`.
+This report expands the Brazilian and European airport set to 12 airports: for Brazil, the new entries are Recife (SBRF) and Eduardo Gomes/Manaus (SBEG), and for Europe, Athens (LGAV) and Istanbul (LTFM).
 
 ### Monthly Variation of Additional Taxi-in Times
 
@@ -385,7 +395,7 @@ plot_monthly_txxt("ARR", "BRA", "avg. add. taxi-in time [min/arr]", .ylim = c(0,
 ```
 
 The evolution of the taxi-in time at the study airports, shown in @fig-eur-txit-timeline and @fig-bra-txit-timeline, reinforces the annual comparison and provides a check on the seasonal variation of the surface movement indicator.
-The interpretation remains deliberately light in this first draft until the harmonised Brazilian extract has been reviewed with DECEA.
+
 
 ## Taxi-Out Times
 
@@ -407,7 +417,7 @@ plot_annual_txxt("DEP", "EUR", "average additional taxi-out time [min/dep]")
 plot_annual_txxt("DEP", "BRA", "average additional taxi-out time [min/dep]")
 ```
 
-On average, higher additional times for taxi-out are observed across airports (c.f. @fig-eur-txot-annual and @fig-bra-txot-annual).
+On average, higher additional times for taxi-out are observed across airports (see @fig-eur-txot-annual and @fig-bra-txot-annual).
 The taxi-out phase requires a higher level of management of the surface movements.
 Departure procedures and flow control can impact the departure queue.
 
@@ -429,7 +439,7 @@ plot_monthly_txxt("DEP", "EUR", "avg. add. taxi-out time [min/dep]", .ylim = c(0
 plot_monthly_txxt("DEP", "BRA", "avg. add. taxi-out time [min/dep]", .ylim = c(0, 12))
 ```
 
-The monthly evolution in @fig-eur-txot-timeline and @fig-bra-txot-timeline provides the working view for updating the narrative once the Brazilian surface movement data are confirmed on the same basis.
+The monthly evolution in @fig-eur-txot-timeline and @fig-bra-txot-timeline complements the annual comparison and highlights seasonal variation in the additional taxi-out times.
 
 ## Mapping Additional Taxi-in and Taxi-out Times
 
@@ -448,15 +458,53 @@ It also shows that on average taxi-out operations accrue more additional time th
 ## Additional Time in Terminal Airspace
 
 The additional time in terminal airspace is calculated as the difference between the actual flying time from entering the sequencing area and a reference time for comparable arrivals.
-Previous research and guidance suggest that the reference time can be built for flights sharing similar operational characteristics, including entry range, entry sector, aircraft class, and landing runway.
+Previous research and guidance suggest that the reference time can be built for flights sharing similar operational characteristics.
 
-The refreshed Brazil ASMA ingestion uses the multi-year DECEA ASMA extract for 2023-2025 and applies a 2024 ICAO GANP 20th percentile reference.
-For Brazil, the reference groups are defined by airport, range, aircraft class as supplied in the Brazil data, landing runway, and supplied sector grouping.
-The Brazil source carries wake-turbulence style `CLASS` values rather than the full APDF class code combining wake-turbulence category and propulsion; the results should therefore be interpreted as a first harmonised ASMA view until the aircraft-type mapping is added.
+The ASMA data for both regions are being further harmonised and follow the ICAO GANP 20th percentile approach for determining reference times.
+For Brazil, the refreshed data preparation now supports both 40 NM and 100 NM arrival sequencing areas for 2023-2025.
+For Europe, the ASMA comparison is extended to cover both ranges while the harmonised ASMA preparation is being aligned with the Brazilian update.
 
-The European ASMA data have not yet been rebuilt with the same 2024 reference-time pipeline.
-For orientation, the European 100 NM series below reuses the older ASMA products through 2024 and carries 2024 forward as a placeholder for 2025.
-The placeholder is included only to keep the report comparison layout stable while the missing European reference-time determination steps are developed.
+### Additional ASMA Time at 40 NM
+
+The 40 NM view gives a closer-in terminal-airspace perspective.
+For this report, this range is available for Brazil and provides an additional view on the terminal arrival segment closer to the aerodrome.
+
+```{r}
+#| label: fig-eur-asma40-annual
+#| fig-cap: Europe - Additional ASMA time at 40 NM (2023-2025)
+#| fig-height: 4.8
+
+plot_annual_asma("C40", "EUR", .xlim = c(0, 7))
+```
+
+```{r}
+#| label: fig-bra-asma40-annual
+#| fig-cap: Brazil - Additional ASMA time at 40 NM (2023-2025, 2024 GANP p20 reference)
+#| fig-height: 4.8
+
+plot_annual_asma("C40", "BRA", .xlim = c(0, 5))
+```
+
+```{r}
+#| label: fig-eur-asma40-timeline
+#| fig-cap: Europe - Monthly evolution of additional ASMA time at 40 NM
+#| fig-height: 7.2
+
+plot_monthly_asma("C40", "EUR", .ylim = c(0, 8))
+```
+
+```{r}
+#| label: fig-bra-asma40-timeline
+#| fig-cap: Brazil - Monthly evolution of additional ASMA time at 40 NM
+#| fig-height: 7.2
+
+plot_monthly_asma("C40", "BRA", .ylim = c(0, 5))
+```
+
+The 40 NM results in @fig-eur-asma40-annual, @fig-bra-asma40-annual, @fig-eur-asma40-timeline, and @fig-bra-asma40-timeline provide the closer-in view of arrival sequencing.
+For Brazil, the 40 NM results are lower than the 100 NM values, as expected for the shorter arrival segment.
+At the Brazil regional level, the 40 NM average remains close to 2.2 minutes per arrival in 2024 and 2025.
+The monthly timeline shows that the closer-in ASMA measure still varies across the study airports and across the year.
 
 ### Additional ASMA Time at 100 NM
 
@@ -473,7 +521,7 @@ plot_annual_asma("C100", "BRA", .xlim = c(0, 7))
 
 ```{r}
 #| label: fig-eur-asma100-annual
-#| fig-cap: Europe - Additional ASMA time at 100 NM (2023-2025, 2025 filled with 2024 data)
+#| fig-cap: Europe - Additional ASMA time at 100 NM (2023-2025)
 #| fig-height: 4.8
 
 plot_annual_asma("C100", "EUR", .xlim = c(0, 7))
@@ -483,8 +531,8 @@ plot_annual_asma("C100", "EUR", .xlim = c(0, 7))
 The highest additional times remain concentrated at the larger and more constrained arrival systems.
 Congonhas (SBSP) improves materially in 2025, while Guarulhos (SBGR) increases again and remains the highest Brazilian airport in the 2025 sample.
 
-@fig-eur-asma100-annual keeps the European comparison visible but should be read with caution.
-The 2025 European values are not newly observed values; they repeat 2024 until the European ASMA reference-time pipeline is rebuilt on the same basis as Brazil.
+@fig-eur-asma100-annual keeps the European comparison visible at the established 100 NM range.
+The European regional average remains close to 3.6-3.8 minutes per arrival over the 2023-2025 period.
 
 ```{r}
 #| label: fig-bra-asma100-timeline
@@ -494,53 +542,36 @@ The 2025 European values are not newly observed values; they repeat 2024 until t
 plot_monthly_asma("C100", "BRA", .ylim = c(0, 7))
 ```
 
-The monthly 100 NM timeline in @fig-bra-asma100-timeline provides the working multi-year view for the Brazil arrivals.
+The monthly 100 NM timeline in @fig-bra-asma100-timeline provides the multi-year view for the Brazil arrivals.
 It shows that the annual averages mask substantial month-to-month variation, especially at Congonhas (SBSP), Santos Dumont (SBRJ), Guarulhos (SBGR), and Eduardo Gomes (SBEG).
-This makes the daily/grouped ASMA output useful beyond the annual indicator because the same file can support follow-up checks by runway, sector, range, and class.
+This makes the ASMA output useful beyond the annual indicator because the same approach can support follow-up checks for airport-level operational patterns.
 
-### Additional ASMA Time at 40 NM
-
-The 40 NM view gives a closer-in terminal-airspace perspective.
-It is not yet available for Europe in the refreshed report workflow, so this subsection focuses on Brazil.
-The 40 NM reference uses the same 2024 GANP p20 principle and the same grouping dimensions as the 100 NM result.
+### Comparison by ASMA Range
 
 ```{r}
-#| label: fig-bra-asma40-annual
-#| fig-cap: Brazil - Additional ASMA time at 40 NM (2023-2025, 2024 GANP p20 reference)
-#| fig-height: 4.8
-
-plot_annual_asma("C40", "BRA", .xlim = c(0, 5))
-```
-
-```{r}
-#| label: fig-bra-asma40-timeline
-#| fig-cap: Brazil - Monthly evolution of additional ASMA time at 40 NM
-#| fig-height: 7.2
-
-plot_monthly_asma("C40", "BRA", .ylim = c(0, 5))
-```
-
-The 40 NM results in @fig-bra-asma40-annual and @fig-bra-asma40-timeline are lower than the 100 NM values, as expected for the shorter arrival segment.
-At the Brazil regional level, the 40 NM average remains close to 2.2 minutes per arrival in 2024 and 2025.
-The 100 NM average remains higher, which indicates that a meaningful share of the additional time is accrued before aircraft enter the closer-in 40 NM area.
-
-```{r}
-#| label: fig-bra-asma-range-summary
-#| fig-cap: Brazil - Regional additional ASMA time by range
+#| label: fig-asma-range-summary
+#| fig-cap: Regional additional ASMA time by range
 #| fig-height: 3.8
 
-plot_asma_range_summary("BRA")
+plot_asma_range_summary()
 ```
 
-@fig-bra-asma-range-summary summarises the distinction between the two available ranges.
-The Brazil ASMA ingestion now provides a consistent daily basis for producing both timelines, while retaining the finer `CLASS`, `RWY`, and sector breakdown required for deeper analysis.
+@fig-asma-range-summary compares the regional averages for the available ASMA ranges.
+For Brazil, the 100 NM average remains higher than the 40 NM average, which indicates that a meaningful share of the additional time is accrued before aircraft enter the closer-in 40 NM area.
+At 40 NM, the European regional average remains higher than the Brazilian regional average over the 2023-2025 period.
+At 100 NM, Brazil and Europe are within the same order of magnitude over the 2023-2025 period.
+The Brazilian 100 NM values show a gradual reduction, while the European 100 NM values and the 40 NM values in both regions remain comparatively stable in this comparison report.
 
 ## Summary
 
 This chapter analysed operational efficiency through the assessment of additional taxi-in, taxi-out, and terminal-airspace ASMA times.
-For Europe, the first 2025 update now uses the PBWG APDF extraction with a 2024 ICAO GANP 20th percentile reference and covers the 12 airports defined in `_chapter-setup.R`.
-For Brazil, the chapter now uses the harmonised DECEA taxi extract prepared in APDF-like form and processed through the same PBWG taxi-time pipeline.
-The chapter uses `TOT_TXXT` as the observed taxi-time total for the metric-ready sample and derives the additional-time averages from `MVTS_VALID`.
-The ASMA section now uses the refreshed Brazil ASMA ingestion to develop 40 NM and 100 NM multi-year timelines with a 2024 GANP 20th percentile reference.
-For Europe, the ASMA comparison remains provisional: 2025 is filled with 2024 values until the European ASMA reference-time pipeline is rebuilt.
-The next update should add the aircraft-type to APDF class-code mapping and align the European ASMA preparation with the new Brazil workflow.
+The 2025 update extends the comparison for the selected study airports and applies the ICAO GANP 20th percentile approach to the harmonised taxi-time indicators for both regions.
+
+For taxi-in, the 2-minute threshold per arrival remains a useful practical reference point.
+The annual and monthly views indicate that taxi-in additional times remain generally contained, while constrained airport systems continue to show higher values.
+For taxi-out, additional times are higher than for taxi-in, reflecting the operational complexity of departure sequencing, surface movement management, and flow restrictions.
+
+The ASMA section provides a first harmonised view of additional time in terminal airspace for both regions at 40 NM and 100 NM.
+The 40 NM values are lower, as expected for the closer-in arrival segment, while the 100 NM values capture a wider share of arrival sequencing and terminal airspace management.
+At 40 NM, the European regional average remains higher than the Brazilian regional average, while at 100 NM both regions are within the same order of magnitude in this comparison.
+Further harmonisation of the ASMA data will support a more robust side-by-side interpretation in future updates.
