@@ -1,11 +1,19 @@
-# Foreword {.unnumbered}
+
 
 <!--
 ![](figures/foreword-combined.png)
 -->
 
-
-
+```{=latex}
+\thispagestyle{empty}
+\addcontentsline{toc}{chapter}{Foreword}
+\begin{picture}(0,0)
+\put(-85,-642){\includegraphics[width=\paperwidth,height=\paperheight]{figures/foreword.pdf}}
+\end{picture}
+\clearpage
+\addtocounter{chapter}{-1}
+```
+<!--
 :::{.callout-note} 
 
 **DECEA**
@@ -20,7 +28,7 @@ EUROCONTROL and the Performance Review Commision is proud to continue this journ
 
 :::
 
-<!--
+
 #| label: shakehands
 #| fig-cap: ""
 #| fig-align: "center"
