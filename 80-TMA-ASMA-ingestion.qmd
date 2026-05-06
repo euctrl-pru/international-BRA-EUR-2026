@@ -1,0 +1,63 @@
+# European ASMA Public CSV Ingestion
+
+```{r}
+source(here::here("_chapter-setup.R"))
+```
+
+This aide-memoire ingests the public EUROCONTROL ASMA CSV files for the European study airports.
+The public series represents the standard European ASMA airport measure and is used here as the temporary 40 NM input for the report chapter until the package workflow regenerates the harmonised 40 NM and 100 NM products.
+
+```{r}
+asma_years <- 2023:2025
+
+read_eur_asma_public <- function(.year) {
+  readr::read_csv(
+    glue::glue("https://www.eurocontrol.int/performance/data/download/csv/asma_additional_time_{.year}.csv"),
+    show_col_types = FALSE
+  ) |>
+    dplyr::mutate(
+      YEAR = as.integer(.data$YEAR),
+      MONTH_NUM = as.integer(.data$MONTH_NUM),
+      DATE = lubridate::ymd(glue::glue("{YEAR}-{MONTH_NUM}-01"))
+    )
+}
+
+eur_asma_public <- purrr::map_dfr(asma_years, read_eur_asma_public) |>
+  dplyr::filter(.data$APT_ICAO %in% eur_apts)
+```
+
+```{r}
+eur_asma40_monthly <- eur_asma_public |>
+  dplyr::transmute(
+    REG = "EUR",
+    ICAO = .data$APT_ICAO,
+    DATE,
+    YEAR,
+    MONTH = DATE,
+    RANGE = "C40",
+    MVTS_VALID = .data$VALID_FL,
+    MVTS_NA = .data$NO_REF,
+    TOT_ASMA = .data$TOTAL_REF_TIME_MIN + .data$TOTAL_ADD_TIME_MIN,
+    TOT_REF = .data$TOTAL_REF_TIME_MIN,
+    TOT_ADD_TIME = .data$TOTAL_ADD_TIME_MIN,
+    AVG_ASMA = dplyr::if_else(.data$MVTS_VALID > 0, .data$TOT_ASMA / .data$MVTS_VALID, NA_real_),
+    AVG_REF = dplyr::if_else(.data$MVTS_VALID > 0, .data$TOT_REF / .data$MVTS_VALID, NA_real_),
+    AVG_ADD_TIME = dplyr::if_else(.data$MVTS_VALID > 0, .data$TOT_ADD_TIME / .data$MVTS_VALID, NA_real_)
+  )
+
+readr::write_csv(
+  eur_asma40_monthly,
+  here::here("data", "PBWG-EUR-asma40-monthly-2023-2025-public.csv")
+)
+```
+
+```{r}
+eur_asma40_monthly |>
+  dplyr::summarise(
+    MVTS_VALID = sum(.data$MVTS_VALID, na.rm = TRUE),
+    TOT_ADD_TIME = sum(.data$TOT_ADD_TIME, na.rm = TRUE),
+    AVG_ADD_TIME = .data$TOT_ADD_TIME / .data$MVTS_VALID,
+    .by = c(.data$REG, .data$YEAR)
+  )
+```
+

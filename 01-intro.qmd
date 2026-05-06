@@ -34,7 +34,9 @@ It is important to note that the comparative analysis in this iteration of the r
 From an indicator perspective, the DECEA Performance Section and PRU have reached a consensus to concentrate on operational benchmarking and aligning their efforts with the performance indicators proposed by ICAO in conjunction with the update of the Global Air Navigation Plan (GANP).
 Discussions are on-going, and future work may also include aspects of cost-effectiveness.
 
-<!-- The report also presents an initial approach to quantifying potential inefficiencies in terms of fuel burn and CO2 emissions. -->
+<!-- WORK FOR NEXT ITERATIONS 
+The report also presents an initial approach to quantifying potential inefficiencies in terms of fuel burn and CO2 emissions. 
+-->
 
 ## Geographical Scope
 
@@ -91,79 +93,33 @@ This includes the integration of military objectives and requirements which need
 A variety of coordination cells/procedures exists between civil air traffic control centres and air defence units reflecting the local practices.
 Many EUROCONTROL member states are members of NATO and have their air defence centres / processes for civil-military coordination aligned under the integrated NATO air defence system.
 
-```
-Further details on the organisation of the regional air navigation systems in Brazil and Europe will be provided in Section 2.1. <!-- make this a cross-reference -->
-```
+Further details on the organisation of the regional air navigation systems in Brazil and Europe will be provided in the next chapter.
 
 ### Network and Inter-regional Traffic Flow
 
-::: {.callout-warning appearance="simple"}
-To be reviewed
-:::
+Both regions exhibit distinct traffic flow patterns shaped by their geographic extent, population distribution, and economic geography.
+In Brazil, traffic is concentrated along a few high-density corridors connecting the major metropolitan areas — notably the Rio de Janeiro–São Paulo–Brasília triangle — while a significant share of movements crosses multiple FIR boundaries due to the continental scale of the country. 
+In Europe, traffic flows are characterised by a dense network of cross-border routes, where intra-regional movements are the norm rather than the exception, reflecting the proximity of major city pairs across national boundaries.
+It also shows the historic roots of the European network with each State operating a major national hub and flag carrier connecting to other European states and serving international connections.  
 
-Both regions exhibit distinct traffic flow patterns shaped by their geographic 
-extent, population distribution, and economic geography. In Brazil, traffic is 
-concentrated along a few high-density corridors connecting the major metropolitan 
-areas — notably the Rio de Janeiro–São Paulo–Brasília triangle — while a significant 
-share of movements crosses multiple FIR boundaries due to the continental scale of 
-the country. In Europe, traffic flows are characterised by a dense network of 
-cross-border routes, where inter-regional movements are the norm rather than the 
-exception, reflecting the proximity of major city pairs across national boundaries.
+Understanding these network-level flow patterns is essential to contextualise the performance comparison presented in this report. 
+Differences in traffic distribution, route structure, and inter-regional connectivity directly influence the operational demands placed on each air navigation system and, consequently, the performance outcomes observed.
 
-Understanding these network-level flow patterns is essential to contextualise the 
-performance comparison presented in this report. Differences in traffic distribution, 
-route structure, and inter-regional connectivity directly influence the operational 
-demands placed on each air navigation system and, consequently, the performance 
-outcomes observed.
+For this report, regional traffic is defined by the geographic scope of the Brazilian air navigation system and the combined European system as domestic level air traffic.
+Accordingly, the Brazilian network level accounts for flight operations within the domestic airspace, while European network traffic refers to the inter-region traffic.
 
 ### Study Airports
 
+In previous editions of this report, the airport sample comprised 10 airports in each region, selected on the basis of IFR traffic volume and operational relevance. 
+Building on this foundation, this edition expands the sample to 12 airports per region, adding two airports in each region to better capture the diversity of operational contexts within both air navigation systems.
 
-:::{.callout-warning}
+In Brazil, Recife International Airport (SBRF) was included given its position among the top-30 busiest airports in the country and its role as a significant international hub serving the Northeast region. 
+Eduardo Gomes International Airport (SBEG), located in Manaus, was also added as the most important gateway for the Northern region of Brazil, serving as a key node for both domestic connectivity and international flights to neighbouring South American countries.
 
-New text. To be reviwed
-
-:::
-
-In previous editions of this report, the airport sample comprised 10 airports in 
-each region, selected on the basis of IFR traffic volume and operational relevance. 
-Building on this foundation, this edition expands the sample to 12 airports per 
-region, adding two airports in each region to better capture the diversity of 
-operational contexts within both air navigation systems.
-
-In Brazil, Recife International Airport (SBRF) was included given its position 
-among the top-30 busiest airports in the country and its role as a significant 
-international hub serving the Northeast region. Eduardo Gomes International Airport 
-(SBEG), located in Manaus, was also added as the most important gateway for the 
-Northern region of Brazil, serving as a key node for both domestic connectivity 
-and international flights to neighbouring South American countries.
-
-In Europe, the sample was extended to include Athens International Airport (LGAV) 
-and Istanbul Airport (LTFM), two major hubs that strengthen the geographic 
-representativeness of the European sample and reflect the growing importance of 
-South-eastern Europe in international air traffic flows.
-
-
-<!--
-Old text
-
-As concerns airport-related operational air navigation performance, this edition of the comparison report addresses the performance at a set of selected airports.
-These airports represent the top-10 or most relevant airports in terms of IFR movements in both regions and allow to make meaningful comparisons.\
-In Brazil, the selected airports play a significant role for the national and regional connectivity, including the major hubs for international air traffic.
-These study airports have consolidated systems and structured processes for data collection in support of this comparison report.\
-For the European context, the study airports comprise the busiest airports in several states exhibiting a mix of national, regional, and international air traffic.
-These airports are also characterised by varying operational constraints that make them excellent candidates for an international comparison.
-All of these airports are subject to the performance monitoring under the EUROCONTROL Performance Review System and provide movement related data on the basis of a harmonised data specification.
--->
+In Europe, the sample was extended to include Athens International Airport (LGAV) and Istanbul Airport (LTFM), two major hubs that strengthen the geographic representativeness of the European sample and reflect the growing importance of South-eastern Europe in international air traffic flows.
 
 @fig-scope-airports provides an overview of the location of the chosen study airports within both regions.
 The airports are also listed in @tbl-scopetable.
-
-<!--
-
-New version of table using csv table. Tested in html and PDF views.
-
--->
 
 
 ```{r}
@@ -289,7 +245,7 @@ knitr::include_graphics(here::here("figures", "scope-airports-2025.png"))
 
 ### Temporal Scope
 
-This report focuses on the period from January 2019 to December 2024 with a focus on the post-pandemic years.
+This report focuses on the period from January 2019 to December 2025 with a focus on the post-pandemic years.
 This report continues to build a timeline with comparable data to be augmented in future editions.
 
 Throughout the report, summary statistics will be given with reference to calendar years of this comparison study unless highlighted specifically.
@@ -299,10 +255,9 @@ Throughout the report, summary statistics will be given with reference to calend
 The nature of the performance indicator requires the collection of data from different sources.
 DECEA Performance Section and PRU investigated the comparability of the data available in both regions, including the data pre-processes, data cleaning and aggregation, to ensure a harmonised set of data for performance comparison purposes.
 
-DECEA mainly uses data from the tower systems of the main airports as a data source for performance studies.
-The control tower system collects and provides data for each landing and take-off operation automatically.
-This edition blended ANAC (Brazilian CAA) official and public data with DECEA's data to increase precision for specific indicators, adding a pre-processing phase to the data analytical work.
-The provided data include such items as the times of operations, gate entry and exit, and flight origin and destination.
+DECEA's data sources for this edition were expanded to include SETA Millennium, a system that extracts flight data directly from ATC systems. 
+This addition complemented the tower-collected operational records already in use and was further combined with official ANAC (Brazilian CAA) data on scheduled commercial flights in Brazil. 
+Together, these sources cover key parameters such as operation timestamps, gate entry and exit times, and flight origin and destination, increasing the precision of the analysis.
 
 Within the European context, PRU has established a variety of performance-related data collection processes.
 For this report the main sources are the European Air Traffic Flow Management System (ETFMS [^01-intro-2]) complemented with airport operator reported data.

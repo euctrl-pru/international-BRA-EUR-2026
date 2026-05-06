@@ -1,0 +1,420 @@
+---
+title: "HFE - report proposal"
+---
+
+```{r}
+#| label: setup
+#| message: false
+library(tidyverse)
+
+ggplot2::theme_set(ggplot2::theme_minimal())
+```
+
+
+
+## Data preparation
+
+### Brazil
+
+DECEA -> data lake, HFE data for 2025
+data ingestion via download from data lake
+
+```{}
+# setup ingestion
+source("./R/rqutils-zip.R")
+
+path_to_download <- "/Users/rainerkoelle/Downloads"
+hfe_download <- fs::dir_ls(path_to_download, regexp = "OneDrive_1_29-04") |> basename()
+hfe_fns      <- check_zip_content(path_to_download, hfe_download) |> pull(Name)
+
+bra_kea <- read_zip_content(path_to_download, hfe_download, hfe_fns[1], "csv_auto")
+bra_kep <- read_zip_content(path_to_download, hfe_download, hfe_fns[2], "csv_auto")
+
+bra_kea <- bra_kea |> select(ADEP = plan_dep, ADES = real_arr, DATE_TIME = time, TYPE = equip
+                  ,FLTID = id_icao, REG = reg
+                  , HFE_BRA = kpi05_v1
+                  ,DIST_ACHD = dist_achieved_v1
+                  ,DIST_FLOWN = dist_flown_v1) |> 
+  mutate(KPI = "KEA")
+
+bra_kep <- bra_kep |> 
+  select(ADEP = orig, ADES = dest, DATE_TIME = time   #, TYPE = equip
+                  ,FLTID = id_icao
+         #, REG = reg
+         , HFE_BRA = kpi04_v1
+                  ,DIST_ACHD = dist_achieved_v1
+                  ,DIST_FLOWN = dist_flown_v1) |> 
+  mutate(KPI = "KEP")
+```
+
+```{}
+hfe_bra_network <- bind_rows(bra_kea, bra_kep) 
+hfe_bra_network |> write_csv("./data/BRA-HFE-network-2025.csv")
+```
+
+
+
+### Europe
+
+```{r}
+hfe_eur_12 <- fs::dir_ls("./data", regexp = "EUR-hfe-Q") |> 
+  purrr::map(.f = ~ arrow::read_parquet(.x)) |> bind_rows()
+
+```
+
+```{}
+hfe_eur_network <- readr::read_csv("https://www.eurocontrol.int/performance/data/download/csv/horizontal_flight_efficiency_2025.csv", show_col_types = FALSE) |> 
+  filter(ENTITY_NAME == "EUROCONTROL Area (PRR)")
+
+hfe_eur_network |> write_csv("EUR-HFE-network-2025.csv")
+```
+
+
+### Airport Meta Data 
+
+study scope and meta data
+
+```{r}
+bra_apts_names <- tibble::tribble(
+  ~ICAO  , ~NAME
+  ,"SBGR", "Guarulhos"
+  ,"SBGL", "Galeão"
+  ,"SBRJ", "Rio Dumont"
+  ,"SBCF", "Belo Horizonte"
+  ,"SBBR", "Brasília"
+  ,"SBSV", "Salvador"
+  ,"SBKP", "Campinas"
+  ,"SBSP", "Congonhas"
+  ,"SBCT", "Curitiba"
+  ,"SBPA", "Porto Alegre"
+  ,"SBRF", "Recife"
+  ,"SBEG", "Eduardo Gomes"
+)
+bra_apts <- bra_apts_names$ICAO
+
+eur_apts_names <- tibble::tribble(
+  ~ICAO  , ~NAME
+  ,"EGLL", "Heathrow"
+  ,"EGKK", "Gatwick"
+  ,"EHAM", "Amsterdam"
+  ,"EDDF", "Frankfurt"
+  ,"EDDM", "Munich"
+  ,"LSZH", "Zurich"
+  ,"LFPG", "Paris"
+  ,"LEMD", "Madrid"
+  ,"LEBL", "Barcelona"
+  ,"LPPT", "Lisbon"
+  ,"LGAV", "Athens"
+  ,"LTFM", "Istanbul"
+)
+eur_apts <- eur_apts_names$ICAO
+```
+
+get GCD
+
+```{}
+oa <- read_csv("https://davidmegginson.github.io/ourairports-data/airports.csv", show_col_types = FALSE)
+
+bra_apts_latlon <- oa |> 
+  filter(grepl("[A-Z]{4}", icao_code)) |> 
+  select(ICAO = icao_code, LAT = latitude_deg, LON = longitude_deg) |> 
+  filter(ICAO %in% bra_apts)
+
+eur_apts_latlon <- oa |> 
+  filter(grepl("[A-Z]{4}", icao_code)) |> 
+  select(ICAO = icao_code, LAT = latitude_deg, LON = longitude_deg) |> 
+  filter(ICAO %in% eur_apts)
+
+bra_gcds <- expand_grid(ADEP = bra_apts, ADES = bra_apts) |> 
+  left_join(bra_apts_latlon, by = join_by("ADEP" == "ICAO")) |> 
+  rename(LAT1 = LAT, LON1 = LON) |> 
+  left_join(bra_apts_latlon, by = join_by("ADES" == "ICAO")) |> 
+  mutate( GCD = geosphere::distHaversine(cbind(LON1, LAT1), cbind(LON, LAT))
+         ,GCD = GCD / 1852    # GCD in NM
+         )
+
+eur_gcds <- expand_grid(ADEP = eur_apts, ADES = eur_apts) |> 
+    left_join(eur_apts_latlon, by = join_by("ADEP" == "ICAO")) |> rename(LAT1 = LAT, LON1 = LON) |> 
+    left_join(eur_apts_latlon, by = join_by("ADES" == "ICAO")) |> 
+    mutate( GCD = geosphere::distHaversine(cbind(LON1, LAT1), cbind(LON, LAT))
+           ,GCD = GCD / 1852)
+
+gcds <- bind_rows(bra_gcds |> mutate(REGION = "BRA"), eur_gcds |> mutate(REGION = "EUR")) |> 
+  write_csv("./data/meta-apts-study-gcds.csv")
+```
+
+```{r}
+gcds <- read_csv("./data/meta-apts-study-gcds.csv", show_col_types = F)
+
+gcds |> 
+ggplot() +
+  geom_point(aes(x = GCD, y = REGION, color = REGION))
+```
+
+
+### Store Airport Pair Data for Study
+
+filter to airport pairs
+
+```{}
+bra_kea <- bra_kea |> filter(ADEP %in% bra_apts & ADES %in% bra_apts)
+bra_kep <- bra_kep |> filter(ADEP %in% bra_apts & ADES %in% bra_apts)
+
+bind_rows(bra_kea, bra_kep) |> arrow::write_parquet("./data/BRA-HFE-12apts-2025.parquet")
+```
+
+
+## Analysis
+
+The following chunks use the prepared data above.  Brazilian KPI values are not
+used directly; HFE is recalculated from achieved/flown distances and infeasible
+negative values are retained only in quality counters.
+
+```{r}
+HFE_VALID_MAX <- 0.25
+
+gcds <- read_csv("./data/meta-apts-study-gcds.csv", show_col_types = F)
+```
+
+
+```{r}
+hfe_bra_12 <- arrow::read_parquet("./data/BRA-HFE-12apts-2025.parquet") |> 
+  transmute(
+    ADEP, ADES, DATE_TIME, FLTID, REG, HFE_BRA,
+    HFE_TYPE = KPI,
+    DIST_FLOWN,
+    DIST_ACHIEVED = DIST_ACHD,
+    HFE = (DIST_FLOWN / DIST_ACHD) - 1
+  )
+
+hfe_eur_12 <- fs::dir_ls("./data", regexp = "EUR-hfe-Q") |> 
+  purrr::map(.f = ~ arrow::read_parquet(.x)) |> bind_rows() |> 
+  filter(ADEP %in% eur_apts, ADES %in% eur_apts) |> 
+  transmute(
+    ADEP, ADES, DATE_TIME = ENTRY_TIME, HFE_TYPE = KPI,
+    DIST_FLOWN = TOTAL_FLOWN_KM / 1.852,
+    DIST_ACHIEVED = TOTAL_ACHIEVED_KM / 1.852,
+    HFE = (TOTAL_FLOWN_KM / TOTAL_ACHIEVED_KM) - 1
+  )
+```
+
+
+
+
+top connections
+
+```{r}
+hfe_bra_stats <- hfe_bra_12 |> 
+  group_by(ADEP, ADES) |> 
+  reframe(
+    N = n(),
+    N_VALID = sum(is.finite(HFE) & HFE >= 0 & HFE <= HFE_VALID_MAX),
+    N_NEG = sum(HFE < 0, na.rm = TRUE),
+    N_HIGH = sum(HFE > HFE_VALID_MAX, na.rm = TRUE)
+  ) |> 
+  left_join(gcds |> filter(REGION == "BRA") |> select(ADEP, ADES, GCD), by = join_by(ADEP, ADES))
+  
+hfe_bra_stats |> arrange(desc(N))
+```
+
+```{r}
+hfe_eur_stats <- hfe_eur_12 |> 
+  group_by(ADEP, ADES) |> 
+  reframe(
+    N = n(),
+    N_VALID = sum(is.finite(HFE) & HFE >= 0 & HFE <= HFE_VALID_MAX),
+    N_NEG = sum(HFE < 0, na.rm = TRUE),
+    N_HIGH = sum(HFE > HFE_VALID_MAX, na.rm = TRUE)
+  ) |> 
+  left_join(gcds |> filter(REGION == "EUR") |> select(ADEP, ADES, GCD), by = join_by(ADEP, ADES))
+  
+hfe_eur_stats |> arrange(desc(N))
+```
+
+
+Interactive plot used to identify airport pairs with broadly similar great-circle
+distance and enough flights.
+
+```{r}
+pair_screening <- bind_rows(
+  hfe_bra_stats |> mutate(REGION = "BRA", LABEL = paste0(ADEP,"-",ADES))
+, hfe_eur_stats |> mutate(REGION = "EUR", LABEL = paste0(ADEP,"-",ADES))
+) 
+
+pair_screening_plot <- pair_screening |>  
+  ggplot(aes(x = N, y = GCD, color = REGION, label = LABEL)) + 
+  geom_point()
+
+if (requireNamespace("plotly", quietly = TRUE)) {
+  plotly::ggplotly(pair_screening_plot)
+} else {
+  pair_screening_plot
+}
+```
+
+Candidate pairs retained for the report work-up.  The one-way selections from
+the screening plot are expanded to both directions for the analytic dataset.
+
+```{r}
+candidate_pairs_one_way <- tribble(
+  ~PAIR_GROUP, ~ADEP, ~ADES,
+  "long",      "LPPT", "LGAV",
+  "long",      "LTFM", "LPPT",
+  "long",      "SBEG", "SBGL",
+  "long",      "SBEG", "SBGR",
+  "mid_600",   "SBBR", "SBSV",
+  "mid_600",   "SBBR", "SBCT",
+  "mid_600",   "SBPA", "SBGL",
+  "mid_600",   "EGKK", "LEBL",
+  "mid_600",   "EGLL", "LEBL",
+  "mid_600",   "LEBL", "EDDM",
+  "mid_780_800", "EHAM", "LEMD",
+  "mid_780_800", "LFPG", "LPPT",
+  "mid_780_800", "SBSV", "SBGR",
+  "mid_780_800", "SBSV", "SBKP",
+  "mid_780_800", "SBSV", "SBSP",
+  "short",     "SBCF", "SBSP",
+  "short",     "LPPT", "LEMD",
+  "short",     "LTFM", "LGAV",
+  "short",     "SBCF", "SBKP"
+)
+
+candidate_pairs <- bind_rows(
+  candidate_pairs_one_way,
+  candidate_pairs_one_way |> rename(ADEP_REV = ADES, ADES_REV = ADEP) |> transmute(PAIR_GROUP, ADEP = ADEP_REV, ADES = ADES_REV)
+) |> 
+  distinct() |> 
+  left_join(
+    gcds |> select(REGION, ADEP, ADES, GCD),
+    by = join_by(ADEP, ADES)
+  )
+
+candidate_pairs |> arrange(PAIR_GROUP, REGION, GCD, ADEP, ADES)
+
+```
+
+```{r}
+pair_example <- bind_rows(
+  hfe_bra_12 |> mutate(REGION = "BRA"),
+  hfe_eur_12 |> mutate(REGION = "EUR")
+) |> 
+  semi_join(candidate_pairs, by = join_by(ADEP, ADES)) |> 
+  filter((ADEP == "SBEG" & ADES == "SBGL") | (ADEP == "LPPT" & ADES == "LGAV")) |> 
+  mutate(DATE = date(DATE_TIME)) |> 
+  group_by(REGION, DATE, ADEP, ADES, HFE_TYPE) |> 
+  reframe(
+    N = n(),
+    N_VALID = sum(is.finite(HFE) & HFE >= 0 & HFE <= HFE_VALID_MAX),
+    N_NEG = sum(HFE < 0, na.rm = TRUE),
+    N_HIGH = sum(HFE > HFE_VALID_MAX, na.rm = TRUE),
+    DIST_FLOWN = sum(DIST_FLOWN[is.finite(HFE) & HFE >= 0 & HFE <= HFE_VALID_MAX], na.rm = TRUE),
+    DIST_ACHIEVED = sum(DIST_ACHIEVED[is.finite(HFE) & HFE >= 0 & HFE <= HFE_VALID_MAX], na.rm = TRUE)
+  ) |> 
+  mutate(HFE = if_else(DIST_ACHIEVED > 0, (DIST_FLOWN / DIST_ACHIEVED) - 1, NA_real_))
+
+pair_example |> 
+  ggplot() +
+  geom_path(aes(x = DATE, y = HFE, color = HFE_TYPE, group = HFE_TYPE)) +
+  facet_wrap(vars(REGION))
+```
+
+
+## Network Level
+
+```{r}
+hfe_bra_network <- read_csv("./data/BRA-HFE-network-2025.csv", show_col_types = F) |> 
+  transmute(
+    DATE = lubridate::date(DATE_TIME),
+    HFE_TYPE = KPI,
+    DIST_FLOWN,
+    DIST_ACHIEVED = DIST_ACHD,
+    HFE = (DIST_FLOWN / DIST_ACHD) - 1,
+    IS_VALID = is.finite(HFE) & HFE >= 0 & HFE <= HFE_VALID_MAX
+  ) |> 
+  group_by(DATE, HFE_TYPE) |> 
+  reframe(
+    N = n(),
+    N_VALID = sum(IS_VALID),
+    N_NEG = sum(HFE < 0, na.rm = TRUE),
+    N_HIGH = sum(HFE > HFE_VALID_MAX, na.rm = TRUE),
+    DIST_FLOWN = sum(DIST_FLOWN[IS_VALID], na.rm = TRUE),
+    DIST_ACHIEVED = sum(DIST_ACHIEVED[IS_VALID], na.rm = TRUE)
+  ) |> 
+  mutate(HFE = if_else(DIST_ACHIEVED > 0, (DIST_FLOWN / DIST_ACHIEVED) - 1, NA_real_), REGION = "BRA")
+
+hfe_eur_network <- read_csv("./data/EUR-HFE-network-2025.csv", show_col_types = FALSE) |> 
+  filter(TYPE_MODEL %in% c("CPF","FTFM")) |> 
+  transmute(
+    REGION = "EUR",
+    DATE = lubridate::ymd(ENTRY_DATE),
+    HFE_TYPE = case_when(TYPE_MODEL == "CPF" ~ "KEA", TYPE_MODEL == "FTFM" ~ "KEP", .default = NA),
+    N = NA_integer_,
+    N_VALID = NA_integer_,
+    N_NEG = NA_integer_,
+    N_HIGH = NA_integer_,
+    DIST_FLOWN = DIST_FLOWN_KM / 1.852,
+    DIST_ACHIEVED = DIST_ACHIEVED_KM / 1.852,
+    HFE = (DIST_FLOWN / DIST_ACHIEVED) - 1
+  )
+  
+
+hfe_network <- bind_rows(
+   hfe_bra_network
+  ,hfe_eur_network
+) |> 
+  select(REGION, DATE, HFE_TYPE, N, N_VALID, N_NEG, N_HIGH, DIST_FLOWN, DIST_ACHIEVED, HFE)
+```
+
+```{r}
+hfe_network |> 
+  ggplot() + geom_path(aes(x = DATE, y = HFE, color = HFE_TYPE, group = HFE_TYPE)) +
+  scale_y_continuous(limits = c(0, NA)) +
+  facet_wrap(vars(REGION))
+```
+
+```{r}
+readr::write_csv(hfe_network, "./data/hfe-network-daily-2025.csv")
+```
+
+
+## Airport Pair Level
+
+```{r}
+hfe_pair_daily <- bind_rows(
+  hfe_bra_12 |> mutate(REGION = "BRA"),
+  hfe_eur_12 |> mutate(REGION = "EUR")
+) |> 
+  semi_join(candidate_pairs, by = join_by(ADEP, ADES)) |> 
+  mutate(
+    DATE = lubridate::date(DATE_TIME),
+    IS_VALID = is.finite(HFE) & HFE >= 0 & HFE <= HFE_VALID_MAX
+  ) |> 
+  group_by(REGION, DATE, ADEP, ADES, HFE_TYPE) |> 
+  reframe(
+    N = n(),
+    N_VALID = sum(IS_VALID),
+    N_NEG = sum(HFE < 0, na.rm = TRUE),
+    N_HIGH = sum(HFE > HFE_VALID_MAX, na.rm = TRUE),
+    DIST_FLOWN = sum(DIST_FLOWN[IS_VALID], na.rm = TRUE),
+    DIST_ACHIEVED = sum(DIST_ACHIEVED[IS_VALID], na.rm = TRUE)
+  ) |> 
+  mutate(HFE = if_else(DIST_ACHIEVED > 0, (DIST_FLOWN / DIST_ACHIEVED) - 1, NA_real_)) |> 
+  left_join(candidate_pairs, by = join_by(REGION, ADEP, ADES)) |> 
+  select(REGION, DATE, PAIR_GROUP, ADEP, ADES, GCD, HFE_TYPE, N, N_VALID, N_NEG, N_HIGH, DIST_FLOWN, DIST_ACHIEVED, HFE)
+
+hfe_pair_daily |> 
+  count(REGION, PAIR_GROUP, ADEP, ADES, HFE_TYPE, wt = N_VALID, name = "N_VALID") |> 
+  arrange(PAIR_GROUP, REGION, desc(N_VALID))
+```
+
+```{r}
+hfe_pair_daily |> 
+  ggplot(aes(x = DATE, y = HFE, color = HFE_TYPE, group = HFE_TYPE)) +
+  geom_path() +
+  facet_wrap(vars(REGION, PAIR_GROUP), scales = "free_y") +
+  scale_y_continuous(limits = c(0, NA))
+```
+
+```{r}
+readr::write_csv(hfe_pair_daily, "./data/hfe-airport-pairs-daily-2025.csv")
+```

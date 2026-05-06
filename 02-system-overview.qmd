@@ -26,7 +26,7 @@ Today, NAV Brasil <!-- has xxxx employees in xx different units, providing --> p
 Despite serving a significant number of air transport movements, NAV Brasil does not plan to establish radar facilities or provide en-route services.
 
 The Brazilian airspace, covering an area of approximately 22 million square kilometres (8.5 million square nautical miles of non-oceanic airspace), is divided into five Flight Information Regions.
-These regions are further subdivided and managed by five Area Control Centers (ACC), xx Tower facilities (TWR), one digital tower (D-TWR), xx Approach Units (APP) and xx AFIS/Remote-AFIS.
+These regions are further subdivided and managed by five Area Control Centers (ACC), `r table_bra_eur |> dplyr::filter(KPA == "number of TWR") |> dplyr::pull(Brazil_2025) |> stringr::str_extract("^\\d+")` Tower facilities (TWR), one digital tower (D-TWR), `r table_bra_eur |> dplyr::filter(KPA == "number of APP") |> dplyr::pull(Brazil_2025)` Approach Units (APP) and 70 AFIS/Remote-AFIS.
 
 The non-oceanic airspace in Europe covers an area of 11.5 million square kilometres.
 When it comes to the provision of air traffic services, the European approach involves a multitude of service providers, with 37 distinct en-route Air Navigation Service Providers (ANSPs), each responsible for different geographical regions.
@@ -73,13 +73,12 @@ options(scipen = 999)
 
 note_text <- "Brazil: c.f Performance report 2025 / Europe: c.f ACE report 2024"
 
-hlc_raw <- readr::read_csv(
-  here::here("data", "table_BRA_EUR.csv"),
-  col_types = readr::cols(.default = "c")
-)  |>
-  dplyr::select(1, dplyr::contains("2023"), dplyr::contains("2024"), dplyr::contains("2025"))
+table_bra_eur_display <- table_bra_eur |>
+  dplyr::select(KPA,
+                Brazil_2023, Brazil_2024, Brazil_2025,
+                Europe_2023, Europe_2024, Europe_2025)
 
-colnames(hlc_raw) <- c(
+colnames(table_bra_eur_display) <- c(
   "KPA",
   "Brazil_2023", "Brazil_2024", "Brazil_2025",
   "Europe_2023", "Europe_2024", "Europe_2025"
@@ -87,7 +86,7 @@ colnames(hlc_raw) <- c(
 
 if (knitr::is_latex_output()) {
 
-  tbl_latex <- hlc_raw |>
+  tbl_latex <- table_bra_eur_display |>
     gt::gt() |>
     gt::tab_spanner(label = "Brazil", columns = c(Brazil_2023, Brazil_2024, Brazil_2025)) |>
     gt::tab_spanner(label = "Europe", columns = c(Europe_2023, Europe_2024, Europe_2025)) |>
@@ -143,7 +142,7 @@ if (knitr::is_latex_output()) {
 
 } else {
 
-  hlc_raw |>
+  table_bra_eur_display |>
     gt::gt() |>
     gt::tab_spanner(label = "Brazil", columns = c(Brazil_2023, Brazil_2024, Brazil_2025)) |>
     gt::tab_spanner(label = "Europe", columns = c(Europe_2023, Europe_2024, Europe_2025)) |>
@@ -184,38 +183,16 @@ if (knitr::is_latex_output()) {
     )
 }
 
-# ============================================================
-# Table 2.1: High Level Comparison
-# ============================================================
-# HOW TO UPDATE THIS TABLE FOR FUTURE YEARS:
-#
-# 1. Open the file: data/table_BRA_EUR.csv
-# 2. Add a new column for the new year (e.g. Brazil_2026, Europe_2026)
-# 3. Update the values in each row with the new year's data
-# 4. In the code below, add the new column to:
-#    - tab_spanner: add Brazil_2026 / Europe_2026 to the columns vector
-#    - cols_label: add Brazil_2026 = "2026" / Europe_2026 = "2026"
-# 5. To replace a specific value by row name and column name:
-#    df[dfKPA == "row name here", "column_name"] <- "new value"
-# 6. To find the row and column position of a specific value:
-#    which(df == "value_to_find", arr.ind = TRUE)
-# 7. To replace a specific value by row and column position:
-#    df[row_number, column_number] <- "new value"
-# 8. After fixing values, overwrite the original CSV file:
-#    readr::write_csv(df, here::here("data-src", "table_BRA_EUR.csv"))
-# ============================================================
-
 ```
 
 <!-- I think it is cleaner to extract the "facts" below in a separate code-chunk here, introduce a variable, and call it as inline chunk below. 
 There is quite some codeing in the inline chunks that makes it difficult to follow. 
 -->
 
-In Brazil, the number of Air Traffic Controllers (ATCOs) in operations has continued to grow steadily, increasing from `r hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)` in 2023 to `r hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)` in 2025 — a rise of `r round((as.numeric(hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)) / as.numeric(hlc_raw |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2023)) - 1) * 100, 1)`%. 
-This growth closely followed the sustained increase in air traffic demand over the same period, reflecting a proactive approach to capacity building in line with the country's continued aviation expansion. 
-This behaviour may be partly explained by the fact that DECEA shares part of the structure used in basic training with other Air Force training processes, which, despite leading to a more centralised and rigid hiring process, has allowed for a consistent pipeline of new controllers to meet growing operational needs.
+In Brazil, the number of Air Traffic Controllers (ATCOs) in operations has continued to grow steadily, increasing from `r table_bra_eur |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2024)` in 2024 to `r table_bra_eur |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)` in 2025 — a rise of `r round((as.numeric(table_bra_eur |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2025)) / as.numeric(table_bra_eur |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Brazil_2024)) - 1) * 100, 1)`%. 
+In Brazil, the number of Air Traffic Controllers (ATCOs) in operations remained broadly stable between 2024 and 2025, rising marginally from 3,890 to 3,893 — an increase of just 0.1%. Despite this near-plateau in workforce size, controlled traffic continued to grow over the same period, suggesting that productivity gains and operational efficiency improvements have played an increasingly important role in sustaining capacity. This trend reflects a broader strategic shift within DECEA, where investments in technological modernisation and process optimisation are enabling the existing controller workforce to handle a growing volume of flights, demonstrating that sustainable growth in air traffic management need not rely solely on workforce expansion.
 
-In Europe, ATCO numbers showed only a mild variation over the period, moving from [X] in 2023 to [X] in 2025. This more conservative modulation reflects not only the slower pace of traffic recovery in the region but also a strategic orientation toward investment in technology, automation, and operational efficiency as levers to absorb demand. In Europe, there exists a mix of organisational models and labour contracts ranging from public service to fully commercial organisation, which tends to produce more measured responses to anticipated changes in air traffic demand. @fig-ATCO illustrates this divergence in workforce evolution alongside the traffic index for both regions.
+In Europe, ATCO numbers showed only a mild variation over the period, moving from `r table_bra_eur |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Europe_2023)` in 2023 to `r table_bra_eur |> dplyr::filter(KPA == "number of ATCOs in OPS") |> dplyr::pull(Europe_2024)`  in 2024. This more conservative modulation reflects not only the slower pace of traffic recovery in the region but also a strategic orientation toward investment in technology, automation, and operational efficiency as levers to absorb demand. In Europe, there exists a mix of organisational models and labour contracts ranging from public service to fully commercial organisation, which tends to produce more measured responses to anticipated changes in air traffic demand. @fig-ATCO illustrates this divergence in workforce evolution alongside the traffic index for both regions.
 
 ```{r}
 #| label: fig-ATCO
@@ -227,7 +204,7 @@ knitr::include_graphics("./figures/02_system_ATCO_new_comparison.png")
 ```
 
 The traffic density indicator — expressed as controlled flights per square kilometre of non-oceanic airspace — provides a structural lens through which the operational differences between both regions can be better understood. 
-In 2025, Europe operated at a density of `r hlc_raw |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Europe_2025)` flights/km², significantly higher than Brazil's `r hlc_raw |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Brazil_2025)` flights/km². 
+In 2025, Europe operated at a density of `r table_bra_eur |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Europe_2025)` flights/km², significantly higher than Brazil's `r table_bra_eur |> dplyr::filter(KPA == "traffic density (non-oceanic flights/km²)") |> dplyr::pull(Brazil_2025)` flights/km². 
 Despite this gap, Brazil's density has grown consistently over the period, reflecting the continued expansion of domestic aviation. 
 This contrast underpins many of the operational differences discussed throughout this report, particularly regarding coordination complexity, capacity constraints, and network organisation.
 
@@ -533,9 +510,4 @@ Updated dashboards, previous work, and supporting historical data are available 
 
 ## Summary
 
-The characteristics of the air navigation systems in Brazil and Europe presented in this chapter highlight both the commonalities and the structural differences that shape operational performance in each region. 
-Both systems rely on similar operational concepts, procedures, and supporting technology, yet they differ significantly in their organisational models, workforce dynamics, and traffic density. 
-In 2025, Brazil continued to expand its aviation sector, with a growing controller workforce closely aligned with sustained traffic demand, while Europe consolidated its network with a more measured approach to capacity building. 
-The traffic density gap — with Europe operating at approximately four times the density of Brazil — remains a fundamental structural feature that underpins many of the performance differences documented throughout this report. 
-At the institutional level, both DECEA and EUROCONTROL have continued to deepen their performance monitoring frameworks, with Brazil advancing the calculation of new efficiency indicators such as Vertical Flight Efficiency (VFE) and Horizontal Flight Efficiency (HFE) and strengthening its performance culture through training and annual seminars. 
-Together, these developments reinforce the value of the bilateral collaboration and set the analytical foundation for the traffic and performance analysis presented in the following chapters.
+The characteristics of the air navigation systems in Brazil and Europe presented in this chapter highlight both the commonalities and the structural differences that shape operational performance in each region. Both systems rely on similar operational concepts, procedures, and supporting technology, yet they differ significantly in their organisational models, workforce dynamics, and traffic density. In 2025, Brazil continued to expand its aviation sector, with a controller workforce that remained broadly stable while managed to support sustained traffic growth — reflecting efficiency gains and operational improvements rather than workforce expansion alone. Europe, in turn, consolidated its network with a more measured approach to capacity building. The traffic density gap — with Europe operating at approximately four times the density of Brazil — remains a key structural difference that helps explain many of the performance variations documented throughout this report. At the institutional level, both DECEA and EUROCONTROL have continued to strengthen their performance monitoring frameworks, with Brazil advancing the calculation of new efficiency indicators such as Vertical Flight Efficiency (VFE) and Horizontal Flight Efficiency (HFE) and building its performance culture through training and annual seminars. Together, these developments reinforce the value of the bilateral collaboration and set the foundation for the traffic and performance analysis presented in the following chapters.

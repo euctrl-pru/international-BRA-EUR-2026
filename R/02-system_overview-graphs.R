@@ -2,24 +2,9 @@ source(here::here("_chapter-setup.R"))
 
 #01 ___ATCO graphic with index_____________________________________________________
 
-#___ CHANGE DATA_______ 
-
-# hlc_raw |> mutate(Europe_2024 = case_when
- #                   (KPA == "number of ATCOs in OPS" ~ "16973", .default = Europe_2024) 
- #                  , Europe_2025 = case_when(KPA == "number of ATCOs in OPS" ~ "16973"
- #                  , .default = Europe_2025)) |> 
- #              write_csv2(here::here("data" ,"table_BRA_EUR1.csv"))
-
-
-
-# ── DATA ──────────────────────────────────────────────────────────────────────
-hlc_raw <- readr::read_csv(
-  here::here("data", "table_BRA_EUR.csv"),
-  col_types = readr::cols(.default = readr::col_character())
-)
 
 # ── ATCOs in OPS ──────────────────────────────────────────────────────────────
-atco <- hlc_raw |>
+atco <- table_bra_eur |>
   dplyr::filter(KPA == "number of ATCOs in OPS") |>
   dplyr::select(KPA, Brazil_2023, Brazil_2024, Brazil_2025,
                 Europe_2023, Europe_2024, Europe_2025) |>
@@ -40,7 +25,7 @@ atco <- hlc_raw |>
   dplyr::filter(!is.na(ATCO))
 
 # ── CONTROLLED FLIGHTS — traffic index base 2023 = 100 ───────────────────────
-index <- hlc_raw |>
+index <- table_bra_eur |>
   dplyr::filter(KPA == "controlled flights") |>
   dplyr::select(KPA, Brazil_2023, Brazil_2024, Brazil_2025,
                 Europe_2023, Europe_2024, Europe_2025) |>
@@ -153,13 +138,13 @@ ggplot2::ggsave(
 
 #02 # ── FLIGHTS PER ATCO ──────────────────────────────────────────────────────────
 
-hlc_raw <- readr::read_csv2(
-  here::here("data", "table_BRA_EUR.csv"),
-  col_types = readr::cols(.default = readr::col_character())
-)
+# hlc_raw <- readr::read_csv2(
+#   here::here("data", "table_BRA_EUR.csv"),
+#   col_types = readr::cols(.default = readr::col_character())
+# )
 
 
-flights_atco <- hlc_raw |>
+flights_atco <- table_bra_eur |>
   dplyr::filter(KPA == "flights ATCO") |>
   dplyr::select(KPA, Brazil_2023, Brazil_2024, Brazil_2025,
                 Europe_2023, Europe_2024, Europe_2025) |>

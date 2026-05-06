@@ -4,6 +4,8 @@
 think about which other airport we might use for the BLI/PLI comparison
 -->
 
+# Capacity and Throughput
+
 ```{r}
 #| label: setup
 #| echo: false
@@ -292,7 +294,7 @@ cap_peak_tp_plot <- function(key_year = this_year) {
 }
 ```
 
-# Capacity and Throughput
+
 
 Maintaining an optimal network flow necessitates an equilibrium between airport capacity and flight demand.
 This section delves into assessing capacity and throughput using various key performance indicators (KPIs) at the airport level.

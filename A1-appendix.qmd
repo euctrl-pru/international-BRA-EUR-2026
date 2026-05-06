@@ -1,0 +1,139 @@
+# List of Acronyms {.unnumbered}
+
+```{r}
+#| echo: false
+#| message: false
+
+acronyms <- tibble::tribble(
+  ~Acronym,        ~Category,         ~Definition,
+  # ---- General & ATM ----
+  "ANS",           "General",         "Air Navigation Services",
+  "ANSP",          "General",         "Air Navigation Service Provider",
+  "ASM",           "General",         "Airspace Management",
+  "ATC",           "General",         "Air Traffic Control",
+  "ATCO",          "General",         "Air Traffic Controller",
+  "ATFM",          "General",         "Air Traffic Flow Management",
+  "ATM",           "General",         "Air Traffic Management",
+  "CDM",           "General",         "Collaborative Decision Making",
+  "CDO",           "General",         "Continuous Descent Operations",
+  "FIR",           "General",         "Flight Information Region",
+  "FIS",           "General",         "Flight Information Service",
+  "FMP",           "General",         "Flow Management Position",
+  "GANP",          "General",         "Global Air Navigation Plan",
+  "IFR",           "General",         "Instrument Flight Rules",
+  "RNAV",          "General",         "Area Navigation",
+  "RWY",           "General",         "Runway",
+  "SES",           "General",         "Single European Sky",
+  "SLOT",          "General",         "ATFM Slot / Departure Slot",
+  "UTC",           "General",         "Coordinated Universal Time",
+  "VMC",           "General",         "Visual Meteorological Conditions",
+  "WTC",           "General",         "Wake Turbulence Category",
+  "ACC",           "General",         "Area Control Centre",
+  "APP",           "General",         "Approach Control Unit",
+  "TWR",           "General",         "Aerodrome Control Tower",
+  # ---- Performance ----
+  "AOBT",          "Performance",     "Actual Off-Block Time",
+  "ASMA",          "Performance",     "Arrival Sequencing and Metering Area",
+  "HFE",           "Performance",     "Horizontal Flight Efficiency",
+  "KPA",           "Performance",     "Key Performance Area",
+  "KPI",           "Performance",     "Key Performance Indicator",
+  "PLI",           "Performance",     "Planned Landing Interval",
+  "PRR",           "Performance",     "Performance Review Report",
+  "SIBT",          "Performance",     "Scheduled In-Block Time",
+  "SOBT",          "Performance",     "Scheduled Off-Block Time",
+  "TXIN",          "Performance",     "Taxi-In Time",
+  "TXOT",          "Performance",     "Taxi-Out Time",
+  "VFE",           "Performance",     "Vertical Flight Efficiency",
+  # ---- Organisations ----
+  "ANAC",          "Organisations",   "Agência Nacional de Aviação Civil (Brazilian Civil Aviation Authority)",
+  "CAA",           "Organisations",   "Civil Aviation Authority",
+  "CINDACTA",      "Organisations",   "Integrated Centre for Air Defence and Air Traffic Control (Brazil)",
+  "CRCEA-SE",      "Organisations",   "Regional Centre of Southeast Airspace Control (Brazil)",
+  "DECEA",         "Organisations",   "Departamento de Controle do Espaço Aéreo (Brazilian Airspace Control Department)",
+  "ECAC",          "Organisations",   "European Civil Aviation Conference",
+  "EUROCONTROL",   "Organisations",   "European Organisation for the Safety of Air Navigation",
+  "FAA",           "Organisations",   "Federal Aviation Administration (United States)",
+  "ICAO",          "Organisations",   "International Civil Aviation Organization",
+  "INFRAERO",      "Organisations",   "Empresa Brasileira de Infraestrutura Aeroportuária",
+  "JCAB",          "Organisations",   "Japan Civil Aviation Bureau",
+  "NATO",          "Organisations",   "North Atlantic Treaty Organization",
+  "NMOC",          "Organisations",   "Network Manager Operations Centre (EUROCONTROL)",
+  "PBWG",          "Organisations",   "Performance Benchmarking Working Group",
+  "PRC",           "Organisations",   "Performance Review Commission (EUROCONTROL)",
+  "PRU",           "Organisations",   "Performance Review Unit (EUROCONTROL)",
+  # ---- Brazil Airports ----
+  "SBBR",          "Brazil Airports", "Brasília International Airport",
+  "SBCF",          "Brazil Airports", "Belo Horizonte Confins International Airport",
+  "SBCT",          "Brazil Airports", "Curitiba International Airport",
+  "SBEG",          "Brazil Airports", "Eduardo Gomes International Airport (Manaus)",
+  "SBGL",          "Brazil Airports", "Rio de Janeiro Galeão International Airport",
+  "SBGR",          "Brazil Airports", "São Paulo Guarulhos International Airport",
+  "SBKP",          "Brazil Airports", "Campinas Viracopos International Airport",
+  "SBPA",          "Brazil Airports", "Porto Alegre International Airport",
+  "SBRF",          "Brazil Airports", "Recife International Airport",
+  "SBRJ",          "Brazil Airports", "Rio de Janeiro Santos Dumont Airport",
+  "SBSP",          "Brazil Airports", "São Paulo Congonhas Airport",
+  "SBSV",          "Brazil Airports", "Salvador International Airport",
+  # ---- Europe Airports ----
+  "EDDF",          "Europe Airports", "Frankfurt Airport (Germany)",
+  "EDDM",          "Europe Airports", "Munich Airport (Germany)",
+  "EGKK",          "Europe Airports", "London Gatwick Airport (United Kingdom)",
+  "EGLL",          "Europe Airports", "London Heathrow Airport (United Kingdom)",
+  "EHAM",          "Europe Airports", "Amsterdam Schiphol Airport (Netherlands)",
+  "LEBL",          "Europe Airports", "Barcelona El Prat Airport (Spain)",
+  "LEMD",          "Europe Airports", "Madrid Barajas Airport (Spain)",
+  "LFPG",          "Europe Airports", "Paris Charles de Gaulle Airport (France)",
+  "LGAV",          "Europe Airports", "Athens International Airport (Greece)",
+  "LIRF",          "Europe Airports", "Rome Fiumicino Airport (Italy)",
+  "LPPT",          "Europe Airports", "Lisbon Humberto Delgado Airport (Portugal)",
+  "LSZH",          "Europe Airports", "Zurich Airport (Switzerland)",
+  "LTFM",          "Europe Airports", "Istanbul Airport (Turkey)"
+) |>
+  dplyr::mutate(
+    Category = factor(Category, levels = c(
+      "General", "Performance",
+      "Organisations", "Systems",
+      "Brazil Airports", "Europe Airports"
+    ))
+  ) |>
+  dplyr::arrange(Category, Acronym)
+
+if (knitr::is_latex_output()) {
+  acronyms |>
+    dplyr::select(Category, Acronym, Definition) |>
+    dplyr::arrange(Category, Acronym) |>
+    knitr::kable(
+      format    = "latex",
+      booktabs  = TRUE,
+      longtable = TRUE,
+      col.names = c("Category", "Acronym", "Definition"),
+      linesep   = ""
+    ) |>
+    kableExtra::kable_styling(
+      latex_options = c("repeat_header"),
+      font_size     = 10
+    ) |>
+    kableExtra::column_spec(1, bold = TRUE, width = "3cm") |>
+    kableExtra::column_spec(2, bold = TRUE, width = "2.5cm") |>
+    kableExtra::column_spec(3, width = "10cm") |>
+    kableExtra::collapse_rows(columns = 1, latex_hline = "major")
+
+} else {
+  acronyms |>
+    dplyr::select(Category, Acronym, Definition) |>
+    gt::gt(groupname_col = "Category") |>
+    gt::cols_label(Acronym = "Acronym", Definition = "Definition") |>
+    gt::cols_align(align = "left") |>
+    gt::tab_style(
+      style     = gt::cell_text(weight = "bold"),
+      locations = gt::cells_body(columns = Acronym)
+    ) |>
+    gt::opt_row_striping() |>
+    gt::tab_options(
+      table.width         = gt::pct(100),
+      data_row.padding    = gt::px(4),
+      table.font.size     = 12,
+      row_group.font.size = 13
+    )
+}
+```

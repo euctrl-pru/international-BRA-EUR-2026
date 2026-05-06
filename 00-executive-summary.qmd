@@ -18,16 +18,41 @@ This is also complemented by an exploratory assessment of the runway pressure to
 Both aspects promise to enable further analyses and studies for future editions.
 These focussed topics allow to address discussions about performance benefits and may help to highlight the differences between the operations in both regions.
 
-The report focuses on a subset of the eleven Key Performance Areas identified by the ICAO Global Air Navigation Plan, in particular Predictability, Capacity and Efficiency.
-
 ```{r}
 #| label: fig-scope-KPAs-KPIs
 #| fig-cap: Key Performance Areas addressed in this edition
-#| out-width: "90%"
+#| out-height: "35%"
+#| out-width: "80%"
 
 knitr::include_graphics("./figures/scope-KPA-and-KPI.png")
 ```
 
+The report focuses on a subset of the eleven Key Performance Areas identified by the ICAO Global Air Navigation Plan, in particular Predictability, Capacity and Efficiency.
+
+<!-- REWORDED VERSION FOR FINAL REVIEW -->
+
+The 2025 bi-regional comparison of the Brazilian and European air navigation systems highlights a transition from pandemic recovery to a new baseline of normalized, organic growth.     
+Key take-aways from this edition include:  
+ 
+* **Strategic Institutional Alignment**: The sustained collaboration between DECEA and EUROCONTROL remains a cornerstone of this initiative. By sharing high-fidelity data and operational experiences, both organizations continue to drive the evolution of global ATM performance management and the validation of ICAO GANP indicators. 
+  
+* **Workforce Efficiency and Scalability**: While traffic levels increased, the Brazilian ATCO workforce remained remarkably stable (+0.1% growth). This indicates that DECEA is successfully decoupling traffic growth from linear workforce expansion through technological and procedural optimisation.  
+
+* **Traffic Characterisation and System Pressure**: The operational environment in Europe is characterized by significantly higher pressure, with a traffic density nearly five times that of Brazil.  
+  + *Fleet Mix Complexity*: Brazil manages a unique wake turbulence environment, with "Light" aircraft making up to 30% of the mix at airports like SBEG, whereas the European study airports are almost exclusively "Medium" and "Heavy".
+  + *Infrastructure Benchmarking*: European single-runway hubs like London Gatwick and Lisbon operate at a higher peak load index, providing vital benchmarks for Brazilian airports like Santos Dumont (SBRJ) to exploit as demand matures.
+  + These factors directly influence "achievable" throughput and peak-load management strategies.
+
+* **Predictability and Scheduling Buffers**: Distinct punctuality signatures were observed in 2024 and 2025. 
+  + Brazil maintained a high proportion of "significantly early" arrivals (29% in 2025), suggesting conservative schedule buffering by operators. 
+  + Europe faced continued schedule robustness challenges, with 26% of arrivals more than 15 minutes late, driven by network-wide capacity constraints and high reactionary delays.
+  + These variations have ripple effects on other performance measures as demand patterns change. 
+
+* **Tactical Operational Efficiency**: This report focuses on Additional Taxi-in, Taxi-Out, and Additional ASMA times. These metrics serve as primary indicators for measuring tactical system pressure, airport congestion, and the efficiency of sequencing and metering within the terminal area.  
+
+* **Technical Deep-Dives**: Following up on last year's first deep dive, this report continues to evolve a deeper technical characterisations of operational concepts or performane drivers. The fifth edition includes initial comparative studies on Horizontal Flight Efficiency (HFE) and runway slot pressure..
+
+<!--
 The comparison shows similarities and differences in the air navigation service provision and observed performance in both regions. 
 Major take-aways of this report include:
 
@@ -37,37 +62,8 @@ Major take-aways of this report include:
 * Overall, Europe showed a higher level of throughput as the higher traffic numbers and constraints require a higher level of pressure on the infrastructure. Nonetheless, the constraints of reaching pre-pandemic traffic levels will require attention in terms of increasing efficiency and reducing capacity constraints with future growth.
 Brazil may benefit from increasing their stance and maintaining current performance levels with the anticipated growth of traffic.
 * This report took a first stab at characterising the regional networks for future topic-centric amendments. This will allow to drive future topic studies and provide essential context.
-As an initial topic-related study, a closer look was taken at two point merge implementations in Brazil and Europe that show different performance outcomes. This is complemented by providing a first look at the operational context of two centres, i.e., Curitiba and Lisbon. This edition helped to frame the work and identify a set of future research questions.
 
-```{=html}
-<!-- last edition findings 
-• The difference between Brazil’s and Europe’s systems reacting to the seasons became
-more evident during the pandemic recovery. When not hit by another COVID-19
-wave, the European region had greater variations in demand between the winter
-and summer seasons. The Brazilian flow recovered more gradually, showing a more
-continuous demand.
-• Predictability in both systems degraded during and post COVID phase and is slowly
-recovering to pre-COVID-19 levels.
-• Airport runway system capacities in both systems are designed to meet the traffic
-levels. Capacities at the Brazilian airports were increased in light of a change of
-methodology to determine these capacities and changed procedures.
-• The European system showed a higher association between lower demand and
-increased efficiency considering additional taxi time, additional time in terminal
-airspace and flight time variability. Taxi performance in Brazil follows similar
-principles and operational procedures with no significant differences. The partial
-analysis of additional time in terminal airspace revealed that on average traffic
-in Brazil observed higher times during the arrival phase in 2021 suggesting a
-system-wide change. The level of variability of flight times reflected the overall
-trend.
-• An initial approach to quantifying the emission benefit pool on the basis of the
-observed additional taxi-times was developed. Emissions and the improvement pool
-- next to operational constraints and inefficiencies - are dependent on the fleet mix
-operated at the different airports. This includes the role of the airport within the
-respective system. Larger hubs with a higher share of traffic - and in particular
-heavy aircraft operations - showed a higher contribution to the overall emission
-benefit pool.
----------------------         -->
-``` 
+-->
 
 This report will be updated throughout the coming years under the umbrella of the DECEA-EUROCONTROL memorandum of cooperation. 
 It is also planned to establish a web-based rolling monitoring with regular updates.

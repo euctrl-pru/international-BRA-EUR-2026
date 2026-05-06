@@ -1,0 +1,40 @@
+# Conclusions
+
+**A Mature Partnership in a Shifting Landscape**    
+The 2025 edition of the Brazil-Europe Comparison Report marks a significant milestone in the long-term collaboration between DECEA and EUROCONTROL.
+This year’s work reinforces the value of bi-regional benchmarking as a tool for validating ICAO Global Air Navigation Plan (GANP) indicators in diverse operational contexts. 
+The data reveals that both regions have moved beyond recovery, with Brazil consistently operating above 2019 traffic levels and Europe consolidating its network-wide stability.  
+
+**Key Operational Insights**
+
+The technical analysis across the Key Performance Areas (KPAs) has identified several critical takeaways:
+
+* **System Resilience and Scalability**: A standout finding is the decoupling of traffic growth from workforce expansion in Brazil. By maintaining a stable ATCO headcount (0.1% change) while managing increased movements, DECEA has demonstrated high levels of operational efficiency and successful technological integration. 
+
+* **Fleet Mix and Throughput Constraints**: The report identifies a structural disparity in fleet composition. The high proportion of Light aircraft in Brazil (up to 30% at some airports) introduces wake-turbulence complexities not seen in the Medium/Heavy dominated European hubs. This affects "achievable" throughput comparisons between the two regions.
+
+* **Infrastructure and Density**: With European traffic density nearly five times that of Brazil, the European system operates under higher pressure. However, benchmarking single-runway hubs like London Gatwick and Lisbon shows a "growth dividend" for Brazilian airports like Santos Dumont (SBRJ) to exploit as demand matures. This also offers growth potential for other Brazilian operations.  
+
+* **Predictability and Scheduling Buffers**: Distinct punctuality signatures were observed. Brazil’s high rate of "early arrivals" (29% in 2025) suggests conservative scheduling by operators, whereas Europe’s delays (26% late arrivals) are driven by network-wide capacity constraints and reactionary effects.  
+* **Tactical Operational Efficiency**: Efficiency is specifically measured through the lens of additional time during high-workload phases:
+  + *Surface Movement (Taxi-Out)*: Additional taxi-out time provides a direct indicator of departure management and airport congestion.
+  + *Terminal Arrival Phase (ASMA)*: Additional ASMA time highlights the efficiency of sequencing and metering into the terminal area.
+  
+**Evolution of Methodology** 
+
+This edition continues the evolution toward additional topic-centric analysis. 
+The introduction of initial studies on Horizontal Flight Efficiency (HFE) and runway slot pressure provide the basis for expansion of future reports.    
+The introduction of HFE to this report portfolio a shift toward expanding the reported network-wide performance measures matures.     
+The runway slot pressure investigation offers to provide additional analysis on the behaviour of the airport centric measures during peak and non-peak traffic situations. It may also help to inform and validate on-going work on the international level. may expand on a more granular performance management. 
+
+**The Way Forward**
+
+The DECEA-EUROCONTROL partnership remains committed to the continuous improvement of ATM performance. 
+It is planned to augment the report and its future editions with a rolling web-based monitoring, including regular updates of the underlying data. 
+With these regular updates and future report editions the time series of the different measures will be continuously tracked.
+As witnessed by this report, the continual expansion of the scope is facilitated through the initial deep dives reported. This forms the basis to refine future editions.
+
+The joint work will also help to promote the approach and state-of-the-art with the international benchmarking community. 
+Both groups are contributing to the ICAO GANP Performance Expert Group (GANP-PEG) and the multi-national Performance Benchmarking Working Group (PBWG). 
+The continued harmonisation of the performance related data, the refinement of the guidance material and application of the performance framework start paying dividends. 
+For example, PBWG concluded in its most recent meeting to collaborate on topics of mutual interest for which this report supports the continued research and validation with international partners.

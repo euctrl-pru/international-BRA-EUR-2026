@@ -13,7 +13,7 @@ _book-local/
 **/*.quarto_ipynb
 BRA-EUR-guide.html
 BRA-EUR-guide_files*
-
+*_cache/
 # xx files
 
 xx-*
@@ -25,3 +25,4 @@ data-src
 # remove tracking of local rendering
 *_files/
 R/03-traffic_characterization-graphs.R
+.positai

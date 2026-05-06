@@ -23,6 +23,7 @@ library(devtools)
 library(arrow)
 library(rnaturalearth)
 library(ggplot2)
+library(treemapify)
 
 
 # ============== DEFAULTS and DEFINITIONS =====================================
@@ -53,7 +54,7 @@ bra_apts_names <- tibble::tribble(
   ~ICAO  , ~NAME
   ,"SBGR", "Guarulhos"
   ,"SBGL", "Galeão"
-  ,"SBRJ", "Rio Dumont"
+  ,"SBRJ", "Santos Dumont"
   ,"SBCF", "Belo Horizonte"
   ,"SBBR", "Brasília"
   ,"SBSV", "Salvador"
@@ -88,8 +89,29 @@ eur_apts_names <- tibble::tribble(
 bra_eur_colours <- c(BRA = "#52854C",EUR = "#4E84C4")
 bra_col         <- getElement(bra_eur_colours, "BRA")
 eur_col         <- getElement(bra_eur_colours, "EUR")
+YEAR_COLORS <- c("2023" = "#E74C3C",   
+                 "2024" = "#2ECC71",   
+                 "2025" = "#5DADE2") 
 
 # theme setting - tbd or replaced
 bra_eur_theme_minimal <- theme_minimal() + theme(axis.title = element_text(size = 9))
 bra_eur_theme_bw      <- theme_bw() + theme(axis.title = element_text(size = 9))
+
+
+# table BRA-EUR
+
+table_bra_eur <- tibble::tribble(
+  ~KPA,                                          ~Brazil_2019, ~Brazil_2020, ~Brazil_2021, ~Brazil_2022, ~Brazil_2023, ~Brazil_2024, ~Brazil_2025, ~Europe_2023, ~Europe_2024, ~Europe_2025,
+  "geographic area (non-oceanic million km²)",    "8.5",        "8.5",        "8.5",        "8.5",        "8.5",        "8.5",        "8.5",        "10.9",       "10.9",       "10.9",
+  "number of en-route ANSPs",                     "1",          "1",          "1",          "1",          "1",          "1",          "1",          "37",         "37",         "37",
+  "number of TWR",                                "59 TWR",     "60 TWR",     "57+1 DTWR",  "57+1 DTWR",  "57+1 DTWR",  "57+1 DTWR",  "59+1 DTWR",  "375",        "n/a",        "n/a",
+  "number of APP",                                "43",         "43",         "42",         "42",         "41",         "41",         "42",         "268",        "n/a",        "n/a",
+  "number of ACC",                                "5",          "5",          "5",          "1",          "5",          "5",          "5",          "57",         "57",         "57",
+  "number of ATCOs in OPS",                       "3606",       "3376",       "3549",       "3754",       "3677",       "3890",       "3893",       "16973",      "16973",      "n/a",
+  "controlled flights",                           "1594442",    "1018181",    "1286224",    "1677760",    "1801109",    "1995139",    "2109588",    "10144258",   "10633991",   "11000000",
+  "flights ATCO",                                 "362",        "302",        "362",        "447",        "490",        "497",        "542",        "598",        "n/a",        "n/a",
+  "traffic density (non-oceanic flights/km²)",    "0.22",       "0.13",       "0.12",       "0.16",       "0.18",      "0.19",      "0.21",      "0.93",       "0.976",      "0.985"
+)
+
+
 

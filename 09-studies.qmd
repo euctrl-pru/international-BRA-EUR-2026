@@ -11,97 +11,447 @@ title: "Topic Studies"
 source(here::here("_chapter-setup.R"))
 ```
 
-## IAR - runway pressure 
+For this report, the joint work between the performance groups at DECEA and EUROCONTROL involved the preparatory action for assessing operational sequencing concepts for runway system throughput during peak times and introducing an enroute performance measure, i.e., horizontal flight efficiency (HFE).    
+This chapter provides a first summary of the work to help refine the future work.
 
-pull stuff from other document here
+## Runway Slot Pressure
 
-better visualisation and consideration of peak hours.
-
-## Horizontal Flight Effiency
-
-idea 
-
-* show "network" values for KEP all 2025
-* pick a set of city pairs
+This topic study uses 15-minute runway throughput to assess runway slot pressure during busy operations at the study airports.
+The analysis does not yet measure movement-by-movement inter-arrival time; instead, it uses slot-implied arrival spacing as a first proxy for how tightly arrival flows are packed under representative runway system configurations.
+This provides a basis for future inter-arrival studies and helps compare operational concepts observed in Brazil and Europe.
 
 ```{r}
-# BRA network HFE
-fn <- fs::dir_ls("data", regexp = "kpi04")
-bra_kep <- readr::read_csv(fn, show_col_types = F)
+#| label: rwy-slot-pressure-data
+#| echo: false
 
-fn <- fs::dir_ls("data", regexp = "kpi05")
-bra_kea <- readr::read_csv(fn, show_col_types = F)
+rwy_config_share <- readr::read_csv(
+  here::here("data", "rwy-slot-pressure-config-share-2025.csv"),
+  show_col_types = FALSE
+)
 
+rwy_slot_pressure <- readr::read_csv(
+  here::here("data", "rwy-slot-pressure-summary-2025.csv"),
+  show_col_types = FALSE
+)
 
-bra_KEP <- bra_kep |> 
-    select(
-        DATE = time
-        ,ADEP = orig
-        ,ADES = dest
-        ,FLTID = id_icao
-        ,DIST_FLOWN = dist_flown_v1
-        ,DIST_ACHD  = dist_achieved_v1
-        ,KPI = kpi04_v1) |> 
-    mutate(TYPE = "KEP")
+rwy_airport_order <- rwy_slot_pressure |>
+  dplyr::arrange(.data$REGION, dplyr::desc(.data$MEDIAN_SPACING), .data$ICAO) |>
+  dplyr::mutate(AIRPORT_LABEL = glue::glue("{ICAO} {AIRPORT}")) |>
+  dplyr::pull(.data$AIRPORT_LABEL)
 
-bra_KEA <- bra_kea |> 
-  select(
-        DATE = time
-        ,ADEP = plan_dep
-        ,ADES = real_arr
-        ,FLTID = id_icao
-        ,DIST_FLOWN = dist_flown_v1
-        ,DIST_ACHD  = dist_achieved_v1
-        ,KPI_ORIG = kpi05_v1
-       ) |> 
-    mutate(TYPE = "KEA"
-            ,KPI = KPI_ORIG / 100) |> 
-  filter(DIST_ACHD > 0)
+rwy_config_plot_data <- rwy_config_share |>
+  dplyr::mutate(
+    AIRPORT_LABEL = factor(glue::glue("{ICAO} {AIRPORT}"), levels = rwy_airport_order),
+    CONFIG_GROUP = dplyr::case_when(
+      .data$CONFIG_RANK == 1 ~ "1st configuration",
+      .data$CONFIG_RANK == 2 ~ "2nd configuration",
+      .data$CONFIG_RANK == 3 ~ "3rd configuration",
+      TRUE ~ "Other representative"
+    )
+  ) |>
+  dplyr::summarise(
+    SHARE = sum(.data$SHARE, na.rm = TRUE),
+    .by = c(.data$REG, .data$REGION, .data$ICAO, .data$AIRPORT, .data$AIRPORT_LABEL, .data$CONFIG_GROUP)
+  )
 
-bra_hfe <- bind_rows(bra_KEA, bra_KEP)
-```
-```{r}
-bra_hfe_daily <- bra_hfe |> 
-  mutate(BIN = lubridate::floor_date(DATE, "day")) |> 
-  group_by(BIN, TYPE) |> 
-    reframe(N = n(), KPI = sum(KPI)/n()) 
+rwy_config_residual <- rwy_config_plot_data |>
+  dplyr::summarise(REPRESENTATIVE_SHARE = sum(.data$SHARE, na.rm = TRUE), .by = c(.data$REG, .data$REGION, .data$ICAO, .data$AIRPORT, .data$AIRPORT_LABEL)) |>
+  dplyr::transmute(
+    .data$REG, .data$REGION, .data$ICAO, .data$AIRPORT, .data$AIRPORT_LABEL,
+    CONFIG_GROUP = "Other stable configurations",
+    SHARE = pmax(0, 1 - .data$REPRESENTATIVE_SHARE)
+  )
 
-bra_hfe_daily|> 
-  
-    ggplot() +
-    geom_line(aes(x = BIN, y = KPI, group = TYPE, color = TYPE))
-```
+rwy_config_plot_data <- dplyr::bind_rows(rwy_config_plot_data, rwy_config_residual) |>
+  dplyr::mutate(
+    CONFIG_GROUP = factor(
+      .data$CONFIG_GROUP,
+      levels = c("1st configuration", "2nd configuration", "3rd configuration", "Other representative", "Other stable configurations")
+    ),
+    SHARE_LABEL = dplyr::if_else(.data$SHARE >= 0.10, scales::percent(.data$SHARE, accuracy = 1), NA_character_)
+  )
 
+rwy_slot_pressure_plot_data <- rwy_slot_pressure |>
+  dplyr::mutate(
+    AIRPORT_LABEL = factor(glue::glue("{ICAO} {AIRPORT}"), levels = rwy_airport_order)
+  )
 
-airport pairs
-
-200NM SBRJ - SBSP
-400NM SBBR - SBSP
-1000  SBGR - SBRF
-
-```{r}
-pick_pairs <- tibble::tribble(
-  ~ADEP, ~ADES, ~GCD, ~GCD_GRP
-  , "SBRJ", "SBSP",200, "200"
-  ,"SBBR","SBSP", 400, "400"
-  ,"SBGR", "SBRF", 1000, "1000"
-) |> 
-  mutate(ADP = paste0(ADEP,"-",ADES))
-
-tmp <- bra_hfe |> 
-  mutate(ADP = paste0(ADEP,"-", ADES)) |> 
-  filter(ADP %in% pick_pairs$ADP, TYPE == "KEP") |> 
-  mutate(BIN = lubridate::floor_date(DATE, "day")) |> 
-  group_by(BIN, TYPE, ADEP, ADES) |> 
-    reframe(N = n(), KPI = sum(KPI)/n()) |> 
-    mutate(ADP = paste(ADEP, "-", ADES))
-```
-
-```{r}
-tmp |> 
-  ggplot() +
-  geom_line(
-    aes(x = BIN, y = KPI, color = ADP, group = ADP)
+rwy_slot_pressure_region_medians <- rwy_slot_pressure_plot_data |>
+  dplyr::summarise(
+    REGION_MEDIAN_SPACING = stats::median(.data$MEDIAN_SPACING, na.rm = TRUE),
+    .by = c(.data$REG, .data$REGION)
+  ) |>
+  dplyr::mutate(
+    LABEL = glue::glue("regional median: {scales::number(REGION_MEDIAN_SPACING, accuracy = 0.1)} min")
   )
 ```
 
+For each airport, the analysis identifies the 17 busiest local operating hours and retains stable runway system configurations observed across rolling one-hour windows.
+The stacked bars in @fig-rwy-config-share show whether busy operations are concentrated in one dominant runway configuration or spread across several configurations.
+
+```{r}
+#| label: fig-rwy-config-share
+#| echo: false
+#| fig-cap: "Runway system configuration shares during busy local operating hours"
+#| fig-width: 8
+#| fig-height: 6
+
+rwy_config_plot_data |>
+  ggplot2::ggplot(ggplot2::aes(x = .data$SHARE, y = .data$AIRPORT_LABEL, fill = .data$CONFIG_GROUP)) +
+  ggplot2::geom_col(width = 0.72, colour = "white", linewidth = 0.2) +
+  ggplot2::geom_text(
+    ggplot2::aes(label = .data$SHARE_LABEL),
+    position = ggplot2::position_stack(vjust = 0.5),
+    size = 2.5,
+    colour = "grey15",
+    na.rm = TRUE
+  ) +
+  ggplot2::facet_wrap(. ~ REGION, scales = "free_y") +
+  ggplot2::scale_x_continuous(labels = scales::label_percent(), limits = c(0, 1), expand = c(0, 0)) +
+  ggplot2::scale_fill_manual(
+    values = c(
+      "1st configuration" = "#5f6f7f",
+      "2nd configuration" = "#8c98a4",
+      "3rd configuration" = "#b5bdc5",
+      "Other representative" = "#d3d8dd",
+      "Other stable configurations" = "#f0f2f4"
+    )
+  ) +
+  ggplot2::labs(x = "share of analysed busy-period slots", y = NULL, fill = NULL) +
+  ggplot2::theme(
+    legend.position = "top",
+    legend.text = ggplot2::element_text(size = 8),
+    legend.key.size = ggplot2::unit(0.3, "cm")
+  )
+```
+
+Runway slot pressure is expressed as the slot-implied minutes per arrival, calculated as 15 minutes divided by the number of arrivals in a 15-minute slot.
+Lower values indicate more tightly packed arrival flows.
+@fig-rwy-slot-pressure ranks airports by the median value and shows the interquartile range observed during representative busy-period configurations.
+
+Across the airports in both regions, @fig-rwy-slot-pressure shows a pattern of predominant runway system configurations. 
+Multi-runway systems show a wider variability of combinations with certain configurations dominating the operational use.
+Predominant configurations reflect local conditions comprising - inter alia - traffic dependent approach/departure routings, including associated noise abatement procedures, sequencing techniques, and predominant wind conditions.
+
+```{r}
+#| label: fig-rwy-slot-pressure
+#| echo: false
+#| fig-cap: "Runway slot pressure during representative busy-period configurations"
+#| fig-width: 8
+#| fig-height: 6
+
+rwy_slot_pressure_plot_data |>
+  ggplot2::ggplot(ggplot2::aes(y = .data$AIRPORT_LABEL, colour = .data$REG)) +
+  ggplot2::geom_vline(
+    data = rwy_slot_pressure_region_medians,
+    ggplot2::aes(xintercept = .data$REGION_MEDIAN_SPACING, colour = .data$REG),
+    linetype = "dotted",
+    linewidth = 0.6,
+    show.legend = FALSE
+  ) +
+  ggplot2::geom_label(
+    data = rwy_slot_pressure_region_medians,
+    ggplot2::aes(
+      x = .data$REGION_MEDIAN_SPACING,
+      y = Inf,
+      label = .data$LABEL,
+      colour = .data$REG
+    ),
+    inherit.aes = FALSE,
+    hjust = -0.04,
+    vjust = 1.2,
+    size = 2.7,
+    label.size = 0,
+    fill = "white",
+    show.legend = FALSE
+  ) +
+  ggplot2::geom_segment(
+    ggplot2::aes(x = .data$P25_SPACING, xend = .data$P75_SPACING, yend = .data$AIRPORT_LABEL),
+    linewidth = 1.1
+  ) +
+  ggplot2::geom_point(ggplot2::aes(x = .data$MEDIAN_SPACING), size = 2) +
+  ggplot2::facet_wrap(. ~ REGION, scales = "free_y") +
+  ggplot2::scale_colour_manual(values = bra_eur_colours, guide = "none") +
+  ggplot2::scale_x_continuous(limits = c(0, NA), breaks = seq(0, 15, by = 3)) +
+  ggplot2::labs(x = "minutes per arrival in 15-minute slot", y = NULL) +
+  ggplot2::theme(panel.grid.major.y = ggplot2::element_blank())
+```
+@fig-rwy-slot-pressure serves as a proxy for runway system configuration utilisation. 
+Across the predominant configurations, we observe a distribution of runway system movements per 15-minute slot (arrivals and departures in mixed mode operations or single mode arrivals and departures).
+The higher demand pressure on European airports is characterised by a smaller distribution of the overall observed movements per 15-minute slot. 
+As a proxy, the average across the 12 European airports is 2.0 min per movement or about 7.5 movements per quarter hour and runway.
+Airports in Brazil show a wider variability given the range of traffic demand.
+The slot pressure proxy across the airports ranges about 3 times higher in Brazil.
+The top airports in Brazil, i.e., Guarulhos/SBGR, Congonhas/SBSP, and Brasília/SBBR range within the order of magnitude of the European airports. 
+This confirms observations made earlier in this report.
+@fig-rwy-slot-pressure also shows the growth potential of airports in Brazil with increasing traffic.
+
+
+## Horizontal Flight Efficiency
+
+The horizontal flight efficiency (HFE) topic study compares the 2025 network-level results for Brazil and Europe and explores selected aerodrome pairs with broadly comparable great-circle distance.
+Brazil implemented the HFE algorithm for the first time for this report cycle; the results are therefore considered preliminary and are presented as a first validation-oriented comparison.
+
+```{r}
+#| label: hfe-data-prep
+#| echo: false
+
+hfe_type_colours <- c(KEA = "#0072B2", KEP = "#D55E00")
+
+hfe_network_monthly <- readr::read_csv(
+  here::here("data", "hfe-network-daily-2025.csv"),
+  show_col_types = FALSE
+) |>
+  dplyr::mutate(MONTH = lubridate::floor_date(lubridate::ymd(.data$DATE), "month")) |>
+  dplyr::summarise(
+    N = sum(.data$N, na.rm = TRUE),
+    N_VALID = sum(.data$N_VALID, na.rm = TRUE),
+    N_NEG = sum(.data$N_NEG, na.rm = TRUE),
+    N_HIGH = sum(.data$N_HIGH, na.rm = TRUE),
+    DIST_FLOWN = sum(.data$DIST_FLOWN, na.rm = TRUE),
+    DIST_ACHIEVED = sum(.data$DIST_ACHIEVED, na.rm = TRUE),
+    HFE = dplyr::if_else(.data$DIST_ACHIEVED > 0, .data$DIST_FLOWN / .data$DIST_ACHIEVED - 1, NA_real_),
+    .by = c(.data$REGION, .data$MONTH, .data$HFE_TYPE)
+  ) |>
+  dplyr::mutate(
+    REGION_LABEL = dplyr::recode(.data$REGION, BRA = "Brazil", EUR = "Europe"),
+    HFE_TYPE = factor(.data$HFE_TYPE, levels = c("KEP", "KEA"))
+  )
+
+hfe_pair_daily <- readr::read_csv(
+  here::here("data", "hfe-airport-pairs-daily-2025.csv"),
+  show_col_types = FALSE
+)
+
+hfe_report_pairs <- tibble::tribble(
+  ~REGION, ~PAIR_GROUP, ~ADEP, ~ADES, ~SHOW,
+  "BRA", "short", "SBCF", "SBKP", TRUE,
+  "BRA", "short", "SBCF", "SBSP", TRUE,
+  "BRA", "short", "SBKP", "SBCF", TRUE,
+  "BRA", "short", "SBSP", "SBCF", TRUE,
+  "EUR", "short", "LEMD", "LPPT", TRUE,
+  "EUR", "short", "LGAV", "LTFM", TRUE,
+  "EUR", "short", "LPPT", "LEMD", TRUE,
+  "EUR", "short", "LTFM", "LGAV", TRUE,
+  "BRA", "mid_600", "SBBR", "SBCT", TRUE,
+  "BRA", "mid_600", "SBBR", "SBSV", TRUE,
+  "BRA", "mid_600", "SBCT", "SBBR", TRUE,
+  "BRA", "mid_600", "SBGL", "SBPA", TRUE,
+  "BRA", "mid_600", "SBPA", "SBGL", TRUE,
+  "BRA", "mid_600", "SBSV", "SBBR", TRUE,
+  "EUR", "mid_600", "EDDM", "LEBL", TRUE,
+  "EUR", "mid_600", "EGKK", "LEBL", TRUE,
+  "EUR", "mid_600", "EGLL", "LEBL", TRUE,
+  "EUR", "mid_600", "LEBL", "EDDM", TRUE,
+  "EUR", "mid_600", "LEBL", "EGKK", TRUE,
+  "EUR", "mid_600", "LEBL", "EGLL", TRUE,
+  "BRA", "mid_780_800", "SBGR", "SBSV", TRUE,
+  "BRA", "mid_780_800", "SBKP", "SBSV", TRUE,
+  "BRA", "mid_780_800", "SBSP", "SBSV", TRUE,
+  "BRA", "mid_780_800", "SBSV", "SBGR", TRUE,
+  "BRA", "mid_780_800", "SBSV", "SBKP", TRUE,
+  "BRA", "mid_780_800", "SBSV", "SBSP", TRUE,
+  "EUR", "mid_780_800", "EHAM", "LEMD", TRUE,
+  "EUR", "mid_780_800", "LEMD", "EHAM", TRUE,
+  "EUR", "mid_780_800", "LFPG", "LPPT", TRUE,
+  "EUR", "mid_780_800", "LPPT", "LFPG", TRUE,
+  "BRA", "long", "SBEG", "SBGL", TRUE,
+  "BRA", "long", "SBEG", "SBGR", TRUE,
+  "BRA", "long", "SBGL", "SBEG", TRUE,
+  "BRA", "long", "SBGR", "SBEG", TRUE,
+  "EUR", "long", "LGAV", "LPPT", TRUE,
+  "EUR", "long", "LPPT", "LGAV", TRUE,
+  "EUR", "long", "LPPT", "LTFM", TRUE,
+  "EUR", "long", "LTFM", "LPPT", TRUE
+) |>
+  dplyr::filter(.data$SHOW)
+
+hfe_pair_monthly <- hfe_pair_daily |>
+  dplyr::semi_join(
+    hfe_report_pairs,
+    by = dplyr::join_by(REGION, PAIR_GROUP, ADEP, ADES)
+  ) |>
+  dplyr::mutate(MONTH = lubridate::floor_date(lubridate::ymd(.data$DATE), "month")) |>
+  dplyr::summarise(
+    N = sum(.data$N, na.rm = TRUE),
+    N_VALID = sum(.data$N_VALID, na.rm = TRUE),
+    N_NEG = sum(.data$N_NEG, na.rm = TRUE),
+    N_HIGH = sum(.data$N_HIGH, na.rm = TRUE),
+    DIST_FLOWN = sum(.data$DIST_FLOWN, na.rm = TRUE),
+    DIST_ACHIEVED = sum(.data$DIST_ACHIEVED, na.rm = TRUE),
+    HFE = dplyr::if_else(.data$DIST_ACHIEVED > 0, .data$DIST_FLOWN / .data$DIST_ACHIEVED - 1, NA_real_),
+    .by = c(.data$REGION, .data$PAIR_GROUP, .data$ADEP, .data$ADES, .data$GCD, .data$HFE_TYPE, .data$MONTH)
+  ) |>
+  dplyr::mutate(
+    REGION_LABEL = dplyr::recode(.data$REGION, BRA = "Brazil", EUR = "Europe"),
+    PAIR_LABEL = glue::glue("{ADEP}-{ADES}\n{round(GCD)} NM"),
+    PAIR_GROUP = factor(.data$PAIR_GROUP, levels = c("short", "mid_600", "mid_780_800", "long")),
+    HFE_TYPE = factor(.data$HFE_TYPE, levels = c("KEP", "KEA"))
+  )
+
+plot_hfe_pair_group <- function(.pair_group) {
+  hfe_pair_monthly |>
+    dplyr::filter(.data$PAIR_GROUP == .pair_group) |>
+    ggplot2::ggplot(ggplot2::aes(x = .data$MONTH, y = .data$HFE, colour = .data$HFE_TYPE, group = .data$HFE_TYPE)) +
+    ggplot2::geom_line(linewidth = 0.45, na.rm = TRUE) +
+    ggplot2::geom_point(size = 0.7, na.rm = TRUE) +
+    ggplot2::facet_wrap(. ~ REGION_LABEL + PAIR_LABEL, ncol = 4) +
+    ggplot2::scale_colour_manual(values = hfe_type_colours) +
+    ggplot2::scale_y_continuous(labels = scales::label_percent(accuracy = 1), limits = c(0, NA)) +
+    ggplot2::scale_x_date(date_breaks = "2 months", date_labels = "%b") +
+    ggplot2::labs(x = NULL, y = "monthly HFE", colour = NULL) +
+    ggplot2::theme(
+      legend.position = "top",
+      legend.text = ggplot2::element_text(size = 8),
+      legend.key.size = ggplot2::unit(0.3, "cm"),
+      panel.spacing = ggplot2::unit(0.45, "cm"),
+      strip.text = ggplot2::element_text(size = 7.5)
+    )
+}
+```
+
+<!-- BRAZIL COVERAGE - FOR DISCUSSION / INCLUSION IN FINAL VERSION
+short:        BRA 4, EUR 4
+mid_600:      BRA 6, EUR 6
+mid_780_800:  BRA 6, EUR 4
+long:         BRA 4, EUR 4
+
+mid_600:
+SBBR-SBSV  KEA valid months: 12
+SBSV-SBBR  KEA valid months: 12
+SBBR-SBCT  KEA valid months: 12
+SBPA-SBGL  KEA valid months: 2  <- weak, kept visible
+SBGL-SBPA  KEA valid months: 3  <- weak, kept visible
+
+mid_780_800:
+All selected BRA directions have KEA valid months: 12
+-->
+
+At network level, the HFE indicator shown here expresses horizontal flight inefficiency, calculated from the ratio of flown to achieved distance and aggregated on a monthly basis (c.f. @fig-hfe-network).
+On a network level there is a distinct difference between the horizontal flight inefficiency based on the planned and actual flown trajectories. 
+On average, the HFE values for the actual flown trajectories range within the same order of magnitude, i.e., the 3-4% range. 
+The Brazilian results show a higher level of variability across the year with a slight decreasing trend from January to December.
+Additional research will help to understand this behaviour better.
+There is a clear seasonal pattern on the European side coinciding with the peak tourism season during the summer. 
+On the planning side, Brazil offers a lower level of inefficiency with the KEP ranging solidly below 2%.
+Europe shows a 2-2.5 times higher level of inefficiency with the classical seasonal pattern.
+
+A key difference between both regions becomes visible from this high-level comparison:
+Operational realities appear to increase the level of enroute inefficiency within the Brazilian system with KEA > KEP.
+The European pattern shows the characteristics of a rigid planning system. 
+The planning side is less efficient than the actual enabled flight path, KEP > KEA.
+In both regions the offset between the planned and actual trajectory efficiency accounts on average for 1.5-2%.
+
+
+```{r}
+#| label: fig-hfe-network
+#| echo: false
+#| fig-cap: "Monthly network-level horizontal flight efficiency in 2025"
+#| fig-width: 7
+#| fig-height: 4
+
+hfe_network_monthly |>
+  ggplot2::ggplot(ggplot2::aes(x = .data$MONTH, y = .data$HFE, colour = .data$HFE_TYPE, group = .data$HFE_TYPE)) +
+  ggplot2::geom_line(linewidth = 0.7) +
+  ggplot2::geom_point(size = 1.2) +
+  ggplot2::facet_wrap(. ~ REGION_LABEL) +
+  ggplot2::scale_colour_manual(values = hfe_type_colours) +
+  ggplot2::scale_y_continuous(labels = scales::label_percent(accuracy = 1), limits = c(0, NA)) +
+  ggplot2::scale_x_date(date_breaks = "2 months", date_labels = "%b") +
+  ggplot2::labs(x = NULL, y = "monthly HFE", colour = NULL) +
+  ggplot2::theme(
+    legend.position = "top",
+    legend.text = ggplot2::element_text(size = 8),
+    legend.key.size = ggplot2::unit(0.3, "cm")
+  )
+```
+
+The selected aerodrome-pair comparisons focus on directional connections with broadly similar great-circle distance.
+For this report a set of distinct distances were selected to provide a deeper understanding of the observed differences on the network level and gain insight on how the overall network, airspace structure and associated procedural aspects affect the HFE measure.
+
+```{r}
+#| label: fig-hfe-pairs-short
+#| echo: false
+#| fig-cap: "Monthly HFE for selected short-distance aerodrome pairs"
+#| fig-width: 8
+#| fig-height: 5
+
+plot_hfe_pair_group("short")
+```
+
+@fig-hfe-pairs-short shows HFE values for short-range aerodrome connections (just under 300NM).
+The results confirm the overall pattern observed on the network level. 
+In general, the observed actual horizontal flight inefficiency (KEA) is higher than the planned KEP. 
+A notable exception is the flight connection from Belo Horizonte/SBCF to Campinas/SBKP where there is only a marginal difference between KEP and KEA.
+On the European side, @fig-hfe-pairs-short shows the classical KEP > KEA pattern.
+For the connection from Athens/LGAV to Istanbul/LTFM there is a higher offset between the KEP and KEA value suggesting that planning side constraints are regularly compensated for with the provided enroute services. 
+In comparison with the other horizontal flight efficiency bands, there appears a higher level of inefficiency on shorter routes as departure and arrival procedures and shorter/no lower-upper airspace transition impact the route selection and air traffic services.
+
+```{r}
+#| label: fig-hfe-pairs-mid-600
+#| echo: false
+#| fig-cap: "Monthly HFE for selected aerodrome pairs around 600 NM"
+#| fig-width: 8
+#| fig-height: 6
+
+plot_hfe_pair_group("mid_600")
+```
+
+The first mid-distance band, @fig-hfe-pairs-mid-600, shows a series of airports with a great circle distance of around 600NM.
+The data for Brazil suggests that this mid-level band sees a relatively close realisation of the flight paths as planned.
+The results for Europe vary depending on the chosen aerodrome pair and direction of flight. 
+This suggests a higher impact of procedural aspects at this distance.
+
+```{r}
+#| label: fig-hfe-pairs-mid-780-800
+#| echo: false
+#| fig-cap: "Monthly HFE for selected aerodrome pairs around 780-800 NM"
+#| fig-width: 8
+#| fig-height: 6
+
+plot_hfe_pair_group("mid_780_800")
+```
+
+The second mid-distance band confirms the observations made for the shorter midband.
+On average, the observed horizontal inefficiencies are higher for this distance. 
+This signals that the results also depend on the aerodrome pair chosen.
+Arrivals to Congonhas/SBSP show a higher level of difference between the planned and actual flown trajectory.
+The European results are fairly constant for this level band. This suggests that between the chosen aerodrome pairs, the seasonal effect is less visible and more of a systemic nature.
+
+```{r}
+#| label: fig-hfe-pairs-long
+#| echo: false
+#| fig-cap: "Monthly HFE for selected long-distance aerodrome pairs"
+#| fig-width: 8
+#| fig-height: 5
+
+plot_hfe_pair_group("long")
+```
+
+With @fig-hfe-pairs-long, this report studies the behaviour of the HFE indicator for aerodrome pairs with a great circle distance of around 1500NM or more.
+In both regions, the aforementioned pattern of behaviour between KEP and KEA is confirmed.
+This suggests that longer flights (3-4 hours) experience a similar level of inefficiency to the mid-distance flights. 
+For the European airspace, the connection from Istanbul/LTFM to Lisbon/LPPT shows an interesting pattern, as KEP and KEA broadly coincide, while the other direction of flight shows the classical offset pattern. 
+
+
+## Summary
+
+This chapter highlighted two topics of interest for both parties. 
+It offers a first glimpse into operational concepts, their implementation, and observed performance.
+
+As was pointed out earlier in this report, the increasing demand pressure in both systems requires a high level of operational efficiency.
+One critical aspect in this is the utilisation of the runway system capacity.
+To study the implication of different sequencing concepts and techniques, this report investigated the principal sequencing behaviour during peak operating hours at the study airports. 
+Runway slot pressure of the runway system configuration was introduced as a proxy for the inter-arrival sequencing, both in single runway and mixed mode operations. It measures the serviced demand pressure on the runway system during 15-minute slots.
+As a proxy, it gives already a good indication on the sequencing techniques/practices.
+For the studied airport operations, we observe an average of 2.0 min for Europe versus an average of 7.5 min per runway system movement.
+
+The HFE results demonstrate an emerging capability on the Brazilian side. 
+The data preparatory action now allows for the continual extraction and calculation of the horizontal flight efficiency measure across the network. 
+In this report, the groups focussed on the overall observed network level performance and then studied a subset of aerodrome pair connections with similar great-circle distance.
+
+Both groups are interested in advancing the state-of-the-art in assessing network- and center-level aspects. 
+To move towards a more granular comparison, this report showcases the behaviour on a runway system configuration level and a network-wide measure in Brazil and Europe. 
+This approach allowed for a high-level comparison on a set of harmonised indicators suitable to describe the scope of the service provision. 
+This is useful to characterise the similarities and differences between both regions. 
+Future work will revolve around the validation of the findings and its integration to the corpus of this report and the associated performance measures.
