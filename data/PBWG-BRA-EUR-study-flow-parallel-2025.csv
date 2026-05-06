@@ -1,0 +1,235 @@
+YEAR,ORIG_NODE,DEST_NODE,FLOW_CLASS,FLTS,ORIG_LABEL,DEST_LABEL,ORIG_STUDY,DEST_STUDY,THRESHOLD
+2025,LEMD,SBGR,Study-Study,1872,"Madrid
+(LEMD)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,LPPT,SBGR,Study-Study,1559,"Lisbon
+(LPPT)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,LFPG,SBGR,Study-Study,1107,"Paris
+(LFPG)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,LIRF,SBGR,Study-Non-study,1010,"Rome
+(LIRF)","Guarulhos
+(SBGR)",FALSE,TRUE,90
+2025,EGLL,SBGR,Study-Study,793,"Heathrow
+(EGLL)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,EDDF,SBGR,Study-Study,777,"Frankfurt
+(EDDF)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,LPPT,SBKP,Study-Study,658,"Lisbon
+(LPPT)","Campinas
+(SBKP)",TRUE,TRUE,90
+2025,LPPT,SBGL,Study-Study,642,"Lisbon
+(LPPT)","Galeão
+(SBGL)",TRUE,TRUE,90
+2025,LTFM,SBGR,Study-Study,602,"Istanbul
+(LTFM)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,LPPT,SBRF,Study-Study,580,"Lisbon
+(LPPT)","Recife
+(SBRF)",TRUE,TRUE,90
+2025,LFPG,SBGL,Study-Study,452,"Paris
+(LFPG)","Galeão
+(SBGL)",TRUE,TRUE,90
+2025,LPPT,SBFZ,Study-Non-study,438,"Lisbon
+(LPPT)","Fortaleza
+(SBFZ)",TRUE,FALSE,90
+2025,EHAM,SBGR,Study-Study,385,"Amsterdam
+(EHAM)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,LIRF,SBGL,Study-Non-study,381,"Rome
+(LIRF)","Galeão
+(SBGL)",FALSE,TRUE,90
+2025,EGLL,SBGL,Study-Study,380,"Heathrow
+(EGLL)","Galeão
+(SBGL)",TRUE,TRUE,90
+2025,LSZH,SBGR,Study-Study,379,"Zurich
+(LSZH)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,EHAM,SBGL,Study-Study,362,"Amsterdam
+(EHAM)","Galeão
+(SBGL)",TRUE,TRUE,90
+2025,LPPT,SBSV,Study-Study,354,"Lisbon
+(LPPT)","Salvador
+(SBSV)",TRUE,TRUE,90
+2025,LPPT,SBCF,Study-Study,352,"Lisbon
+(LPPT)","Belo Horizonte
+(SBCF)",TRUE,TRUE,90
+2025,LIMC,SBGR,Study-Non-study,345,"Milan
+(LIMC)","Guarulhos
+(SBGR)",FALSE,TRUE,90
+2025,LPPT,SBSG,Study-Non-study,331,"Lisbon
+(LPPT)","Natal
+(SBSG)",TRUE,FALSE,90
+2025,LPPT,SBBR,Study-Study,326,"Lisbon
+(LPPT)","Brasília
+(SBBR)",TRUE,TRUE,90
+2025,LFPO,SBKP,Study-Non-study,296,"Paris Orly
+(LFPO)","Campinas
+(SBKP)",FALSE,TRUE,90
+2025,LPPT,SBBE,Study-Non-study,273,"Lisbon
+(LPPT)","Belém
+(SBBE)",TRUE,FALSE,90
+2025,Other European airports,Other Brazilian airports,Non-study-Non-study,255,"Other European
+airports","Other Brazilian
+airports",FALSE,FALSE,90
+2025,LEMD,SBGL,Study-Study,243,"Madrid
+(LEMD)","Galeão
+(SBGL)",TRUE,TRUE,90
+2025,LEBL,SBGR,Study-Study,241,"Barcelona
+(LEBL)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,EDDF,SBGL,Study-Study,216,"Frankfurt
+(EDDF)","Galeão
+(SBGL)",TRUE,TRUE,90
+2025,Other European airports,SBGR,Study-Non-study,211,"Other European
+airports","Guarulhos
+(SBGR)",FALSE,TRUE,90
+2025,LFPG,SBFZ,Study-Non-study,207,"Paris
+(LFPG)","Fortaleza
+(SBFZ)",TRUE,FALSE,90
+2025,LEMD,SBSV,Study-Study,179,"Madrid
+(LEMD)","Salvador
+(SBSV)",TRUE,TRUE,90
+2025,ELLX,SBKP,Study-Non-study,166,"Luxembourg
+(ELLX)","Campinas
+(SBKP)",FALSE,TRUE,90
+2025,LFPG,SBSV,Study-Study,165,"Paris
+(LFPG)","Salvador
+(SBSV)",TRUE,TRUE,90
+2025,LPPR,SBGR,Study-Non-study,161,"Porto
+(LPPR)","Guarulhos
+(SBGR)",FALSE,TRUE,90
+2025,LPPT,SBFL,Study-Non-study,159,"Lisbon
+(LPPT)","Florianópolis
+(SBFL)",TRUE,FALSE,90
+2025,LEMD,SBKP,Study-Study,143,"Madrid
+(LEMD)","Campinas
+(SBKP)",TRUE,TRUE,90
+2025,Other European airports,SBGL,Study-Non-study,122,"Other European
+airports","Galeão
+(SBGL)",FALSE,TRUE,90
+2025,LPPT,SBPA,Study-Study,121,"Lisbon
+(LPPT)","Porto Alegre
+(SBPA)",TRUE,TRUE,90
+2025,EDDF,SBKP,Study-Study,115,"Frankfurt
+(EDDF)","Campinas
+(SBKP)",TRUE,TRUE,90
+2025,LPPR,SBGL,Study-Non-study,112,"Porto
+(LPPR)","Galeão
+(SBGL)",FALSE,TRUE,90
+2025,Other European airports,SBRF,Study-Non-study,97,"Other European
+airports","Recife
+(SBRF)",FALSE,TRUE,90
+2025,LPPR,SBKP,Study-Non-study,93,"Porto
+(LPPR)","Campinas
+(SBKP)",FALSE,TRUE,90
+2025,LEMD,SBRF,Study-Study,90,"Madrid
+(LEMD)","Recife
+(SBRF)",TRUE,TRUE,90
+2025,EDDF,SBCT,Study-Study,89,"Frankfurt
+(EDDF)","Curitiba
+(SBCT)",TRUE,TRUE,90
+2025,EDDM,SBGR,Study-Study,65,"Munich
+(EDDM)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,Other European airports,SBBR,Study-Non-study,25,"Other European
+airports","Brasília
+(SBBR)",FALSE,TRUE,90
+2025,Other European airports,SBCF,Study-Non-study,19,"Other European
+airports","Belo Horizonte
+(SBCF)",FALSE,TRUE,90
+2025,LEMD,Other Brazilian airports,Study-Non-study,15,"Madrid
+(LEMD)","Other Brazilian
+airports",TRUE,FALSE,90
+2025,Other European airports,SBCT,Study-Non-study,13,"Other European
+airports","Curitiba
+(SBCT)",FALSE,TRUE,90
+2025,Other European airports,SBKP,Study-Non-study,12,"Other European
+airports","Campinas
+(SBKP)",FALSE,TRUE,90
+2025,LPPT,SBEG,Study-Study,10,"Lisbon
+(LPPT)","Eduardo Gomes
+(SBEG)",TRUE,TRUE,90
+2025,Other European airports,SBSV,Study-Non-study,9,"Other European
+airports","Salvador
+(SBSV)",FALSE,TRUE,90
+2025,LEBL,Other Brazilian airports,Study-Non-study,7,"Barcelona
+(LEBL)","Other Brazilian
+airports",TRUE,FALSE,90
+2025,LEMD,SBBR,Study-Study,7,"Madrid
+(LEMD)","Brasília
+(SBBR)",TRUE,TRUE,90
+2025,LPPT,Other Brazilian airports,Study-Non-study,7,"Lisbon
+(LPPT)","Other Brazilian
+airports",TRUE,FALSE,90
+2025,LSZH,Other Brazilian airports,Study-Non-study,7,"Zurich
+(LSZH)","Other Brazilian
+airports",TRUE,FALSE,90
+2025,Other European airports,SBPA,Study-Non-study,5,"Other European
+airports","Porto Alegre
+(SBPA)",FALSE,TRUE,90
+2025,LFPG,Other Brazilian airports,Study-Non-study,4,"Paris
+(LFPG)","Other Brazilian
+airports",TRUE,FALSE,90
+2025,LGAV,SBGR,Study-Study,4,"Athens
+(LGAV)","Guarulhos
+(SBGR)",TRUE,TRUE,90
+2025,LGAV,Other Brazilian airports,Study-Non-study,3,"Athens
+(LGAV)","Other Brazilian
+airports",TRUE,FALSE,90
+2025,LSZH,SBCF,Study-Study,3,"Zurich
+(LSZH)","Belo Horizonte
+(SBCF)",TRUE,TRUE,90
+2025,LGAV,SBGL,Study-Study,2,"Athens
+(LGAV)","Galeão
+(SBGL)",TRUE,TRUE,90
+2025,LSZH,SBGL,Study-Study,2,"Zurich
+(LSZH)","Galeão
+(SBGL)",TRUE,TRUE,90
+2025,LTFM,SBGL,Study-Study,2,"Istanbul
+(LTFM)","Galeão
+(SBGL)",TRUE,TRUE,90
+2025,EDDM,Other Brazilian airports,Study-Non-study,1,"Munich
+(EDDM)","Other Brazilian
+airports",TRUE,FALSE,90
+2025,EDDM,SBBR,Study-Study,1,"Munich
+(EDDM)","Brasília
+(SBBR)",TRUE,TRUE,90
+2025,EHAM,Other Brazilian airports,Study-Non-study,1,"Amsterdam
+(EHAM)","Other Brazilian
+airports",TRUE,FALSE,90
+2025,EHAM,SBCF,Study-Study,1,"Amsterdam
+(EHAM)","Belo Horizonte
+(SBCF)",TRUE,TRUE,90
+2025,EHAM,SBKP,Study-Study,1,"Amsterdam
+(EHAM)","Campinas
+(SBKP)",TRUE,TRUE,90
+2025,LEBL,SBBR,Study-Study,1,"Barcelona
+(LEBL)","Brasília
+(SBBR)",TRUE,TRUE,90
+2025,LEBL,SBGL,Study-Study,1,"Barcelona
+(LEBL)","Galeão
+(SBGL)",TRUE,TRUE,90
+2025,LEBL,SBPA,Study-Study,1,"Barcelona
+(LEBL)","Porto Alegre
+(SBPA)",TRUE,TRUE,90
+2025,LEMD,SBCT,Study-Study,1,"Madrid
+(LEMD)","Curitiba
+(SBCT)",TRUE,TRUE,90
+2025,LEMD,SBPA,Study-Study,1,"Madrid
+(LEMD)","Porto Alegre
+(SBPA)",TRUE,TRUE,90
+2025,LFPG,SBCF,Study-Study,1,"Paris
+(LFPG)","Belo Horizonte
+(SBCF)",TRUE,TRUE,90
+2025,LGAV,SBBR,Study-Study,1,"Athens
+(LGAV)","Brasília
+(SBBR)",TRUE,TRUE,90
+2025,LSZH,SBRF,Study-Study,1,"Zurich
+(LSZH)","Recife
+(SBRF)",TRUE,TRUE,90
+2025,Other European airports,SBEG,Study-Non-study,1,"Other European
+airports","Eduardo Gomes
+(SBEG)",FALSE,TRUE,90

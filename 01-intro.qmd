@@ -57,8 +57,9 @@ The Brazilian airspace is further divided into five Flight Information Regions (
 #| label: fig-BRA-airspace
 #| fig-cap: Brazilian Airspace Structure/FIRs (CINDACTAs)
 #| echo: false
-#| fig-width: 10
-#| fig-height: 6.5
+#| out-width: "90%"
+# fig-width: 10
+# fig-height: 6.5
 
 knitr::include_graphics("./figures/BRAZIL_CINDACTA_CRCEA_NEW.png")
 ```

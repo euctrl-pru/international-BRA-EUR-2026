@@ -68,19 +68,20 @@ bra_vs_eur_2025 <- bra_2025_flts / eur_2025_flts
 In 2025, Brazil handled approximately `r scales::number(bra_2025_flts / 1e6, accuracy = 0.1)` million controlled flights, representing approximately `r scales::percent(bra_vs_eur_2025, accuracy = 1)` of the traffic serviced in Europe over the same period.
 Overflights account for a small share of the total air traffic momvements in both regions.
 As shown in @fig-traffic-volume, both regions recorded growth over the 2023–2025 period, though the underlying dynamics differ significantly.
-Brazil continued to expand its aviation sector, with traffic growing consistently across the three years — a trajectory that reflects sustained organic demand rather than cyclical fluctuation. 
-In Europe, traffic levels also grew over this period, though at a more moderate pace, with the network continuing to consolidate and recover from the COVID decline and ripple effects from the Russian war of aggression against Ukraine.
-The different pace of growth across both regions reinforces the importance of understanding each system's structural context when comparing operational performance.
+
 
 ```{r}
 #| label: fig-traffic-volume
 #| fig-cap: "Overall traffic volume"
 #| fig-align: "center"
+#| fig-height: 3
 #| out-width: 95%
+
+network_traffic_annual |> 
+
 ggplot2::ggplot(
-  network_traffic_annual,
   ggplot2::aes(x = factor(YEAR), y = FLTS_M, fill = REG)
-) +
+  ) +
   ggplot2::geom_col(
     position = ggplot2::position_dodge2(width = 0.72, padding = 0.12),
     width = 0.62
@@ -102,93 +103,17 @@ ggplot2::ggplot(
   ggplot2::labs(x = NULL, y = "Controlled flights (million)", fill = NULL) +
   ggplot2::theme_minimal(base_size = 11) +
   ggplot2::theme(
-    legend.position = "bottom",
+    legend.position = "inside", legend.position.inside = c(0.1, 0.9),
+    legend.key.size = ggplot2::unit(3, "mm"),
+    axis.title.y = element_text(size = rel(0.8)),
     panel.grid.minor = ggplot2::element_blank()
   )
 
 ```
 
-<!-- 
-
-I don't know if we want to use this fig
-
-```{}
-#| label: fig-annual-network
-#| fig-cap: Evolution of annual network traffic
-#| echo: false
-#| warning: false
-#| 
-tmp_network_yoy <- network_traffic |>
-  dplyr::filter(YEAR %in% c(2023, 2024, 2025)) |>
-  dplyr::transmute(
-    DATE,
-    REGION,
-    YEAR = factor(YEAR),
-    DOY = lubridate::yday(DATE),
-    DLY_FLTS = FLTS
-  ) |>
-  dplyr::arrange(REGION, YEAR, DOY) |>
-  dplyr::group_by(REGION, YEAR) |>
-  dplyr::mutate(
-    MVTS_ROLLAVG = zoo::rollapply(
-      DLY_FLTS, width = 28, FUN = median,
-      partial = TRUE, align = "center"
-    )
-  ) |>
-  dplyr::ungroup()
-
-YEAR_COLORS <- c("2023" = "#E74C3C",   
-                 "2024" = "#2ECC71",   
-                 "2025" = "#5DADE2")   
-
-plot_region_yoy <- function(data, title_label) {
-  ggplot2::ggplot(data, ggplot2::aes(x = DOY, colour = YEAR)) +
-      ggplot2::geom_line(
-      ggplot2::aes(y = MVTS_ROLLAVG),
-      linewidth = 0.7,
-      na.rm     = TRUE        
-) +
-    ggplot2::scale_colour_manual(values = YEAR_COLORS) +
-    ggplot2::scale_x_continuous(
-          breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
-          labels = c("Jan","Feb","Mar","Apr","May","Jun",
-                      "Jul","Aug","Sep","Oct","Nov","Dec")
-    ) +
-    ggplot2::scale_y_continuous(
-      limits = c(0, NA),
-      expand = ggplot2::expansion(mult = c(0, 0.05))
-    ) +
-    ggplot2::labs(
-      title  = title_label,
-      x      = NULL,
-      y      = NULL,
-      colour = NULL
-    ) +
-    ggplot2::theme_minimal(base_size = 11) +
-    ggplot2::theme(
-      plot.title       = ggplot2::element_text(hjust = 0.5, size = 11),
-      panel.grid.minor = ggplot2::element_blank(),
-      legend.position  = "bottom"
-    )
-}
-
-# --- Panels ---
-
-p_brazil_yoy <- tmp_network_yoy |>
-  dplyr::filter(REGION == "Brazil") |>
-  plot_region_yoy("Brazil Region - Daily Movements by Year")
-
-p_europe_yoy <- tmp_network_yoy |>
-  dplyr::filter(REGION == "Europe") |>
-  plot_region_yoy("European Region - Daily Movements by Year")
-
-p_brazil_yoy / p_europe_yoy
-
-
-
-```
-
--->
+Brazil continued to expand its aviation sector, with traffic growing consistently across the three years — a trajectory that reflects sustained organic demand rather than cyclical fluctuation. 
+In Europe, traffic levels also grew over this period, though at a more moderate pace, with the network continuing to consolidate and recover from the COVID decline and ripple effects from the Russian war of aggression against Ukraine.
+The different pace of growth across both regions reinforces the importance of understanding each system's structural context when comparing operational performance.
 
 @fig-annual-timeline shows the 7-day rolling average of daily movements in Brazil and Europe from 2019 to 2025. 
 In Brazil, traffic levels recovered swiftly from the sharp drop observed in 2020 and have continued to grow steadily since 2022, surpassing 2019 levels and maintaining a stable profile with only modest seasonal variation throughout the year. 
@@ -365,6 +290,21 @@ country_departures <- readr::read_csv(
   dplyr::filter(!is.na(ADES_COUNTRY), ADES_WORLD_REGION != "Unmapped") |>
   dplyr::mutate(REGION = dplyr::recode(REG, BRA = "Brazil", EUR = "Europe"))
 
+study_flow_pairs <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-study-flow-pairs-2023-2025.csv"),
+  show_col_types = FALSE
+)
+
+study_flow_rank <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-study-flow-rank-2023-2025.csv"),
+  show_col_types = FALSE
+)
+
+study_flow_parallel <- readr::read_csv(
+  here::here("data", "PBWG-BRA-EUR-study-flow-parallel-2025.csv"),
+  show_col_types = FALSE
+)
+
 rank_share <- function(reg, rank) {
   airport_departure_rank |>
     dplyr::filter(REG == reg, RANK == rank) |>
@@ -393,6 +333,14 @@ bra_total_deps <- airport_departure_rank |>
   dplyr::summarise(DEPS = sum(DEPS)) |>
   dplyr::pull(DEPS)
 bra_eur_dep_share <- bra_eur_deps / bra_total_deps
+
+lppt_sbgr_rank <- study_flow_rank |>
+  dplyr::filter(PAIR == "LPPT-SBGR") |>
+  dplyr::select(YEAR, RANK, FLTS)
+
+lemd_sbgr_rank <- study_flow_rank |>
+  dplyr::filter(PAIR == "LEMD-SBGR") |>
+  dplyr::select(YEAR, RANK, FLTS)
 
 bra_sa_deps <- country_departures |>
   dplyr::filter(REG == "BRA", ADES_WORLD_REGION == "South America") |>
@@ -429,11 +377,13 @@ In 2025, the 10 busiest airports in Brazil handled `r scales::percent(bra_top10_
 The spread remains broadly constant up to the 50th rank, narrowing with the top 100 airports — marking `r scales::percent(bra_top100_share, accuracy = 1)` of all departures in Brazil and `r scales::percent(eur_top100_share, accuracy = 1)` in Europe. 
 This reflects the historical development of the European network, where the traditional focus on national hubs resulted in a higher number of major national aerodromes interconnecting across the continent.
 
+
 ```{r}
 #| label: fig-traffic-share
-#| fig-cap: "traffic share"
+#| fig-cap: "traffic share - ranked departures per region"
 #| fig-align: "center"
 #| out-width: 95%
+
 ggplot2::ggplot(
   dplyr::filter(airport_departure_rank, RANK <= 250),
   ggplot2::aes(x = RANK, y = CUM_SHARE, colour = REG)
@@ -452,19 +402,22 @@ ggplot2::ggplot(
   ggplot2::labs(x = "Airport rank", y = "Cumulative share of departures", colour = NULL) +
   ggplot2::theme_minimal(base_size = 11) +
   ggplot2::theme(
-    legend.position = "bottom",
+    legend.position = "inside", legend.position.inside = c(0.85, 0.8),
+    axis.title = ggplot2::element_text(size = rel(0.8)),
     panel.grid.minor = ggplot2::element_blank()
   )
 
 ```
 
+
+
 @fig-traffic-distribution shows the distribution of domestic/regional and international departures in 2025. 
 In both regions, the share of flights operating externally accounts for `r scales::percent(bra_external_share, accuracy = 1)` of total traffic in Brazil and `r scales::percent(eur_external_share, accuracy = 1)` in Europe. 
-The majority of flights operate within each region. 
+The majority of flights operate within each region, accounting broadly for about -/+ 80%. 
 This domestic dominance is particularly pronounced in Brazil, where the continental scale of the country sustains a large volume of intra-national movements. 
-In Europe, the relatively short distances between states mean that many flights classified as *international* are
-functionally comparable to domestic short-haul routes in Brazil.
+In Europe, the relatively short distances between states mean that many flights classified as *international* are functionally comparable to domestic short-haul routes in Brazil.
 Accordingly, in this report, intra-European air traffic is considered "regional" traffic, equivalent to domestic traffic in other regions or large national airspace and air navigation systems.
+
 <!--
 ```{}
 #| label: fig-traffic-distribution-1
@@ -496,8 +449,9 @@ ggplot2::ggplot(
 
 ```{r}
 #| label: fig-traffic-distribution
-#| fig-cap: "traffic distribution"
+#| fig-cap: "traffic distribution 2025 - within region, departures, arrivals, and overflights"
 #| fig-align: "center"
+#| fig-height: 3
 #| out-width: 95%
 
 
@@ -520,7 +474,7 @@ daio_share |>
     colour   = "white",
     place    = "centre",
     size     = 10,
-    fontface = "bold",
+    #fontface = "bold",
     reflow   = TRUE
   ) +
   ggplot2::facet_wrap(~ REGION) +
@@ -528,8 +482,8 @@ daio_share |>
   ggplot2::labs(fill = NULL) +
   ggplot2::theme_minimal(base_size = 11) +
   ggplot2::theme(
-    legend.position  = "bottom",
-    strip.text       = ggplot2::element_text(size = 12, face = "bold"),
+    legend.position  = "none",
+    strip.text       = ggplot2::element_text(size = rel(0.8)),
     panel.grid       = ggplot2::element_blank()
   )
 ```
@@ -538,47 +492,298 @@ daio_share |>
 
 ### Flows Between Brazil and Europe
 
-@fig-flow shows the connections between Europe and Brazil in 2025. 
-Individual connections with fewer than 90 flights per year are aggregated into an "other" group. 
-Traffic from Brazil to Europe accounts for `r scales::percent(bra_eur_dep_share, accuracy = 0.1)` of the total departures from Brazilian airports. 
-Guarulhos (SBGR) and Madrid (LEMD) are the main airports sustaining connectivity between both regions, reflecting the historically close ties between Brazil and Europe. 
-In this edition, Madrid emerges as the leading European hub in terms of flight operations to Brazil, while Lisbon (LPPT) continues to play a significant role as a gateway between the two regions.
+@fig-flow-rank-change shows the change in rank among the main Europe-to-Brazil connections.
+The strongest connection shifted from Lisbon-Guarulhos (LPPT-SBGR) in 2024 to Madrid-Guarulhos (LEMD-SBGR) in 2025.
 
 ```{r}
-#| label: fig-flow
-#| fig-cap: "Flow Brazil and Europe"
+#| label: fig-flow-rank-change
+#| fig-cap: "Rank change for selected Europe-to-Brazil connections"
 #| fig-align: "center"
+#| fig-height: 5.2
 #| out-width: 95%
-flow_bra_eur <- network_flow_pairs |>
-  dplyr::filter(
-    (REG == "BRA" & ADEP_IN_REGION & ADES_WORLD_REGION == "Europe") |
-      (REG == "EUR" & ADEP_IN_REGION & ADES_WORLD_REGION == "Brazil")
-  ) |>
-  dplyr::mutate(
-    FLOW = dplyr::if_else(REG == "BRA", "Brazil to Europe", "Europe to Brazil"),
-    PAIR = paste(ADEP, ADES, sep = "-")
-  ) |>
-  dplyr::summarise(FLTS = sum(FLTS), .by = c(FLOW, PAIR)) |>
-  dplyr::mutate(PAIR = dplyr::if_else(FLTS < 90, "Other", PAIR)) |>
-  dplyr::summarise(FLTS = sum(FLTS), .by = c(FLOW, PAIR)) |>
-  dplyr::group_by(FLOW) |>
-  dplyr::slice_max(FLTS, n = 12, with_ties = FALSE) |>
-  dplyr::ungroup() |>
-  dplyr::mutate(PAIR = forcats::fct_reorder(PAIR, FLTS))
 
-ggplot2::ggplot(flow_bra_eur, ggplot2::aes(x = FLTS, y = PAIR, fill = FLOW)) +
-  ggplot2::geom_col(width = 0.72) +
-  ggplot2::facet_wrap(~ FLOW, scales = "free_y") +
-  ggplot2::scale_x_continuous(labels = scales::label_number(scale = 1e-3, suffix = "k")) +
-  ggplot2::scale_fill_manual(values = c("Brazil to Europe" = bra_col, "Europe to Brazil" = eur_col)) +
-  ggplot2::labs(x = "Annual flights", y = NULL, fill = NULL) +
+dark_flow_blue <- "#4E84C4"
+light_flow_blue <- "#B9D9F3"
+max_bump_rank <- 20
+
+flow_rank_plot <- study_flow_rank |>
+  dplyr::mutate(
+    YEAR = as.integer(YEAR),
+    PAIR_LABEL = PAIR,
+    HIGHLIGHT = dplyr::case_when(
+      PAIR %in% c("LEMD-SBGR", "LPPT-SBGR") ~ "top connections",
+      PAIR_CLASS == "Study-Study" ~ "study airport connections",
+      TRUE ~ "other connections"
+    ),
+    RANK_PLOT = pmin(RANK, max_bump_rank + 1),
+    POINT_LABEL = dplyr::if_else(FLTS > 0, scales::comma(FLTS), "")
+  )
+
+flow_change <- flow_rank_plot |>
+  dplyr::select(PAIR, YEAR, FLTS) |>
+  tidyr::pivot_wider(names_from = YEAR, values_from = FLTS, names_prefix = "FLTS_") |>
+  dplyr::mutate(
+    CHANGE_2025_2024 = dplyr::if_else(
+      FLTS_2024 > 0,
+      (FLTS_2025 / FLTS_2024) - 1,
+      NA_real_
+    ),
+    CHANGE_LABEL = dplyr::if_else(
+      is.na(CHANGE_2025_2024),
+      "",
+      paste0("  ", scales::percent(CHANGE_2025_2024, accuracy = 1, style_positive = "plus"))
+    )
+  ) |>
+  dplyr::select(PAIR, CHANGE_LABEL)
+
+flow_rank_end_labels <- flow_rank_plot |>
+  dplyr::filter(YEAR == 2025) |>
+  dplyr::left_join(flow_change, by = "PAIR") |>
+  dplyr::mutate(
+    LABEL = paste0(PAIR_LABEL, "  ", scales::comma(FLTS), CHANGE_LABEL),
+    LABEL_COLOUR = dplyr::case_when(
+      HIGHLIGHT == "top connections" ~ "top labels",
+      HIGHLIGHT == "other connections" ~ "other labels",
+      TRUE ~ "study labels"
+    )
+  )
+
+flow_rank_point_labels <- flow_rank_plot |>
+  dplyr::filter(YEAR %in% c(2023, 2024), FLTS > 0, RANK <= max_bump_rank) |>
+  dplyr::mutate(
+    LABEL = scales::comma(FLTS),
+    NUDGE_X = dplyr::case_when(
+      YEAR == 2023 ~ -0.08,
+      TRUE ~ 0.08
+    ),
+    NUDGE_Y = dplyr::if_else(YEAR == 2024, -0.22, 0),
+    HJUST = dplyr::if_else(YEAR == 2023, 1, 0),
+    LABEL_COLOUR = dplyr::case_when(
+      HIGHLIGHT == "top connections" ~ "top labels",
+      HIGHLIGHT == "other connections" ~ "other labels",
+      TRUE ~ "study labels"
+    )
+  )
+
+ggplot2::ggplot(
+  flow_rank_plot,
+  ggplot2::aes(x = YEAR, y = RANK_PLOT, group = PAIR_LABEL)
+) +
+  ggbump::geom_bump(
+    data = dplyr::filter(flow_rank_plot, HIGHLIGHT == "other connections"),
+    ggplot2::aes(colour = HIGHLIGHT),
+    linewidth = 0.75,
+    smooth = 7
+  ) +
+  ggbump::geom_bump(
+    data = dplyr::filter(flow_rank_plot, HIGHLIGHT == "study airport connections"),
+    ggplot2::aes(colour = HIGHLIGHT),
+    linewidth = 0.75,
+    smooth = 7
+  ) +
+  ggbump::geom_bump(
+    data = dplyr::filter(flow_rank_plot, HIGHLIGHT == "top connections"),
+    ggplot2::aes(colour = HIGHLIGHT),
+    linewidth = 0.9,
+    smooth = 7
+  ) +
+  ggplot2::geom_point(
+    data = dplyr::filter(flow_rank_plot, HIGHLIGHT == "other connections"),
+    ggplot2::aes(colour = HIGHLIGHT),
+    size = 2.1
+  ) +
+  ggplot2::geom_point(
+    data = dplyr::filter(flow_rank_plot, HIGHLIGHT == "study airport connections"),
+    ggplot2::aes(colour = HIGHLIGHT),
+    size = 2.1
+  ) +
+  ggplot2::geom_point(
+    data = dplyr::filter(flow_rank_plot, HIGHLIGHT == "top connections"),
+    ggplot2::aes(colour = HIGHLIGHT),
+    size = 2.1
+  ) +
+  ggplot2::geom_text(
+    data = flow_rank_point_labels,
+    ggplot2::aes(label = LABEL, colour = LABEL_COLOUR, hjust = HJUST),
+    nudge_x = flow_rank_point_labels$NUDGE_X,
+    nudge_y = flow_rank_point_labels$NUDGE_Y,
+    size = 1.95,
+    show.legend = FALSE
+  ) +
+  ggrepel::geom_text_repel(
+    data = flow_rank_end_labels,
+    ggplot2::aes(label = LABEL, colour = LABEL_COLOUR),
+    nudge_x = 0.25,
+    direction = "y",
+    hjust = 0,
+    size = 2.55,
+    segment.colour = "grey70",
+    min.segment.length = 0,
+    box.padding = 0.08,
+    max.overlaps = Inf,
+    show.legend = FALSE
+  ) +
+  ggplot2::scale_x_continuous(
+    breaks = c(2023, 2024, 2025),
+    limits = c(2022.72, 2025.95)
+  ) +
+  ggplot2::scale_y_reverse(
+    breaks = seq(1, max_bump_rank + 1, by = 1),
+    expand = ggplot2::expansion(mult = c(0.04, 0.08))
+  ) +
+  ggplot2::scale_colour_manual(
+    values = c(
+      "top connections" = dark_flow_blue,
+      "study airport connections" = light_flow_blue,
+      "other connections" = "grey76",
+      "top labels" = dark_flow_blue,
+      "study labels" = "grey10",
+      "other labels" = "grey55"
+    )
+  ) +
+  ggplot2::labs(x = NULL, y = NULL, colour = NULL) +
   ggplot2::theme_minimal(base_size = 11) +
   ggplot2::theme(
     legend.position = "none",
-    panel.grid.minor = ggplot2::element_blank()
+    axis.text.y = ggplot2::element_blank(),
+    axis.ticks.y = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank(),
+    plot.margin = ggplot2::margin(t = 5, r = 55, b = 5, l = 20)
+  )
+```
+
+@fig-flow shows the connections from Europe to Brazil in 2025. 
+Individual non-study airport connections with fewer than 90 flights per year are aggregated into an "other" group. 
+Traffic from Brazil to Europe accounts for `r scales::percent(bra_eur_dep_share, accuracy = 0.1)` of the total departures from Brazilian airports. 
+
+```{r}
+#| label: fig-flow
+#| fig-cap: "Inter-regional connections between Brazil and Europe"
+#| fig-align: "center"
+#| fig-height: 7.2
+#| out-width: 95%
+
+flow_wide <- study_flow_parallel |>
+  dplyr::mutate(id = dplyr::row_number())
+
+flow_label_overrides <- tibble::tribble(
+  ~y, ~x_nudge, ~hjust,
+  #-------------- Brazilian label correction - shift to left ------------------
+  "Belém\n(SBBE)", 0.16, 0,
+  "Belo Horizonte\n(SBCF)", 0.16, 0,
+  "Brasília\n(SBBR)", 0.16, 0
+  
+  #-------------- European label correction - shift to left ------------------
+  ,"Luxembourg\n(ELLX)", -0.16, 1
+)
+
+flows_long <- flow_wide |>
+  dplyr::transmute(
+    id,
+    value = FLTS,
+    FLOW_CLASS,
+    x_origin = 1,
+    x_dest = 2,
+    y_origin = ORIG_LABEL,
+    y_dest = DEST_LABEL,
+    study_origin = ORIG_STUDY,
+    study_dest = DEST_STUDY
+  ) |>
+  tidyr::pivot_longer(
+    cols = c(x_origin, x_dest, y_origin, y_dest, study_origin, study_dest),
+    names_to = c(".value", "axis"),
+    names_pattern = "(x|y|study)_(origin|dest)"
+  ) |>
+  dplyr::mutate(
+    AXIS_FILL = dplyr::if_else(study, "study", "non-study"),
+    FLOW_FILL = dplyr::case_when(
+      FLOW_CLASS == "Study-Study" ~ "#7DB7E8",
+      FLOW_CLASS == "Study-Non-study" ~ "#B9D9F3",
+      TRUE ~ "grey70"
+    ),
+    AXIS_FILL_COL = dplyr::case_when(
+      AXIS_FILL == "study" ~ "#7DB7E8",
+      TRUE ~ "grey85"
+    )
+  )
+
+flow_plot_base <- ggplot2::ggplot(
+  flows_long,
+  ggplot2::aes(x = x, id = id, split = y, value = value)
+) +
+  ggforce::geom_parallel_sets(
+    ggplot2::aes(fill = FLOW_FILL),
+    alpha = 0.7,
+    axis.width = 0.12
+  ) +
+  ggforce::geom_parallel_sets_axes(
+    axis.width = 0.22,
+    ggplot2::aes(fill = AXIS_FILL_COL),
+    colour = "grey45",
+    linewidth = 0.4
+  ) +
+  ggplot2::scale_fill_identity() +
+  ggplot2::scale_x_continuous(
+    breaks = c(1, 2),
+    labels = c("From Europe", "To Brazil"),
+    expand = ggplot2::expansion(mult = c(0.08, 0.08))
+  ) +
+  ggplot2::coord_cartesian(xlim = c(0.72, 2.28), clip = "off") +
+  ggplot2::labs(x = NULL, y = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    legend.position = "none",
+    axis.text.x = ggplot2::element_text(face = "bold", colour = "grey25"),
+    axis.text.y = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank(),
+    panel.grid = ggplot2::element_blank(),
+    plot.margin = ggplot2::margin(t = 5, r = 35, b = 5, l = 35)
+  )
+
+manual_flow_labels <- ggplot2::ggplot_build(flow_plot_base)$data[[2]] |>
+  tibble::as_tibble() |>
+  dplyr::mutate(
+    y = as.character(label),
+    axis_side = dplyr::if_else(x < 1.5, 1L, 2L)
+  ) |>
+  dplyr::summarise(
+    x = dplyr::first(x),
+    value = dplyr::first(value),
+    ymin = min(ymin),
+    ymax = max(ymax),
+    .by = c(axis_side, y)
+  ) |>
+  dplyr::mutate(
+    y_mid = (ymin + ymax) / 2,
+    x = axis_side
+  ) |>
+  dplyr::mutate(
+    x_nudge = dplyr::case_when(
+      x == 1 ~ -0.01,
+      TRUE ~ 0.01
+    ),
+    hjust = 0.5
+  ) |>
+  dplyr::rows_update(flow_label_overrides, by = "y") |>
+  dplyr::mutate(
+    x_label = x + x_nudge,
+    hjust = dplyr::coalesce(hjust, 0.5)
+  )
+
+flow_plot_base +
+  ggplot2::geom_text(
+    data = manual_flow_labels,
+    ggplot2::aes(x = x_label, y = y_mid, label = y, hjust = hjust),
+    inherit.aes = FALSE,
+    size = 2.9,
+    colour = "grey10",
+    lineheight = 0.95
   )
 
 ```
+
+Guarulhos (SBGR) and Madrid (LEMD) are the main airports sustaining connectivity between both regions, reflecting the historically close ties between Brazil and Europe. 
+In this edition, Madrid emerges as the leading European hub in terms of flight operations to Brazil, while Lisbon (LPPT) continues to play a significant role as a gateway between the two regions.
 
 ### Connections to Other World Regions
 
