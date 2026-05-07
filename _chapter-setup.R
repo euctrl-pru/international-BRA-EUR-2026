@@ -24,6 +24,7 @@ library(arrow)
 library(rnaturalearth)
 library(ggplot2)
 library(treemapify)
+library(ggbump)
 
 
 # ============== DEFAULTS and DEFINITIONS =====================================

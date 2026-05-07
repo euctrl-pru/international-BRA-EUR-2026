@@ -764,7 +764,7 @@ manual_flow_labels <- ggplot2::ggplot_build(flow_plot_base)$data[[2]] |>
     ),
     hjust = 0.5
   ) |>
-  dplyr::rows_update(flow_label_overrides, by = "y") |>
+  dplyr::rows_update(flow_label_overrides, by = "y" , unmatched = "ignore") |> 
   dplyr::mutate(
     x_label = x + x_nudge,
     hjust = dplyr::coalesce(hjust, 0.5)

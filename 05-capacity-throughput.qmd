@@ -4,8 +4,6 @@
 think about which other airport we might use for the BLI/PLI comparison
 -->
 
-# Capacity and Throughput
-
 ```{r}
 #| label: setup
 #| echo: false
