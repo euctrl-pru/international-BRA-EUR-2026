@@ -123,6 +123,10 @@ ft <- flextable::fontsize(
   part = "header"
 )
 
+
+
+
+
 # ZEBRA STRIPES
 ft <- flextable::bg(
   ft,
@@ -146,6 +150,44 @@ ft <- flextable::padding(
   ft,
   padding = 10
 )
+
+# ADD FOOTNOTES
+ft <- flextable::add_footer_lines(
+  ft,
+  values = c(
+    "¹ Europe excludes Ukraine, Georgia, Serbia, Canary Islands and Oceanic areas.",
+    
+    "² Europe excludes Ukraine, Georgia and Serbia.",
+    
+    "³ Europe controlled flights correspond to the ECAC area."
+  )
+)
+
+# FOOTNOTE STYLE
+ft <- flextable::fontsize(
+  ft,
+  size = 8,
+  part = "footer"
+)
+
+ft <- flextable::italic(
+  ft,
+  italic = TRUE,
+  part = "footer"
+)
+
+ft <- flextable::align(
+  ft,
+  align = "left",
+  part = "footer"
+)
+
+ft <- flextable::padding(
+  ft,
+  padding = 2,
+  part = "footer"
+)
+
 
 # REMOVE DEFAULT BORDERS
 ft <- flextable::border_remove(ft)
