@@ -237,7 +237,10 @@ plot_monthly_txxt <- function(.phase, .region, .ylabel, .ylim = NULL) {
     ggplot2::geom_line(colour = region_col, linewidth = 0.35) +
     ggplot2::facet_wrap(. ~ APT_LABEL, ncol = 3) +
     ggplot2::labs(x = NULL, y = .ylabel) +
-    ggplot2::theme(panel.spacing = ggplot2::unit(0.45, "cm"))
+    ggplot2::scale_x_date(date_breaks = "1 year"
+                          , date_labels = "%Y"
+                          ,expand = ggplot2::expansion(mult = c(0.05, 0.1))) +
+    ggplot2::theme(panel.spacing = ggplot2::unit(1.20, "cm"))
   if (!is.null(.ylim)) p <- p + ggplot2::coord_cartesian(ylim = .ylim)
   p
 }
@@ -310,9 +313,12 @@ plot_monthly_asma <- function(.range, .region, .ylim = c(0, 8)) {
     ggplot2::ggplot(ggplot2::aes(x = MONTH, y = AVG_ADD_TIME, group = ICAO)) +
     ggplot2::geom_line(colour = region_col, linewidth = 0.35) +
     ggplot2::facet_wrap(. ~ APT_LABEL, ncol = 3) +
+    ggplot2::scale_x_date(date_breaks = "1 year"
+                          , date_labels = "%Y" 
+                          , expand = ggplot2::expansion(mult = c(0.05, 0.1))) +
     ggplot2::coord_cartesian(ylim = .ylim) +
     ggplot2::labs(x = NULL, y = "avg. additional ASMA time [min/arr]") +
-    ggplot2::theme(panel.spacing = ggplot2::unit(0.45, "cm"))
+    ggplot2::theme(panel.spacing = ggplot2::unit(1.20, "cm"))
 }
 
 plot_asma_range_summary <- function() {
@@ -361,7 +367,7 @@ Based on the ICAO GANP guidance, the reference times for both regions are determ
 #| fig-cap: Europe - Additional taxi-in time [min/arr] (2023-2025, 2024 GANP p20 reference)
 #| fig-height: 4.8
 
-plot_annual_txxt("ARR", "EUR", "average additional taxi-in time [min/arr]")
+plot_annual_txxt("ARR", "EUR", NULL)
 ```
 
 ```{r}
@@ -369,7 +375,7 @@ plot_annual_txxt("ARR", "EUR", "average additional taxi-in time [min/arr]")
 #| fig-cap: Brazil - Additional taxi-in time [min/arr] (2023-2025, 2024 GANP p20 reference)
 #| fig-height: 4.8
 
-plot_annual_txxt("ARR", "BRA", "average additional taxi-in time [min/arr]")
+plot_annual_txxt("ARR", "BRA", NULL)
 ```
 
 The annual development of the average additional taxi-in times at the study airports is depicted by @fig-eur-txit-annual and @fig-bra-txit-annual.
@@ -406,7 +412,7 @@ The evolution of the taxi-in time at the study airports, shown in @fig-eur-txit-
 #| fig-cap: Europe - Average additional taxi-out time [min/dep] (2023-2025, 2024 GANP p20 reference)
 #| fig-height: 4.8
 
-plot_annual_txxt("DEP", "EUR", "average additional taxi-out time [min/dep]")
+plot_annual_txxt("DEP", "EUR", NULL)
 ```
 
 ```{r}
@@ -414,7 +420,7 @@ plot_annual_txxt("DEP", "EUR", "average additional taxi-out time [min/dep]")
 #| fig-cap: Brazil - Average additional taxi-out time [min/dep] (2023-2025, 2024 GANP p20 reference)
 #| fig-height: 4.8
 
-plot_annual_txxt("DEP", "BRA", "average additional taxi-out time [min/dep]")
+plot_annual_txxt("DEP", "BRA", NULL)
 ```
 
 On average, higher additional times for taxi-out are observed across airports (see @fig-eur-txot-annual and @fig-bra-txot-annual).
