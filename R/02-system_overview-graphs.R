@@ -5,7 +5,7 @@ source(here::here("_chapter-setup.R"))
 
 # ── ATCOs in OPS ──────────────────────────────────────────────────────────────
 atco <- table_bra_eur |>
-  dplyr::filter(KPA == "number of ATCOs in OPS") |>
+  dplyr::filter(KPA == "number of ATCOs in OPS¹") |>
   dplyr::select(KPA, Brazil_2023, Brazil_2024, Brazil_2025,
                 Europe_2023, Europe_2024, Europe_2025) |>
   dplyr::mutate(
@@ -22,11 +22,18 @@ atco <- table_bra_eur |>
     YEAR   = as.integer(YEAR),
     REGION = stringr::str_to_title(REGION)
   ) |>
+  dplyr::arrange(REGION, YEAR) |>
+  dplyr::group_by(REGION) |>
+  dplyr::mutate(
+    ESTIMATED = is.na(ATCO),
+    ATCO      = dplyr::if_else(is.na(ATCO), dplyr::lag(ATCO), ATCO)
+  ) |>
+  dplyr::ungroup() |>
   dplyr::filter(!is.na(ATCO))
 
 # ── CONTROLLED FLIGHTS — traffic index base 2023 = 100 ───────────────────────
 index <- table_bra_eur |>
-  dplyr::filter(KPA == "controlled flights") |>
+  dplyr::filter(KPA == "controlled flights³") |>
   dplyr::select(KPA, Brazil_2023, Brazil_2024, Brazil_2025,
                 Europe_2023, Europe_2024, Europe_2025) |>
   dplyr::mutate(
@@ -67,10 +74,13 @@ plot_atco_panel <- function(data, region_name, bar_color) {
   ggplot2::ggplot(df_reg, ggplot2::aes(x = YEAR)) +
     
     ggplot2::geom_col(
-      ggplot2::aes(y = ATCO),
-      fill  = bar_color,
+      ggplot2::aes(y = ATCO, fill = ESTIMATED),
       alpha = 0.85,
       width = 0.5
+    ) +
+    ggplot2::scale_fill_manual(
+      values = c("FALSE" = bar_color, "TRUE" = "grey70"),
+      guide  = "none"
     ) +
     
     ggplot2::geom_text(
@@ -158,11 +168,15 @@ flights_atco <- table_bra_eur |>
     names_sep = "_",
     values_to = "FLT_ATCO"
   ) |>
+  dplyr::arrange(REGION, YEAR) |>
+  dplyr::group_by(REGION) |>
   dplyr::mutate(
-    YEAR   = factor(as.integer(YEAR)),
-    REGION = stringr::str_to_title(REGION)
+    ESTIMATED = is.na(FLT_ATCO),
+    FLT_ATCO  = dplyr::if_else(is.na(FLT_ATCO), dplyr::lag(FLT_ATCO), FLT_ATCO)
   ) |>
-  dplyr::filter(!is.na(FLT_ATCO))
+  dplyr::ungroup() |>
+  dplyr::filter(!is.na(FLT_ATCO)) |>
+  dplyr::mutate(YEAR = factor(YEAR))
 
 # ── PLOT FUNCTION ─────────────────────────────────────────────────────────────
 plot_flt_atco <- function(data,
@@ -174,11 +188,14 @@ plot_flt_atco <- function(data,
     ggplot2::aes(x = YEAR, y = FLT_ATCO, fill = REGION)
   ) +
     
-    # MUDAR AQUI: position = "dodge" agrupa as barras por ano
     ggplot2::geom_col(
+      ggplot2::aes(alpha = ESTIMATED),
       position = ggplot2::position_dodge(width = 0.6),
-      alpha    = 0.85,
       width    = 0.5
+    ) +
+    ggplot2::scale_alpha_manual(
+      values = c("FALSE" = 0.85, "TRUE" = 0.35),
+      guide  = "none"
     ) +
     
     ggplot2::geom_text(
