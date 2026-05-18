@@ -74,10 +74,6 @@ format:
         \fancyhead[R]{}
         \fancyfoot[L]{}
         \AtBeginDocument{\let\maketitle\relax} % use this to not show the title
-    include-after-body:
-      text: |
-        \includepdf[pages=1]{figures/Brazil-Europe-2025-Cover-xback.pdf} % use this to add back cover from pdf
-    
   # 
   # docx:
   #   toc: true
