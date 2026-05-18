@@ -4,15 +4,32 @@
 ![](figures/foreword-combined.png)
 -->
 
+::: {.content-visible when-format="pdf"}
+
+<!-- This text is **only** in pdf output. -->
+
 ```{=latex}
 \thispagestyle{empty}
-\addcontentsline{toc}{chapter}{Foreword}
+% \addcontentsline{toc}{chapter}{Foreword}
 \begin{picture}(0,0)
 \put(-85,-642){\includegraphics[width=\paperwidth,height=\paperheight]{figures/foreword.pdf}}
 \end{picture}
 \clearpage
-\addtocounter{chapter}{-1}
+% not sure what this does - feels like reduce chapter count by one 
+% \addtocounter{chapter}{-1}
 ```
+
+:::
+
+::: {.content-visible when-format="html"}
+
+<!-- This text is **only** in HTML output. -->
+# Foreword {.unnumbered}
+
+<embed title="Foreword" src="figures/foreword.pdf" width="100%" height="520" />
+
+:::
+
 <!--
 :::{.callout-note} 
 
