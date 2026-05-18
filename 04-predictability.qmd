@@ -626,6 +626,7 @@ p_dep_2025 <- punc_annual |>
 ::: {#fig-departure-punc layout-ncol=1}
 
 ```{r}
+#| label: fig-departure-punc
 #| fig-height: 7
 #| fig-cap: "Evolution of departure punctuality at study airports (2024 vs 2025)"
 

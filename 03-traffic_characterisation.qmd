@@ -794,8 +794,9 @@ From a broader international perspective, both regions are interconnected with t
 @fig-share-regions shows the spread of international traffic from each region. 
 For Brazil, connections to other South American states represent the major international destinations. 
 For Europe, the Middle East, North America, and Africa represent the largest international markets. 
-The chart aligns Brazil-to-Europe and Europe-to-Brazil traffic on a common counterpart-region row to support comparison. Placeholder destinations that cannot be mapped to a world region are retained in the canonical data product but
-excluded from this mapped-region comparison.
+The chart aligns Brazil-to-Europe and Europe-to-Brazil traffic on a common counterpart-region row to support comparison. 
+Connections to other regions or below a certain limit of regular flights are not presented.
+The potential impact of such connections will be further analysed in future editions.
 
 ```{r}
 #| label: fig-share-regions
@@ -823,7 +824,7 @@ ggplot2::ggplot(
     x = "Share of mapped external departures",
     y = NULL,
     fill = NULL,
-    subtitle = "Reminder: rethink grouping / breakdown of regions, including EUROCONTROL Europe versus other Europe."
+#    subtitle = "Reminder: rethink grouping / breakdown of regions, including EUROCONTROL #Europe versus other Europe."
   ) +
   ggplot2::coord_cartesian(clip = "off") +
   ggplot2::theme_minimal(base_size = 11) +
@@ -851,7 +852,11 @@ ggplot2::ggplot(
   ggplot2::aes(x = FLTS, y = COUNTRY_LABEL, fill = CONNECTION_PANEL)
 ) +
   ggplot2::geom_col(width = 0.72) +
-  ggplot2::facet_wrap(~ CONNECTION_PANEL, scales = "free") +
+  ggplot2::facet_wrap(
+    ~ CONNECTION_PANEL, scales = "free"
+    ,labeller = labeller(
+      CONNECTION_PANEL = function(x) stringr::str_wrap(x, width = 20))
+    ) +
   ggplot2::scale_x_continuous(labels = scales::label_number(scale = 1e-3, suffix = "k")) +
   ggplot2::scale_fill_manual(
     values = c(
