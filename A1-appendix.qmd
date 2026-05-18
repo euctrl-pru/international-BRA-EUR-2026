@@ -115,7 +115,7 @@ if (knitr::is_latex_output()) {
     ) |>
     kableExtra::column_spec(1, bold = TRUE, width = "3cm") |>
     kableExtra::column_spec(2, bold = TRUE, width = "2.5cm") |>
-    kableExtra::column_spec(3, width = "10cm") |>
+    kableExtra::column_spec(3, width = "8cm") |>
     kableExtra::collapse_rows(columns = 1, latex_hline = "major")
 
 } else {
