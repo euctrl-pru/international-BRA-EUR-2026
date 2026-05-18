@@ -667,7 +667,7 @@ The departure performance observed at Guarulhos is in line with the arrival punc
 
 The preceding section highlighted how the general traffic conditions in the previous years influenced the dependability of arrival schedules.
 In this section, we assess the degree of departure punctuality measured as the difference between the scheduled departure versus the observed actual off-block time.
-@fig-departure-punc shows the overall departure punctuality at Brazilian and European airports in 2024 and 2025.
+@fig-puncvstfc-dep shows the overall departure punctuality at Brazilian and European airports in 2024 and 2025.
 
 ```{r}
 #| label: data-prep-punc-vs-tfc-dep
