@@ -60,6 +60,9 @@ format:
     include-before-body:
       text: |
         \includepdf[pages=1]{figures/Brazil-Europe-2025-Cover.pdf} % use this to add a cover from pdf
+    include-after-body:
+      text: |
+        \includepdf[pages=1]{figures/Brazil-Europe-2025-BackCover.pdf} % use this to add a backcover from pdf
     include-in-header:
       text: |
         \usepackage{pdfpages}
