@@ -531,7 +531,10 @@ flow_change <- flow_rank_plot |>
     CHANGE_LABEL = dplyr::if_else(
       is.na(CHANGE_2025_2024),
       "",
-      paste0("  ", scales::percent(CHANGE_2025_2024, accuracy = 1, style_positive = "plus"))
+      paste0("  "
+             # based on request --- % change deactivated
+             #, scales::percent(CHANGE_2025_2024, accuracy = 1, style_positive = "plus")
+             )
     )
   ) |>
   dplyr::select(PAIR, CHANGE_LABEL)

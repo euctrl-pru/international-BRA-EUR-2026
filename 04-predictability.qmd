@@ -480,13 +480,12 @@ p_arr_2025 <- punc_annual |>
 
 ```{r}
 #| fig-height: 7
+#| fig-cap: "Evolution of arrival punctuality at study airports (2024 vs 2025)"
 
 (p_arr_2024 / p_arr_2025) +
   patchwork::plot_layout(guides = "collect") &
   ggplot2::theme(legend.position = "top")
 ```
-
-Evolution of arrival punctuality at study airports (2024 vs 2025)
 
 :::
 
@@ -538,6 +537,8 @@ arr_punc_vs_tfc <- punc_annual |>
 #| label: fig-puncvstfc-arr
 #| fig-cap: Evolution of arrival punctuality -/+15 min vs arrival traffic
 #| fig-height: 7
+
+this_limits <- c(0,1)  # not necessary - SBEG and SBRF not included in data
 
 p_bra_arr <- arr_punc_vs_tfc |>
   dplyr::filter(REG == "BRA") |>
@@ -626,13 +627,12 @@ p_dep_2025 <- punc_annual |>
 
 ```{r}
 #| fig-height: 7
+#| fig-cap: "Evolution of departure punctuality at study airports (2024 vs 2025)"
 
 (p_dep_2024 / p_dep_2025) +
   patchwork::plot_layout(guides = "collect") &
   ggplot2::theme(legend.position = "top")
 ```
-
-Evolution of departure punctuality at study airports (2024 vs 2025)
 
 :::
 
@@ -685,13 +685,15 @@ dep_punc_vs_tfc <- punc_annual |>
 #| fig-cap: Evolution of departure punctuality -/+15 min vs departure traffic
 #| fig-height: 7
 
+increased_limits <- c(0, 0.9)
+
 p_bra_dep <- dep_punc_vs_tfc |>
   dplyr::filter(REG == "BRA") |>
-  plot_punctuality_vs_traffic(.share_limits = c(0, 0.85))
+  plot_punctuality_vs_traffic(.share_limits = increased_limits)
 
 p_eur_dep <- dep_punc_vs_tfc |>
   dplyr::filter(REG == "EUR") |>
-  plot_punctuality_vs_traffic(.share_limits = c(0, 0.85))
+  plot_punctuality_vs_traffic(.share_limits = increased_limits)
 
 p_bra_dep / p_eur_dep +
   patchwork::plot_layout(guides = "collect") &
