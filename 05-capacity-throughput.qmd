@@ -9,6 +9,7 @@ think about which other airport we might use for the BLI/PLI comparison
 #| echo: false
 #| message: false
 source(here::here("_chapter-setup.R"))
+source(here::here("R", "bli-pli-plots.R"))
 ```
 
 ```{r}
@@ -452,7 +453,7 @@ bli_pli <- readr::read_csv(
   here::here("data", "PBWG-BRA-EUR-bli-pli-2019-2025.csv"),
   show_col_types = FALSE
 ) |>
-  filter(YEAR %in% bli_pli_years, !is.na(BLI), !is.na(PLI)) |>
+  filter(YEAR %in% bli_pli_years) |>
   mutate(
     YEAR = factor(YEAR, levels = bli_pli_years),
     YEAR_NUM = as.integer(as.character(YEAR)),
@@ -463,6 +464,9 @@ bli_pli <- readr::read_csv(
     ),
     LABEL = paste(ICAO, YEAR)
   )
+
+bli_pli_complete <- bli_pli |>
+  filter(!is.na(BLI), !is.na(PLI))
 
 plot_ordered_thrus <- function(.ordered_thrus) {
   cap_levels <- .ordered_thrus |>
@@ -601,78 +605,6 @@ bli_pli_trajectory_plot <- function(
     )
 }
 
-bli_pli_heatmap_plot <- function(.bli_pli_df) {
-  stress_palette <- c(
-    "0.0-0.2" = "#D7ECFA",
-    "0.2-0.4" = "#D8F0D2",
-    "0.4-0.6" = "#79C36A",
-    "0.6-0.8" = "#F0A35E",
-    ">0.8" = "#D95F5F"
-  )
-
-  heatmap_data <- .bli_pli_df |>
-    select(REG, ICAO, YEAR, BLI, PLI) |>
-    pivot_longer(cols = c(BLI, PLI), names_to = "INDEX", values_to = "VALUE") |>
-    mutate(
-      INDEX = factor(INDEX, levels = c("BLI", "PLI")),
-      AIRPORT = factor(ICAO, levels = sort(unique(ICAO))),
-      AIRPORT_INDEX = factor(
-        paste(ICAO, INDEX),
-        levels = unlist(lapply(sort(unique(ICAO)), function(.apt) paste(.apt, c("BLI", "PLI"))))
-      ),
-      YEAR_FCT = factor(YEAR, levels = bli_pli_years),
-      STRESS = cut(
-        VALUE,
-        breaks = c(-Inf, 0.2, 0.4, 0.6, 0.8, Inf),
-        labels = c("0.0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", ">0.8"),
-        right = TRUE
-      )
-    )
-
-  row_annotations <- heatmap_data |>
-    distinct(REG, ICAO, AIRPORT_INDEX, INDEX) |>
-    mutate(
-      YEAR_FCT = factor(bli_pli_first_year, levels = bli_pli_years),
-      ANNO_X = 0.62,
-      ANNO_LABEL = as.character(INDEX)
-    )
-
-  heatmap_data |>
-    ggplot(aes(x = YEAR_FCT, y = AIRPORT_INDEX, fill = STRESS)) +
-    geom_tile(color = "white", linewidth = 0.35) +
-    geom_text(
-      data = row_annotations,
-      aes(x = ANNO_X, y = AIRPORT_INDEX, label = ANNO_LABEL),
-      inherit.aes = FALSE,
-      hjust = 0,
-      size = 2.7,
-      color = "grey15"
-    ) +
-    facet_wrap(. ~ REG, scales = "free_y", ncol = 2) +
-    scale_fill_manual(values = stress_palette, drop = FALSE) +
-    scale_y_discrete(
-      labels = function(x) {
-        parts <- strsplit(x, " ")
-        vapply(
-          parts,
-          function(.parts) {
-            if (.parts[2] == "PLI") .parts[1] else ""
-          },
-          character(1)
-        )
-      }
-    ) +
-    labs(x = NULL, y = NULL, fill = "index range") +
-    coord_cartesian(clip = "off") +
-    theme(
-      axis.text.x = element_text(size = 8),
-      axis.text.y = element_text(size = 7, lineheight = 1.0),
-      panel.grid = element_blank(),
-      legend.position = "top",
-      panel.spacing.y = unit(0.8, "cm"),
-      plot.margin = margin(5.5, 5.5, 5.5, 28)
-    )
-}
 ```
 
 ```{r}
@@ -701,16 +633,16 @@ The peak load index (PLI) accounts then for the number of operating hours at or 
 #| label: fig-bli-pli
 #| fig-cap: Capacity utilisation trajectory (base load index vs peak load index)
 
-bli_pli_trajectory_plot(bli_pli) +
+bli_pli_trajectory_plot(bli_pli_complete) +
   theme(legend.position = c(0.08, 0.82), legend.key.height = unit(4, "mm"))
 ```
 
 
 ```{r}
 #| label: fig-bli-pli-heatmap
-#| fig-cap: Capacity utilisation heatmap by airport and year
+#| fig-cap: Capacity utilisation heatmap by region, load index, airport, and year
 
-bli_pli_heatmap_plot(bli_pli)
+bli_pli_panel_heatmap_plot(bli_pli, .years = bli_pli_years)
 ```
 
 
@@ -730,7 +662,8 @@ For the majority of European airports, the peak load index ranges relatively low
 This suggests that most of the airports operate currently concentrated short peaks or having growth potential available in terms of traffic load.
 
 The complementary heatmap adds back the full airport-year detail without overloading the scatter plot with labels.
-It makes it easier to scan how BLI and PLI evolve side by side for each airport, while preserving the trajectory scatter for showing the overall relationship between both load indices.
+Splitting the base-load and peak-load indices into separate panels makes it easier to scan the evolution of each load characteristic by airport, while preserving the trajectory scatter for showing the overall relationship between both load indices.
+Grey cells indicate years where the current input data do not yet support a BLI/PLI estimate.
 
 Using a regression analysis, we can also see a difference in the trend in Europe in comparison to Brazil.
 Amongst the study airports, there is a higher share of European airports with more peak operating hours than in Brazil. 
