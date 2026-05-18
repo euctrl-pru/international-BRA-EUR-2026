@@ -632,6 +632,7 @@ The peak load index (PLI) accounts then for the number of operating hours at or 
 ```{r}
 #| label: fig-bli-pli
 #| fig-cap: Capacity utilisation trajectory (base load index vs peak load index)
+#| fig-height: 3
 
 bli_pli_trajectory_plot(bli_pli_complete) +
   theme(legend.position = c(0.08, 0.82), legend.key.height = unit(4, "mm"))
@@ -641,8 +642,12 @@ bli_pli_trajectory_plot(bli_pli_complete) +
 ```{r}
 #| label: fig-bli-pli-heatmap
 #| fig-cap: Capacity utilisation heatmap by region, load index, airport, and year
+#| fig-height: 5
 
-bli_pli_panel_heatmap_plot(bli_pli, .years = bli_pli_years)
+bli_pli_panel_heatmap_plot(bli_pli, .years = bli_pli_years) +
+  theme(
+    legend.key.size = unit(3, "mm")
+  )
 ```
 
 
@@ -661,17 +666,16 @@ This suggests that for many of these airports the daily traffic loads returned t
 For the majority of European airports, the peak load index ranges relatively low.
 This suggests that most of the airports operate currently concentrated short peaks or having growth potential available in terms of traffic load.
 
-The complementary heatmap adds back the full airport-year detail without overloading the scatter plot with labels.
-Splitting the base-load and peak-load indices into separate panels makes it easier to scan the evolution of each load characteristic by airport, while preserving the trajectory scatter for showing the overall relationship between both load indices.
+The heatmap, @fig-bli-pli-heatmap, shows the full airport-year detail and infrastructure utilisation across the year.
+Splitting the base-load and peak-load indices into separate panels makes it easier to scan the evolution of each load characteristic by airport.
+We observe a solid use of the study airports in both regions in terms of base traffic levels.
+The lower traffic levels during the main COVID years are well reflected.
 Grey cells indicate years where the current input data do not yet support a BLI/PLI estimate.
-
-Using a regression analysis, we can also see a difference in the trend in Europe in comparison to Brazil.
 Amongst the study airports, there is a higher share of European airports with more peak operating hours than in Brazil. 
 This might be related to the overall role of the airports and underlying connectivity structure and demand levels already described in earlier chapters.
 Future work on understanding the drivers between operational concepts and demand may reveal further characteristics of the service provision in both systems.
 
 ## Summary
-
 
 This chapter analysed the relationship between airport capacity, throughput, and demand management across Brazilian and European airports.
 
