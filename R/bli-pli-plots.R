@@ -7,6 +7,8 @@ bli_pli_stress_palette <- c(
   "missing" = "#E2E2E2"
 )
 
+bli_pli_continuous_palette <- c(low = "#f7fbff", high = "#2166ac", missing = "#E2E2E2")
+
 bli_pli_stress_band <- function(.value) {
   bands <- cut(
     .value,
@@ -93,17 +95,21 @@ bli_pli_panel_heatmap_plot <- function(.bli_pli_df, .years = sort(unique(.bli_pl
         labels = c("Base load index (BLI)", "Peak load index (PLI)")
       ),
       ICAO = factor(ICAO, levels = sort(unique(ICAO))),
-      YEAR_FCT = factor(YEAR, levels = .years),
-      STRESS = bli_pli_stress_band(VALUE)
+      YEAR_FCT = factor(YEAR, levels = .years)
     )
 
   heatmap_data |>
-    ggplot2::ggplot(ggplot2::aes(x = YEAR_FCT, y = ICAO, fill = STRESS)) +
+    ggplot2::ggplot(ggplot2::aes(x = YEAR_FCT, y = ICAO, fill = VALUE)) +
     ggplot2::geom_tile(color = "white", linewidth = 0.35) +
     ggplot2::facet_wrap(INDEX ~ REG, ncol = 2, scales = "free_y") +
-    ggplot2::scale_fill_manual(values = bli_pli_stress_palette, drop = FALSE) +
-    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 2, byrow = TRUE)) +
-    ggplot2::labs(x = NULL, y = NULL, fill = "index range") +
+    ggplot2::scale_fill_gradient(
+      low = bli_pli_continuous_palette["low"],
+      high = bli_pli_continuous_palette["high"],
+      limits = c(0, 1),
+      na.value = bli_pli_continuous_palette["missing"],
+      labels = scales::number_format(accuracy = 0.1)
+    ) +
+    ggplot2::labs(x = NULL, y = NULL, fill = "index value") +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text(size = 8),
       axis.text.y = ggplot2::element_text(size = 7, lineheight = 1.0),
