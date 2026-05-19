@@ -12,7 +12,7 @@
 \thispagestyle{empty}
 % \addcontentsline{toc}{chapter}{Foreword}
 \begin{picture}(0,0)
-\put(-85,-642){\includegraphics[width=\paperwidth,height=\paperheight]{figures/foreword.pdf}}
+\put(-87,-642){\includegraphics[width=\paperwidth,height=\paperheight]{figures/foreword.pdf}}
 \end{picture}
 \clearpage
 % not sure what this does - feels like reduce chapter count by one 
