@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>7&nbsp; Topic Studies – Operational Comparison of ANS Performance</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./10-conclusions.html" rel="next">
+<link href="./06-efficiency.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5ccb035bea26c1e21f80f44cf7c27909.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+  .navbar-logo {
+    max-height: 60px;
+  }
+</style>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./09-studies.html"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Topic Studies</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Operational Comparison of ANS Performance</a> 
+        <div class="sidebar-tools-main">
+    <a href="./Operational-Comparison-of-ANS-Performance.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./00-foreword.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Foreword</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./00-executive-summary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Executive Summary</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-system-overview.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Air Navigation System Characterisation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-traffic_characterisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Traffic Characterisation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-predictability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Predictability</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-capacity-throughput.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Capacity and Throughput</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-efficiency.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Efficiency</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-studies.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Topic Studies</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-conclusions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conclusions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./99-references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./A1-appendix.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">List of Acronyms</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#runway-slot-pressure" id="toc-runway-slot-pressure" class="nav-link active" data-scroll-target="#runway-slot-pressure"><span class="header-section-number">7.1</span> Runway Slot Pressure</a></li>
+  <li><a href="#horizontal-flight-efficiency" id="toc-horizontal-flight-efficiency" class="nav-link" data-scroll-target="#horizontal-flight-efficiency"><span class="header-section-number">7.2</span> Horizontal Flight Efficiency</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">7.3</span> Summary</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Topic Studies</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>For this report, the joint work between the performance groups at DECEA and EUROCONTROL involved the preparatory action for assessing operational sequencing concepts for runway system throughput during peak times and introducing an enroute performance measure, i.e., horizontal flight efficiency (HFE).<br>
+This chapter provides a first summary of the work to help refine the future work.</p>
+<section id="runway-slot-pressure" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="runway-slot-pressure"><span class="header-section-number">7.1</span> Runway Slot Pressure</h2>
+<p>This topic study uses 15-minute runway throughput to assess runway slot pressure during busy operations at the study airports. The analysis does not yet measure movement-by-movement inter-arrival time; instead, it uses slot-implied arrival spacing as a first proxy for how tightly arrival flows are packed under representative runway system configurations. This provides a basis for future inter-arrival studies and helps compare operational concepts observed in Brazil and Europe.</p>
+<p>For each airport, the analysis identifies the 17 busiest local operating hours and retains stable runway system configurations observed across rolling one-hour windows. The stacked bars in <a href="#fig-rwy-config-share" class="quarto-xref">Figure&nbsp;<span>7.1</span></a> show whether busy operations are concentrated in one dominant runway configuration or spread across several configurations.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-rwy-config-share" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rwy-config-share-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-studies_files/figure-html/fig-rwy-config-share-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rwy-config-share-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.1: Runway system configuration shares during busy local operating hours
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Runway slot pressure is expressed as the slot-implied minutes per arrival, calculated as 15 minutes divided by the number of arrivals in a 15-minute slot. Lower values indicate more tightly packed arrival flows. <a href="#fig-rwy-slot-pressure" class="quarto-xref">Figure&nbsp;<span>7.2</span></a> ranks airports by the median value and shows the interquartile range observed during representative busy-period configurations.</p>
+<p>Across the airports in both regions, <a href="#fig-rwy-slot-pressure" class="quarto-xref">Figure&nbsp;<span>7.2</span></a> shows a pattern of predominant runway system configurations. Multi-runway systems show a wider variability of combinations with certain configurations dominating the operational use. Predominant configurations reflect local conditions comprising - inter alia - traffic dependent approach/departure routings, including associated noise abatement procedures, sequencing techniques, and predominant wind conditions.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-rwy-slot-pressure" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rwy-slot-pressure-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-studies_files/figure-html/fig-rwy-slot-pressure-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rwy-slot-pressure-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.2: Runway slot pressure during representative busy-period configurations
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-rwy-slot-pressure" class="quarto-xref">Figure&nbsp;<span>7.2</span></a> serves as a proxy for runway system configuration utilisation. Across the predominant configurations, we observe a distribution of runway system movements per 15-minute slot (arrivals and departures in mixed mode operations or single mode arrivals and departures). The higher demand pressure on European airports is characterised by a smaller distribution of the overall observed movements per 15-minute slot. As a proxy, the average across the 12 European airports is 2.0 min per movement or about 7.5 movements per quarter hour and runway. Airports in Brazil show a wider variability given the range of traffic demand. The slot pressure proxy across the airports ranges about 3 times higher in Brazil. The top airports in Brazil, i.e., Guarulhos/SBGR, Congonhas/SBSP, and Brasília/SBBR range within the order of magnitude of the European airports. This confirms observations made earlier in this report. <a href="#fig-rwy-slot-pressure" class="quarto-xref">Figure&nbsp;<span>7.2</span></a> also shows the growth potential of airports in Brazil with increasing traffic.</p>
+</section>
+<section id="horizontal-flight-efficiency" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="horizontal-flight-efficiency"><span class="header-section-number">7.2</span> Horizontal Flight Efficiency</h2>
+<p>The horizontal flight efficiency (HFE) topic study compares the 2025 network-level results for Brazil and Europe and explores selected aerodrome pairs with broadly comparable great-circle distance. Brazil implemented the HFE algorithm for the first time for this report cycle; the results are therefore considered preliminary and are presented as a first validation-oriented comparison.</p>
+<!-- BRAZIL COVERAGE - FOR DISCUSSION / INCLUSION IN FINAL VERSION
+short:        BRA 4, EUR 4
+mid_600:      BRA 6, EUR 6
+mid_780_800:  BRA 6, EUR 4
+long:         BRA 4, EUR 4
+
+mid_600:
+SBBR-SBSV  KEA valid months: 12
+SBSV-SBBR  KEA valid months: 12
+SBBR-SBCT  KEA valid months: 12
+SBPA-SBGL  KEA valid months: 2  <- weak, kept visible
+SBGL-SBPA  KEA valid months: 3  <- weak, kept visible
+
+mid_780_800:
+All selected BRA directions have KEA valid months: 12
+-->
+<p>At network level, the HFE indicator shown here expresses horizontal flight inefficiency, calculated from the ratio of flown to achieved distance and aggregated on a monthly basis (c.f. <a href="#fig-hfe-network" class="quarto-xref">Figure&nbsp;<span>7.3</span></a>). On a network level there is a distinct difference between the horizontal flight inefficiency based on the planned and actual flown trajectories. On average, the HFE values for the actual flown trajectories range within the same order of magnitude, i.e., the 3-4% range. The Brazilian results show a higher level of variability across the year with a slight decreasing trend from January to December. Additional research will help to understand this behaviour better. There is a clear seasonal pattern on the European side coinciding with the peak tourism season during the summer. On the planning side, Brazil offers a lower level of inefficiency with the KEP ranging solidly below 2%. Europe shows a 2-2.5 times higher level of inefficiency with the classical seasonal pattern.</p>
+<p>A key difference between both regions becomes visible from this high-level comparison: Operational realities appear to increase the level of enroute inefficiency within the Brazilian system with KEA &gt; KEP. The European pattern shows the characteristics of a rigid planning system. The planning side is less efficient than the actual enabled flight path, KEP &gt; KEA. In both regions the offset between the planned and actual trajectory efficiency accounts on average for 1.5-2%.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-hfe-network" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hfe-network-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-studies_files/figure-html/fig-hfe-network-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hfe-network-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.3: Monthly network-level horizontal flight efficiency in 2025
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The selected aerodrome-pair comparisons focus on directional connections with broadly similar great-circle distance. For this report a set of distinct distances were selected to provide a deeper understanding of the observed differences on the network level and gain insight on how the overall network, airspace structure and associated procedural aspects affect the HFE measure.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-hfe-pairs-short" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hfe-pairs-short-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-studies_files/figure-html/fig-hfe-pairs-short-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hfe-pairs-short-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.4: Monthly HFE for selected short-distance aerodrome pairs
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-hfe-pairs-short" class="quarto-xref">Figure&nbsp;<span>7.4</span></a> shows HFE values for short-range aerodrome connections (just under 300NM). The results confirm the overall pattern observed on the network level. In general, the observed actual horizontal flight inefficiency (KEA) is higher than the planned KEP. A notable exception is the flight connection from Belo Horizonte/SBCF to Campinas/SBKP where there is only a marginal difference between KEP and KEA. On the European side, <a href="#fig-hfe-pairs-short" class="quarto-xref">Figure&nbsp;<span>7.4</span></a> shows the classical KEP &gt; KEA pattern. For the connection from Athens/LGAV to Istanbul/LTFM there is a higher offset between the KEP and KEA value suggesting that planning side constraints are regularly compensated for with the provided enroute services. In comparison with the other horizontal flight efficiency bands, there appears a higher level of inefficiency on shorter routes as departure and arrival procedures and shorter/no lower-upper airspace transition impact the route selection and air traffic services.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-hfe-pairs-mid-600" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hfe-pairs-mid-600-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-studies_files/figure-html/fig-hfe-pairs-mid-600-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hfe-pairs-mid-600-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.5: Monthly HFE for selected aerodrome pairs around 600 NM
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The first mid-distance band, <a href="#fig-hfe-pairs-mid-600" class="quarto-xref">Figure&nbsp;<span>7.5</span></a>, shows a series of airports with a great circle distance of around 600NM. The data for Brazil suggests that this mid-level band sees a relatively close realisation of the flight paths as planned. The results for Europe vary depending on the chosen aerodrome pair and direction of flight. This suggests a higher impact of procedural aspects at this distance.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-hfe-pairs-mid-780-800" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hfe-pairs-mid-780-800-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-studies_files/figure-html/fig-hfe-pairs-mid-780-800-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hfe-pairs-mid-780-800-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.6: Monthly HFE for selected aerodrome pairs around 780-800 NM
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The second mid-distance band confirms the observations made for the shorter midband. On average, the observed horizontal inefficiencies are higher for this distance. This signals that the results also depend on the aerodrome pair chosen. Arrivals to Congonhas/SBSP show a higher level of difference between the planned and actual flown trajectory. The European results are fairly constant for this level band. This suggests that between the chosen aerodrome pairs, the seasonal effect is less visible and more of a systemic nature.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-hfe-pairs-long" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hfe-pairs-long-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-studies_files/figure-html/fig-hfe-pairs-long-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hfe-pairs-long-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.7: Monthly HFE for selected long-distance aerodrome pairs
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>With <a href="#fig-hfe-pairs-long" class="quarto-xref">Figure&nbsp;<span>7.7</span></a>, this report studies the behaviour of the HFE indicator for aerodrome pairs with a great circle distance of around 1500NM or more. In both regions, the aforementioned pattern of behaviour between KEP and KEA is confirmed. This suggests that longer flights (3-4 hours) experience a similar level of inefficiency to the mid-distance flights. For the European airspace, the connection from Istanbul/LTFM to Lisbon/LPPT shows an interesting pattern, as KEP and KEA broadly coincide, while the other direction of flight shows the classical offset pattern.</p>
+</section>
+<section id="summary" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="summary"><span class="header-section-number">7.3</span> Summary</h2>
+<p>This chapter highlighted two topics of interest for both parties. It offers a first glimpse into operational concepts, their implementation, and observed performance.</p>
+<p>As was pointed out earlier in this report, the increasing demand pressure in both systems requires a high level of operational efficiency. One critical aspect in this is the utilisation of the runway system capacity. To study the implication of different sequencing concepts and techniques, this report investigated the principal sequencing behaviour during peak operating hours at the study airports. Runway slot pressure of the runway system configuration was introduced as a proxy for the inter-arrival sequencing, both in single runway and mixed mode operations. It measures the serviced demand pressure on the runway system during 15-minute slots. As a proxy, it gives already a good indication on the sequencing techniques/practices. For the studied airport operations, we observe an average of 2.0 min for Europe versus an average of 7.5 min per runway system movement.</p>
+<p>The HFE results demonstrate an emerging capability on the Brazilian side. The data preparatory action now allows for the continual extraction and calculation of the horizontal flight efficiency measure across the network. In this report, the groups focussed on the overall observed network level performance and then studied a subset of aerodrome pair connections with similar great-circle distance.</p>
+<p>Both groups are interested in advancing the state-of-the-art in assessing network- and center-level aspects. To move towards a more granular comparison, this report showcases the behaviour on a runway system configuration level and a network-wide measure in Brazil and Europe. This approach allowed for a high-level comparison on a set of harmonised indicators suitable to describe the scope of the service provision. This is useful to characterise the similarities and differences between both regions. Future work will revolve around the validation of the findings and its integration to the corpus of this report and the associated performance measures.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./06-efficiency.html" class="pagination-link" aria-label="Efficiency">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Efficiency</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./10-conclusions.html" class="pagination-link" aria-label="Conclusions">
+        <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conclusions</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

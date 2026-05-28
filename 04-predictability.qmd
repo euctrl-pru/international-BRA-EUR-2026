@@ -476,9 +476,8 @@ p_arr_2025 <- punc_annual |>
   ggplot2::theme(legend.position = "none")
 ```
 
-::: {#fig-arrival-punc layout-ncol=1}
-
 ```{r}
+#| label: fig-arrival-punc
 #| fig-height: 7
 #| label: fig-arrival-punc
 #| fig-cap: Evolution of arrival punctuality at study airports (2024 vs 2025)
@@ -488,9 +487,8 @@ p_arr_2025 <- punc_annual |>
   ggplot2::theme(legend.position = "top")
 ```
 
-:::
 
-Compared to Brazil, Europe observed a high level of delayed arrivals in 2025.
+Compared to Brazil, Europe observed a high level of delayed arrivals in 2025 (c.f. @fig-arrival-punc).
 Across the European study airports, `r scales::percent(eur_arr_late_2025, accuracy = 1)` of arrivals were more than 15 minutes late.
 This nevertheless marks an improvement against 2024, when `r scales::percent(eur_arr_late_2024, accuracy = 1)` of European arrivals were delayed by more than 15 minutes.
 The highest share was observed at `r highest_eur_arr_late_2025$ICAO`, where `r scales::percent(highest_eur_arr_late_2025$LATE, accuracy = 1)` of arrivals were late.
@@ -624,7 +622,6 @@ p_dep_2025 <- punc_annual |>
   ggplot2::theme(legend.position = "none")
 ```
 
-::: {#fig-departure-punc layout-ncol=1}
 
 ```{r}
 #| label: fig-departure-punc
@@ -636,7 +633,6 @@ p_dep_2025 <- punc_annual |>
   ggplot2::theme(legend.position = "top")
 ```
 
-:::
 
 @fig-departure-punc presents the departure punctuality results for the study airports.
 The 2025 data show that, overall, airports perform better in managing outbound traffic, although challenges remain.

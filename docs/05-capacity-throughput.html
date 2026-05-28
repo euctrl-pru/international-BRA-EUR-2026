@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>5&nbsp; Capacity and Throughput – Operational Comparison of ANS Performance</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./06-efficiency.html" rel="next">
+<link href="./04-predictability.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5ccb035bea26c1e21f80f44cf7c27909.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+  .navbar-logo {
+    max-height: 60px;
+  }
+</style>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./05-capacity-throughput.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Capacity and Throughput</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Operational Comparison of ANS Performance</a> 
+        <div class="sidebar-tools-main">
+    <a href="./Operational-Comparison-of-ANS-Performance.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./00-foreword.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Foreword</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./00-executive-summary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Executive Summary</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-system-overview.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Air Navigation System Characterisation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-traffic_characterisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Traffic Characterisation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-predictability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Predictability</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-capacity-throughput.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Capacity and Throughput</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-efficiency.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Efficiency</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-studies.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Topic Studies</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-conclusions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conclusions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./99-references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./A1-appendix.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">List of Acronyms</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#peak-declared-capacity" id="toc-peak-declared-capacity" class="nav-link active" data-scroll-target="#peak-declared-capacity"><span class="header-section-number">5.1</span> Peak Declared Capacity</a></li>
+  <li><a href="#peak-arrival-throughput" id="toc-peak-arrival-throughput" class="nav-link" data-scroll-target="#peak-arrival-throughput"><span class="header-section-number">5.2</span> Peak Arrival Throughput</a></li>
+  <li><a href="#peak-departure-throughput" id="toc-peak-departure-throughput" class="nav-link" data-scroll-target="#peak-departure-throughput"><span class="header-section-number">5.3</span> Peak Departure Throughput</a></li>
+  <li><a href="#declared-capacity-and-peak-throughput" id="toc-declared-capacity-and-peak-throughput" class="nav-link" data-scroll-target="#declared-capacity-and-peak-throughput"><span class="header-section-number">5.4</span> Declared Capacity and Peak Throughput</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">5.5</span> Summary</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Capacity and Throughput</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- 
+think about which other airport we might use for the BLI/PLI comparison
+-->
+<p>Maintaining an optimal network flow necessitates an equilibrium between airport capacity and flight demand. This section delves into assessing capacity and throughput using various key performance indicators (KPIs) at the airport level. Airspace users expect sufficient capacity provision addressing the levels of demand. With higher levels of capacity utilisation, airspace users will experience congestion and constraints (e.g.&nbsp;higher inefficiency, increased delay/lower punctuality and predictability). However, planning and staffing for peak situations may come at significant costs to airspace users as well. In that respect it is essential to understand the trade-off between capacity provision and capacity consumption (i.e.&nbsp;traffic demand) as it impacts the overall system performance. Capacity and throughput analyses therefore show to what extent air navigation services are capable of accommodating the demand. The previous sections showed the level of overall traffic recovery in both regions. The increasing demand put strain on the systems and local knock-on effects amplified the uncertainty and variability of the expected traffic levels. This chapter may therefore also highlight the flexibility of air navigation services to accommodate such distortions of the schedule.</p>
+<section id="peak-declared-capacity" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="peak-declared-capacity"><span class="header-section-number">5.1</span> Peak Declared Capacity</h2>
+<p>Peak Declared Capacity refers to the highest movement rate (arrivals and landings) at an airport using the most favourable runway configuration under optimal conditions. The capacity value might be subject to local or national decision-making processes. The indicator represents the highest number of landings an airport can accept in a one-hour period.</p>
+<p>In both regions, peak capacity is declared by the respective authority. In Brazil, this function is performed by DECEA. Within the European region, the airport peak capacity is determined on a local or national level. The processes consider local operational constraints (e.g.&nbsp;political caps, noise quota and abatement procedures) and infrastructure related limitations (e.g.&nbsp;apron/stand availability, passenger facilities).</p>
+<p>The capacity of airports (and the associated runway system) is predominantly influenced by their infrastructure. The existence of independent parallel runways, e.g.&nbsp;Brasilia (SBBR) and Munich (EDDM), can support decisively the resulting capacity. Furthermore, operational procedures can lead to an increase in airport capacity. London Heathrow (EGLL), in the past, and Guarulhos (SBGR) in recent years show that changes in operational procedures can help the airport absorb significant traffic increases or reduce the additional sequencing time in the terminal airspace. Guarulhos, for example, benefited from the implementation of segregated operations under VMC conditions, and Heathrow increased its capacity through the introduction of time-based separation on final.</p>
+<p>Previous reports showed the relatively stable nature of the overall peak declared capacity. It is anticipated that future changes to the overall capacity level will depend on changes to the declaration process or significant changes of the operational concepts. Accordingly, this edition works with the most recent declared maximum (global) capacities for each study airport.</p>
+<p><a href="#fig-peak-declared-cpacity" class="quarto-xref">Figure&nbsp;<span>5.1</span></a> shows the declared peak capacity for the study airports. As observable in the case of Amsterdam Schiphol (EHAM, 6 runways), the number of runways is not a direct indication of the maximum capacity. For example, the two-runway airports Brasilia (SBBR), London Heathrow (EGLL), and Munich (EDDM) share a similar runway system layout and range above the 3-runway systems of Barcelona (LEBL) and Zurich (LSZH). London Gatwick (EGKK) is renowned for its maximisation of its single-runway throughput. Please note that Lisbon (LPPT) was added to this comparison report and capacity values for earlier years were not available at the time of writing.</p>
+<p>As mentioned above, the capacity declaration/determination process takes into account the varying local conditions and constraints. It balances the need to accommodate growth vs policy priorities and public interests. A potential area for further research could be a closer investigation of the operational concepts deployed and the variations of the declared capacity with the local runway system characteristics.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-peak-declared-cpacity" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-peak-declared-cpacity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="05-capacity-throughput_files/figure-html/fig-peak-declared-cpacity-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-peak-declared-cpacity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.1: Peak declared capacity 2025 [flights/hour]
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="peak-arrival-throughput" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="peak-arrival-throughput"><span class="header-section-number">5.2</span> Peak Arrival Throughput</h2>
+<p>This comparison report uses the GANP KPI to measure the peak arrival throughput as the 95th percentile of the hourly number of landings observed at an airport <span class="citation" data-cites="icao-doc-9750-2019">(<a href="99-references.html#ref-icao-doc-9750-2019" role="doc-biblioref">ICAO 2019</a>)</span>. The measure gives an indication of the achievable landing rates during “busy-hours”. It is an indication to what extent arrival traffic can be accommodated at an airport. For congested airports, the throughput provides a measure of the effectively realized capacity. Throughput is a measure of demand and therefore comprises already air traffic flow or sequencing measures applied by ATM or ATC in the en-route and terminal phase. For non-congested airports, throughput serves as a measure of showing the level of (peak) demand at this airport.</p>
+<p><a href="#fig-arrival-throughput" class="quarto-xref">Figure&nbsp;<span>5.2</span></a> compares the observed annual peak arrival throughput at the study airports in Brazil and Europe. On average, the busiest hour of the Brazilian airports under study did not suffer a significant reduction. This signals that peak arrival demand remained fairly constant during the pandemic. An increased arrival peak throughput was serviced at Brasilia (SBBR), Guarulhos (SBGR), and Confins (SBCF). Services at Galeão (SBGL) observed a significant shift in the traffic pattern. The peak arrival throughput fell sharply with the pandemic and has not yet recovered. This overall picture is contrasted by the pandemic related drop of overall traffic at European airports. The overall reduction resulted in significantly lower peak hours. The recovery pattern is also visible in the peak arrival throughput behaviour.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-arrival-throughput" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-arrival-throughput-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="05-capacity-throughput_files/figure-html/fig-arrival-throughput-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-arrival-throughput-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.2: Evolution of annual arrival throughput at study airports
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>With <a href="#fig-arrival-throughput" class="quarto-xref">Figure&nbsp;<span>5.2</span></a>, a further difference between both regions becomes apparent. The peak arrival throughput represents the achieved peak service rate utilising the available arrival runway system capacity. On average, the peak arrival throughput is higher in Europe than in Brazil based on the available infrastructure. It is interesting to see that arrival operations at SBGR and Brasilia (SBBR) range at the level of Gatwick (EGKK), while Congonhas (SBSP) remains above Lisbon (LPPT). At the same time, it offers growth potential when these airports are compared to the achievable arrival throughput at dual independent runway operations at Munich (EDDM) or even Heathrow (EGLL).</p>
+<p>While the peak arrival throughput varied in Brazil over the past years, the pattern is more homogeneous. Larger variations are explainable with local demand changes. However, compared to Europe, Brazil did not show the scale effects of lower air traffic demand during the pandemic phase. In light with the overall traffic recovery also the pressure on the arrival runway system increased at the European airports. Lisbon (LPPT) shows a level of variation. This suggests that even during the pandemic, operational peaks were serviced consistently at the same level.</p>
+</section>
+<section id="peak-departure-throughput" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="peak-departure-throughput"><span class="header-section-number">5.3</span> Peak Departure Throughput</h2>
+<p>In analogy to the previous section, <a href="#fig-departure-throughput" class="quarto-xref">Figure&nbsp;<span>5.3</span></a> shows the peak departure throughput. The latter is determined as the 95th percentile of the hourly number of departures.</p>
+<p>A similar picture emerges for the peak departure throughput in both regions. In Brazil, Congonhas reduced the peak departure throughput in comparison with 2024. Curitiba, Porto Alegre, Santos Dumont, and Confins maintained broadly the same level as in 2024. For the other Brazilian airports, the peak departure throughput increased. A continual increase of the peak departure throughput is observed at SBGR, exceeding in 2025 the pre-pandemic 2019 level. This suggests a concerted effort and more efficient use of the runway system for the departure phase.</p>
+<p>The pattern in Europe is characterised by the continual air traffic recovery for the majority of the airports. A lesser pronounced variation is observed at Lisbon (LPPT) for which the peak departure rate remained fairly stable over the past years.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-departure-throughput" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-departure-throughput-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="05-capacity-throughput_files/figure-html/fig-departure-throughput-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-departure-throughput-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.3: Evolution of departure throughput at study airports
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="declared-capacity-and-peak-throughput" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="declared-capacity-and-peak-throughput"><span class="header-section-number">5.4</span> Declared Capacity and Peak Throughput</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-capvsthru" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-capvsthru-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="05-capacity-throughput_files/figure-html/fig-capvsthru-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-capvsthru-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.4: Comparison of declared capacity and throughput for arrival phase.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Comparing the peak declared (arrival) capacity and throughput serviced at the different airports reveals a varying picture. On average, <a href="#fig-capvsthru" class="quarto-xref">Figure&nbsp;<span>5.4</span></a> evidences that operations at the majority of the airports do not yet observe capacity constraints. In many instances, the achieved throughput ranges about 10 flights per hour below the maximum declared capacity. In 2025, a particularly low utilisation was observed at Galeão (SBGL), where the spread between proxy arrival capacity and peak throughput exceeds 15 flights per hour. Further sizeable margins remain visible at Eduardo Gomes (SBEG), Paris Charles de Gaulle (LFPG), Porto Alegre (SBPA), Brasilia (SBBR), Curitiba (SBCT), Recife (SBRF), and Barcelona (LEBL). It is also noteworthy that a subset of airport services operate at or above their proxy maximum arrival capacity (e.g.&nbsp;EHAM, LGAV, SBGR, SBSP, EDDF, LPPT, and LSZH, with EDDM at parity). These airports are also characterised by a combination of complexity of the aerodrome layout and operational context. It will be interesting to study how these airports facilitate higher levels of demand. Higher peak throughput rates than the proxy arrival capacity were observed at Amsterdam (EHAM), Athens (LGAV), Guarulhos (SBGR), Congonhas (SBSP), Frankfurt (EDDF), and marginally at Lisbon (LPPT) and Zurich (LSZH). The offsets at EHAM and LGAV, and to a lesser extent at SBGR and SBSP, suggest that the simplified 50% proxy for arrival capacity can understate what is operationally achievable at some airports. In the case of Amsterdam (EHAM) there is a political cap on the number of operations per year. This may result in a determined (and declared) hourly rate that does strictly speaking not apply to the operational peak situations.</p>
+<p>The analysis of the spread of the declared capacity versus the achieved throughput is useful. However, it provides no indication on how often the demand reaches the declared capacity level. For this purpose, this report determines two characteristic points, i.e.&nbsp;the <em>BLI</em> base load index, and the peak load index <em>PLI</em>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-bli-pli-lppt-sbgr" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bli-pli-lppt-sbgr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="05-capacity-throughput_files/figure-html/fig-bli-pli-lppt-sbgr-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bli-pli-lppt-sbgr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.5: Ranked hourly throughput at LPPT and SBGR
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Comparing the achieved hourly throughput at Guarulhos (SBGR) and Lisbon (LPPT), the ranked-hourly-throughput example depicts a higher level of peak throughput traffic numbers at SBGR. The overall patterns are similar across the studied years. Lisbon (LPPT) observed an increase in its overall traffic throughputs as the hourly throughputs for 2023 and 2025 exceed the pre-pandemic levels of 2019, with 2024 remaining at a comparable level. Guarulhos (SBGR) experienced a bounce-back with the continual increase in its hourly throughput from 2023 to 2025, bringing the upper part of the ranked curve back closer to the pre-COVID 2019 pattern.</p>
+<p>In terms of demand pressure, Lisbon observed a substantially higher share of hours with throughputs above 80% of its declared capacity than SBGR, and this share increased further in 2025. As the overall ordered throughput shows a gradual reduction gradient at Guarulhos (SBGR), combined with a large spread of the peak and base level, there exists available capacity at the airport. Lisbon shows a narrower spread. On top, the existence of night flying restrictions is clearly visible for LPPT with its distribution tail.</p>
+<p>The ranked-hourly-throughput example shows that multiple factors influence the interplay between the declared capacity and observed throughputs. Similar to comparing only the number of runways and not the runway system utilisation, focussing on the difference between declared capacities, demand periods and operating conditions does not readily allow to compare operations at different airports. For this report, we define peak operating conditions, if the total hourly throughput reaches or exceeds 80% of the declared capacity levels, and accordingly, base load levels, if 20% of more are observed. The peak load index (PLI) accounts then for the number of operating hours at or above the peak level, and respectively, the base load index (BLI) for hours at or above the 20% base traffic level.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-bli-pli" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bli-pli-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="05-capacity-throughput_files/figure-html/fig-bli-pli-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bli-pli-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.6: Capacity utilisation trajectory (base load index vs peak load index)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-bli-pli-heatmap" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bli-pli-heatmap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="05-capacity-throughput_files/figure-html/fig-bli-pli-heatmap-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bli-pli-heatmap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.7: Capacity utilisation heatmap by region, load index, airport, and year
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The BLI/PLI plot summarises the observed utilisation of the available (i.e., declared) capacity at the study airports in the different regions. It shows the full 2019-2025 airport-year trajectory, while labels are limited to automatically selected 2025 airports that mark different parts of the regional load profile: peak pressure, high base load with limited peaks, low utilisation, and peaky imbalance. Based on this report, airports showing a BLI higher than 0.75 observe a consistent level of demand across the operating hours, while congestion due to peak operating conditions starts to become visible around a PLI of 0.3. Lower PLI values suggest concentrated demand banks, while higher levels of the PLI demonstrate a more consistent use of the available capacity. In Brazil, we observe a high utilisation of the capacity at Sao Paulo (SBSP) in 2019, 2023, 2024, and 2025 comparable to or above pre-COVID levels. For a majority of the airport across the years, no substantial peak loads were measured. This suggests that there is substantial capacity to sustain future growth of air traffic. Rio de Janeiro Santos Dumont (SBRJ) observed moderate loads confirming the role of the airport within the Brazilian system. The major hub in Brazil, SBGR, shows a relatively high base-load-index (BLI), while the peak-load-index (PLI) remains far below the levels observed at LPPT or SBSP. Within the European context, a high utilisation of the available system capacity was observed for London Heathrow, Lisbon, Frankfurt, Gatwick, and Zurich, while EDDF and LSZH combine very high base loads with more moderate peak-load conditions. This suggests that for many of these airports the daily traffic loads returned to similar or higher levels of capacity utilisation than pre-COVID. For the majority of European airports, the peak load index ranges relatively low. This suggests that most of the airports operate currently concentrated short peaks or having growth potential available in terms of traffic load.</p>
+<p>The heatmap, <a href="#fig-bli-pli-heatmap" class="quarto-xref">Figure&nbsp;<span>5.7</span></a>, shows the full airport-year detail and infrastructure utilisation across the year. Splitting the base-load and peak-load indices into separate panels makes it easier to scan the evolution of each load characteristic by airport. We observe a solid use of the study airports in both regions in terms of base traffic levels. The lower traffic levels during the main COVID years are well reflected. Grey cells indicate years where the current input data do not yet support a BLI/PLI estimate. Amongst the study airports, there is a higher share of European airports with more peak operating hours than in Brazil. This might be related to the overall role of the airports and underlying connectivity structure and demand levels already described in earlier chapters. Future work on understanding the drivers between operational concepts and demand may reveal further characteristics of the service provision in both systems.</p>
+</section>
+<section id="summary" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="summary"><span class="header-section-number">5.5</span> Summary</h2>
+<p>This chapter analysed the relationship between airport capacity, throughput, and demand management across Brazilian and European airports.</p>
+<p>On average, declared peak capacities at Brazilian airports tend to be lower than in Europe, suggesting greater flexibility to accommodate future traffic growth at major Brazilian hubs. In contrast, many European airports will increasingly depend on novel operational concepts to achieve further gains, as their existing runway infrastructure and separation standards already impose operational limits.</p>
+<p>Comparing the utilisation of capacity based on a new indicator revealed interesting patterns. Most airports currently operate with a margin between declared capacity and observed peak throughput, suggesting that, at present, runway system capacities are not a limiting factor in either region.</p>
+<p>Notably, in 2025, low utilisation was observed at Galeão (SBGL), Eduardo Gomes (SBEG), and Paris Charles de Gaulle (LFPG), where the spread between capacity and peak throughput remained large. Conversely, São Paulo Congonhas (SBSP), Guarulhos (SBGR), Amsterdam Schiphol (EHAM), and Athens (LGAV) emerged as airports servicing peak arrival rates close to or above the proxy arrival capacity used in this report.</p>
+<p>Overall, the findings highlight that while current capacities are sufficient, maintaining system performance amid projected air traffic growth will increasingly depend on operational innovations and efficient management strategies in both regions.</p>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-icao-doc-9750-2019" class="csl-entry" role="listitem">
+ICAO. 2019. <em>Doc 9750, Capacity &amp; Efficiency, Global Air Navigation Plan 2016-2030</em>. Sixth Edition. International Civil Aviation Organization.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./04-predictability.html" class="pagination-link" aria-label="Predictability">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Predictability</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./06-efficiency.html" class="pagination-link" aria-label="Efficiency">
+        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Efficiency</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
