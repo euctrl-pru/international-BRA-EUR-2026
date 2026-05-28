@@ -479,7 +479,6 @@ p_arr_2025 <- punc_annual |>
 ```{r}
 #| label: fig-arrival-punc
 #| fig-height: 7
-#| label: fig-arrival-punc
 #| fig-cap: Evolution of arrival punctuality at study airports (2024 vs 2025)
 
 (p_arr_2024 / p_arr_2025) +
