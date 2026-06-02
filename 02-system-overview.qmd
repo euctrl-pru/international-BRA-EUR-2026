@@ -26,7 +26,7 @@ Today, NAV Brasil <!-- has xxxx employees in xx different units, providing --> p
 Despite serving a significant number of air transport movements, NAV Brasil does not plan to establish radar facilities or provide en-route services.
 
 The Brazilian airspace, covering an area of approximately 22 million square kilometres (8.5 million square nautical miles of non-oceanic airspace), is divided into five Flight Information Regions.
-These regions are further subdivided and managed by five Area Control Centers (ACC), `r table_bra_eur |> dplyr::filter(KPA == "number of TWR") |> dplyr::pull(Brazil_2025) |> stringr::str_extract("^\\d+")` Tower facilities (TWR), one digital tower (D-TWR), `r table_bra_eur |> dplyr::filter(KPA == "number of APP") |> dplyr::pull(Brazil_2025)` Approach Units (APP) and 70 AFIS/Remote-AFIS.
+These regions are further subdivided and managed by five Area Control Centers (ACC), `r table_bra_eur |> dplyr::filter(str_starts(KPA, "number of TWR")) |> dplyr::pull(Brazil_2025) |> stringr::str_extract("^\\d+")` Tower facilities (TWR), one digital tower (D-TWR), `r table_bra_eur |> dplyr::filter(str_starts(KPA, "number of APP")) |> dplyr::pull(Brazil_2025)` Approach Units (APP) and 70 AFIS/Remote-AFIS.
 
 The non-oceanic airspace in Europe covers an area of 11.5 million square kilometres.
 When it comes to the provision of air traffic services, the European approach involves a multitude of service providers, with 37 distinct en-route Air Navigation Service Providers (ANSPs), each responsible for different geographical regions.
@@ -54,7 +54,7 @@ Subsequently, the NMOC implements the relevant flow management initiatives as re
 #| label: HLC-numbers
 # BRA ATCO increase
 bra_atco_2019 <- 3126
-bra_actos     <- c("2023" = 3677, "2024" = 3890 , "2025" = 4000)
+bra_actos <- c("2023" = 3677, "2024" = 3890, "2025" = 4000)
 bra_atcos_pct <- ((bra_actos / bra_atco_2019) - 1) * 100
 ```
 
@@ -90,7 +90,6 @@ In Europe, ATCO numbers showed only a mild variation over the period, moving fro
 #| fig-align: "center"
 #| out-width: 95%
 knitr::include_graphics("./figures/02_system_ATCO_new_comparison.png")
-
 ```
 
 The traffic density indicator — expressed as controlled flights per square kilometre of non-oceanic airspace — provides a structural lens through which the operational differences between both regions can be better understood. 
@@ -108,7 +107,6 @@ This difference reflects not only the traffic density gap between the two region
 #| fig-align: "center"
 #| out-width: 95%
 knitr::include_graphics("./figures/02_system_ATCO_new_ratio.png")
-
 ```
 
 <!-- Old text
