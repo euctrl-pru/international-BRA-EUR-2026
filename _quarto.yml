@@ -18,7 +18,6 @@ book:
   downloads: pdf # [pdf, docx]
   chapters:
   - index.qmd
-  #- xx-quarto-gt-word.qmd
   - 00-foreword.qmd
   - 00-executive-summary.qmd
   - 01-intro.qmd
@@ -27,11 +26,9 @@ book:
   - 04-predictability.qmd
   - 05-capacity-throughput.qmd
   - 06-efficiency.qmd
-  # - 07-environment.qmd
   - 09-studies.qmd
   - 10-conclusions.qmd
   - 99-references.qmd
-  #appendices:
   - A1-appendix.qmd
   navbar:
   # Note: You need to install: ```quarto install extension mcanouil/quarto-iconify```
@@ -155,7 +152,9 @@ book:
             href: https://ansperformance.eu/about/disclaimer/
 
 bibliography: references.bib
-
+nocite: |
+  @point_merge, @bra_point_merge, @ICAO-Doc9931
+  
 format:
   html:
     title: ""
